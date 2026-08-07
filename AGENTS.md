@@ -20,20 +20,20 @@
    - 开发文档专家：负责把方案整理成 AI 编程工具可执行的说明书
 
 ## 文件约定
-1. `current_task.md` 是当前任务输入，以它为准。
-2. `prompts/` 目录存放各角色提示词。
-3. `templates/` 目录存放交接模板。
-4. `workflows/` 目录存放自动化流程与脚本。
-5. `output/` 目录存放各阶段输出结果。
-6. `lessons/` 目录按课题保存单节课项目文件（Vite 工程，每课独立开发、独立构建），统一结构为：`lesson.json`、`index.html`（Vite 入口）、`src/`（`main.ts` 入口 + `styles/` `data/` `utils/` `modules/` 分层）、`assets/`、`docs/`、`dist/`（构建产物，禁止手改）。
+1. `agents/current_task.md` 是当前任务输入模板，以它为准。
+2. `agents/prompts/` 目录存放各角色提示词。
+3. `agents/templates/` 目录存放交接模板。
+4. `scripts/` 目录存放工程脚本（多课构建、结构校验等纯工程操作，不调用 AI API；Agent 编排由项目外 Agent 应用负责，不在项目本地维护）。
+5. `agents/output/` 目录存放各阶段输出结果。
+6. `lessons/` 目录按课题保存单节课项目文件（Vite 工程，每课独立开发、独立构建），统一结构为：`lesson.json`、`index.html`（Vite 入口）、`src/`（`main.ts` 入口 + `styles/` `data/` `utils/` `modules/` 分层）、`assets/`、`public/`（视频/3D 等大资源，构建时原样复制、不内联）、`docs/`、`dist/`（构建产物，禁止手改）。
 7. `books/` 目录用于将单课汇编成整书（必修一 / 必修二），通过 `lesson.json` 自动汇总。
 8. `shared/` 目录存放多课复用的公共组件、样式、工具和资源。
 9. 单课开发文档统一放在该课 `docs/` 下，命名为 `01_教学设计交接包.md` ~ `05_开发文档.md`。
-10. 工程构建由根目录 `package.json` + `vite.config.ts` 驱动：`npm run dev` 开发、`npm run build` 构建（先类型检查）、`npm run test` 功能测试（vitest + jsdom）、`npm run preview` 预览产物。
+10. 工程构建由根目录 `package.json` + `vite.config.ts` 驱动：`npm run dev` 开发、`npm run build` 单课构建（先类型检查）、`npm run build:all` 多课构建、`npm run check` 结构校验、`npm run test` 功能测试（vitest + jsdom）、`npm run preview` 预览产物。
 11. 第三方库优先 npm 引入（如 Three.js），不再手工维护本地 `libs/`。
 
 ## 推荐工作流
-1. 读取 `current_task.md`
+1. 读取 `agents/current_task.md`
 2. 先进入教学设计
 3. 再进入页面设计
 4. 再进入技术实现

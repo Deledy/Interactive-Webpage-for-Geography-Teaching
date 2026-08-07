@@ -872,8 +872,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   --deck-card-top: var(--deck-tab-h);
 
   position: relative;
-  width: min(860px, 100%);
-  margin-inline: auto;
+  width: 100%;
   height: 500px;
 }
 

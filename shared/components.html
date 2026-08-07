@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>shared 组件目录</title>
+<style>
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  background: #f3f4f6;
+  color: #1f2430;
+  line-height: 1.6;
+}
+
+header {
+  background: #20222c;
+  color: #fff;
+  padding: 32px 24px;
+}
+
+header h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+header p {
+  opacity: .85;
+  font-size: 14px;
+}
+
+header code {
+  background: rgba(255,255,255,.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.comp {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.comp__head {
+  padding: 20px 24px 12px;
+}
+
+.comp__head h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.comp__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+
+.comp__meta dt {
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.comp__meta dd {
+  color: #374151;
+}
+
+.comp__meta code {
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.comp__preview {
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  background: #20222c;
+}
+
+.comp__preview iframe {
+  display: block;
+  width: 100%;
+  height: 480px;
+  border: 0;
+}
+
+.comp__use {
+  padding: 16px 24px 20px;
+  font-size: 13px;
+}
+
+.comp__use summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.comp__use pre {
+  margin-top: 10px;
+  background: #20222c;
+  color: #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12px;
+}
+
+footer {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 12px;
+  padding-bottom: 32px;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>shared/ 共享组件目录</h1>
+  <p>浏览全部共享组件的实际效果。单课调用统一使用相对路径 <code>../../shared/components/&lt;组件名&gt;.html</code>。</p>
+</header>
+
+<main>
+  <section class="comp">
+    <div class="comp__head">
+      <h2>1. 动态标签页堆叠卡片 <small>dynamic-tabbed-stack-deck</small></h2>
+      <dl class="comp__meta">
+        <dt>文件</dt>
+        <dd><code>components/dynamic-tabbed-stack-deck.html</code></dd>
+        <dt>用途</dt>
+        <dd>多标签页 + 卡片内容的切换展示（知识卡片分类、对比讲解等）</dd>
+        <dt>实现</dt>
+        <dd>纯 CSS（radio :checked 状态机），零 JavaScript 依赖</dd>
+        <dt>兼容性</dt>
+        <dd>oklch 主色内置十六进制降级，旧浏览器自动回退</dd>
+      </dl>
+    </div>
+    <div class="comp__preview">
+      <iframe src="components/dynamic-tabbed-stack-deck.html" title="动态标签页堆叠卡片预览" loading="lazy"></iframe>
+    </div>
+    <details class="comp__use">
+      <summary>查看调用方式</summary>
+      <pre><code>&lt;!-- 方式一：整页 iframe 嵌入（样式完全隔离，推荐） --&gt;
+&lt;iframe src="../../shared/components/dynamic-tabbed-stack-deck.html"
+        style="width:100%;height:480px;border:0"&gt;&lt;/iframe&gt;
+
+&lt;!-- 方式二：抽取 CSS + HTML 片段复制进课程页面，替换卡片文案即可
+     注意：保留 .tsd 前缀，避免与页面其它组件样式冲突 --&gt;</code></pre>
+    </details>
+  </section>
+</main>
+
+<footer>shared/ 目录当前共 1 个组件</footer>
+</body>
+</html>

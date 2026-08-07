@@ -6,20 +6,20 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { App } from '../lessons/地球的宇宙环境/src/state'
-import { init } from '../lessons/地球的宇宙环境/src/main'
-import { initMeteorCase } from '../lessons/地球的宇宙环境/src/modules/meteor'
-import { initHierarchy } from '../lessons/地球的宇宙环境/src/modules/hierarchy'
-import { initLifeChain } from '../lessons/地球的宇宙环境/src/modules/life'
-import { initPlanetCategories } from '../lessons/地球的宇宙环境/src/modules/planets'
-import { initReviewTree } from '../lessons/地球的宇宙环境/src/modules/review'
-import { initPracticeModal } from '../lessons/地球的宇宙环境/src/modules/practiceModal'
-import { initExtendModal } from '../lessons/地球的宇宙环境/src/modules/extendModal'
-import { initSolarSystem } from '../lessons/地球的宇宙环境/src/modules/solar'
+import { App } from '../lessons/geo01-earth-universe/src/state'
+import { init } from '../lessons/geo01-earth-universe/src/main'
+import { initMeteorCase } from '../lessons/geo01-earth-universe/src/modules/meteor'
+import { initHierarchy } from '../lessons/geo01-earth-universe/src/modules/hierarchy'
+import { initLifeChain } from '../lessons/geo01-earth-universe/src/modules/life'
+import { initPlanetCategories } from '../lessons/geo01-earth-universe/src/modules/planets'
+import { initReviewTree } from '../lessons/geo01-earth-universe/src/modules/review'
+import { initPracticeModal } from '../lessons/geo01-earth-universe/src/modules/practiceModal'
+import { initExtendModal } from '../lessons/geo01-earth-universe/src/modules/extendModal'
+import { initSolarSystem } from '../lessons/geo01-earth-universe/src/modules/solar'
 
 function loadLessonBody(): string {
   const html = readFileSync(
-    resolve(process.cwd(), 'lessons/地球的宇宙环境/index.html'),
+    resolve(process.cwd(), 'lessons/geo01-earth-universe/index.html'),
     'utf-8'
   )
   const m = html.match(/<body>([\s\S]*)<\/body>/)

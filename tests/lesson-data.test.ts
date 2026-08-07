@@ -3,7 +3,7 @@
    校验迁移后数据结构与内容完整性，作为"数据驱动"的基线保障。
    ============================================================ */
 import { describe, it, expect } from 'vitest'
-import { lessonData } from '../lessons/地球的宇宙环境/src/data/lessonData'
+import { lessonData } from '../lessons/geo01-earth-universe/src/data/lessonData'
 
 describe('lessonData 数据完整性', () => {
   it('元信息完整', () => {

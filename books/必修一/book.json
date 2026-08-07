@@ -1,29 +1,25 @@
 {
-  "title": "高中地理 必修一",
-  "subject": "地理",
+  "book": "必修一",
   "grade": "高中必修",
-  "publisher": "",
+  "version": "1.0.0",
+  "status": "draft",
+  "updatedAt": "2026-08-07T07:30:47.180Z",
   "chapters": [
     {
-      "id": "ch1",
-      "name": "第一章 宇宙中的地球",
-      "order": 1,
-      "lessons": ["地球的宇宙环境"]
+      "title": "第一章",
+      "lessons": [
+        "geo01-earth-universe"
+      ]
     }
   ],
   "lessons": [
     {
-      "id": "地球的宇宙环境",
-      "path": "lessons/地球的宇宙环境",
+      "id": "geo01-earth-universe",
+      "path": "lessons/geo01-earth-universe",
       "lessonTitle": "地球的宇宙环境",
-      "chapter": "第一章",
       "order": 1,
-      "grade": "高中必修",
-      "status": "done",
-      "entry": "dist/index.html"
+      "chapterTitle": "第一章"
     }
   ],
-  "cover": "",
-  "description": "由 lessons/ 各课 lesson.json 自动汇总生成（vite 迁移后单课发布产物为各课 dist/）",
-  "status": "draft"
+  "_note": "由 lessons/ 各课 lesson.json 经 scripts/assemble.mjs 自动汇总生成，请勿手改。"
 }

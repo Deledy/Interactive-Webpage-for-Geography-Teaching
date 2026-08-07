@@ -7,6 +7,17 @@
   "status": "done",
   "engine": "vite",
   "entry": "dist/index.html",
+  "resources": [
+    { "path": "assets/images/universe-intro.jpg", "type": "image" },
+    { "path": "assets/images/celestial-nebula.jpg", "type": "image" },
+    { "path": "assets/images/celestial-star.jpg", "type": "image" },
+    { "path": "assets/images/celestial-planet.jpg", "type": "image" },
+    { "path": "assets/images/celestial-moon.jpg", "type": "image" },
+    { "path": "assets/images/celestial-meteoroid.jpg", "type": "image" },
+    { "path": "assets/images/celestial-comet.jpg", "type": "image" },
+    { "path": "assets/images/celestial-satellite.jpg", "type": "image" },
+    { "path": "assets/images/celestial-spaceship.jpg", "type": "image" }
+  ],
   "tags": ["宇宙", "天体", "太阳系", "地球", "基础概念"],
   "description": "围绕地球在宇宙中的位置与基本特征设计的互动教学网页，涵盖天体判别、天体系统层级、太阳系与八大行星、地球存在生命的原因等内容"
 }
