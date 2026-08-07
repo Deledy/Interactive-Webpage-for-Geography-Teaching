@@ -12,6 +12,7 @@ import { initPlanetCategories } from './modules/planets'
 import { initLifeChain } from './modules/life'
 import { initReviewTree } from './modules/review'
 import { initNebulaTilt } from './modules/nebulaTilt'
+import { initLightbox } from './modules/lightbox'
 
 export function init(): void {
   initStarfield();
@@ -25,6 +26,7 @@ export function init(): void {
   initLifeChain();
   initReviewTree();
   initNebulaTilt();
+  initLightbox();
 }
 
 if (document.readyState === 'loading') {

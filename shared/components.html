@@ -199,8 +199,42 @@ footer {
         style="width:100%;height:480px;border:0"&gt;&lt;/iframe&gt;</code></pre>
     </details>
   </section>
+
+  <section class="comp">
+    <div class="comp__head">
+      <h2>3. 图片查看器 <small>image-lightbox</small></h2>
+      <dl class="comp__meta">
+        <dt>文件</dt>
+        <dd><code>components/image-lightbox.html</code></dd>
+        <dt>用途</dt>
+        <dd>点击图片弹出查看大图，支持缩放/拖拽/手势操作</dd>
+        <dt>实现</dt>
+        <dd>原生 JS（Pointer Events + Touch Events + rAF 节流），零外部依赖</dd>
+        <dt>兼容性</dt>
+        <dd>全现代浏览器，移动端双指缩放支持；prefers-reduced-motion 降级；CSS 变量可覆写主题</dd>
+      </dl>
+    </div>
+    <div class="comp__preview">
+      <iframe src="components/image-lightbox.html" title="图片查看器预览" loading="lazy"></iframe>
+    </div>
+    <details class="comp__use">
+      <summary>查看调用方式</summary>
+      <pre><code>&lt;!-- 方式一：iframe 嵌入页面（推荐，样式隔离） --&gt;
+&lt;iframe src="../../shared/components/image-lightbox.html"
+        style="width:0;height:0;border:0;position:absolute;visibility:hidden"
+        aria-hidden="true"&gt;&lt;/iframe&gt;
+
+&lt;!-- 给页面中需要点击放大的图片添加 data-lightbox 属性即可 --&gt;
+&lt;img src="photo.jpg" data-lightbox alt="描述"&gt;
+
+&lt;!-- 方式二：JS API 手动调用 --&gt;
+&lt;script&gt;ImageLightbox.open('图片URL', '描述文字');&lt;/script&gt;
+
+&lt;!-- 方式三：复制 &lt;style&gt; + &lt;template&gt; + &lt;script&gt; 内容到页面中 --&gt;</code></pre>
+    </details>
+  </section>
 </main>
 
-<footer>shared/ 目录当前共 2 个组件</footer>
+<footer>shared/ 目录当前共 3 个组件</footer>
 </body>
 </html>

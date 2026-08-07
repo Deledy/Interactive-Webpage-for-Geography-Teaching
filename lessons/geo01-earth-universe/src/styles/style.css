@@ -869,7 +869,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   /* 页签几何（8 个页签平铺一行；窄屏不足时整行横向滚动） */
   --deck-tab-h: 40px;
   --deck-tab-gap: 6px;
-  --deck-card-top: var(--deck-tab-h);
+  --deck-card-top: calc(var(--deck-tab-h) + 6px);
 
   position: relative;
   width: 100%;
@@ -892,6 +892,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   z-index: 5;
   display: flex;
   gap: var(--deck-tab-gap);
+  padding-top: 6px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -931,7 +932,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   height: calc(100% - var(--deck-card-top));
   padding: 26px 30px;
   overflow: hidden;
-  border-radius: 0 18px 18px 18px;
+  border-radius: 0 0 18px 18px;
   background: linear-gradient(165deg,
     color-mix(in srgb, var(--c) 16%, #111730),
     color-mix(in srgb, var(--c) 5%, #0c1126) 55%,
@@ -951,20 +952,93 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   display: flex;
   gap: 26px;
   height: 100%;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  overflow: hidden;
 }
 
-.body-deck__fig { flex-shrink: 0; align-self: flex-start; margin: 0; }
-.body-deck__img {
+/* 非星云天体双图卡片画廊：左侧双图并列，尺寸与星云 .nebula-tilt 对齐 */
+.body-deck__gallery {
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: flex;
+  gap: 12px;
+  width: 574px;
+  height: 380px;
+  margin: 6px 0 0 4px;
+  perspective: 1100px;
+  perspective-origin: 50% 50%;
+}
+.body-deck__gallery-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #191b30, #0e101f);
+  border: 1px solid color-mix(in srgb, var(--c) 26%, #2a2d48);
+  box-shadow:
+    0 26px 46px -24px rgba(0, 0, 0, .85),
+    0 0 0 1px color-mix(in srgb, var(--c) 12%, transparent) inset;
+  transform-style: preserve-3d;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.body-deck__gallery-card:hover {
+  cursor: grabbing;
+}
+.body-deck__gallery-card:hover .nebula-tilt__layer--glare,
+.body-deck__gallery-card:hover .nebula-tilt__layer--border {
+  opacity: 1;
+}
+.body-deck__gallery-card .nebula-tilt__layer--holo {
+  opacity: 0;
+}
+.body-deck__gallery-img {
   display: block;
-  width: 210px;
-  height: 210px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
-  background: #0b1030;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5);
+}
+.body-deck__gallery-shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52%;
+  background: linear-gradient(180deg, transparent, rgba(4, 6, 14, .9));
+  pointer-events: none;
+}
+.body-deck__gallery-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 18px 16px 18px;
+}
+.body-deck__gallery-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .7);
+}
+.body-deck__gallery-name::before {
+  content: '';
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--c), transparent);
+}
+.body-deck__gallery-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c) 72%, #fff);
 }
 
 .body-deck__info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -976,6 +1050,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   letter-spacing: .5px;
 }
 .body-deck__title .badge { margin-left: 10px; vertical-align: 5px; }
+.body-deck__desc { margin: 0 0 12px; font-size: 18px; line-height: 1.7; color: #c3c7de; }
 .body-deck__row { margin: 3px 0; font-size: 18px; line-height: 1.65; }
 .body-deck__label { display: inline-block; min-width: 52px; color: var(--c); font-weight: 700; }
 .body-deck__list { margin: 8px 0 0; padding-left: 56px; }
@@ -1013,7 +1088,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   height: 380px;
   margin: 6px 0 0 4px;
   perspective: 1100px;
-  perspective-origin: 50% 30%;
+  perspective-origin: 50% 50%;
 }
 /* 底部氛围光 */
 .nebula-tilt::before {
@@ -1031,13 +1106,9 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   gap: 12px;
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  /* 倾斜由 JS 直接驱动 transform（rAF 缓动），不依赖 @property，兼容性最佳；
-     不加 will-change，避免常驻 GPU 合成层导致卡内文字亚像素抗锯齿失效（发虚） */
-  transform: rotateX(0deg) rotateY(0deg);
-  touch-action: pan-y;
-  cursor: grab;
+  /* 每张卡片独立倾斜，deck 仅作为弹性容器，不再承载 3D 上下文 */
 }
+/* 卡片基底：各自承载独立的 preserve-3d 上下文 */
 .nebula-tilt__card {
   position: relative;
   flex: 1 1 0;
@@ -1049,17 +1120,22 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   box-shadow:
     0 26px 46px -24px rgba(0, 0, 0, .85),
     0 0 0 1px color-mix(in srgb, var(--c) 12%, transparent) inset;
+  transform-style: preserve-3d;
+  cursor: grab;
+  touch-action: pan-y;
 }
-/* 创生之柱图片卡：主卡置于 z=0，卡内文字不进入 3D 合成层，渲染清晰 */
+/* 创生之柱图片卡：主卡置于 z=0 */
 .nebula-tilt__card--img {
   transform: translateZ(0);
   background: #070a18;
 }
-/* 深空星云图片卡：垫后形成 z 轴视差（图片为位图，对合成层模糊不敏感） */
+/* 猫眼星云图片卡：垫后形成 z 轴视差，filter 仅作用于图片避免影响边框层 */
 .nebula-tilt__card--deep {
-  transform: translateZ(-36px);
-  filter: brightness(.85) saturate(.9);
+  transform: translateZ(-16px);
   background: #070a18;
+}
+.nebula-tilt__card--deep .nebula-tilt__img {
+  filter: brightness(.85) saturate(.9);
 }
 .nebula-tilt__img {
   display: block;
@@ -1076,14 +1152,59 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   background: linear-gradient(180deg, transparent, rgba(4, 6, 14, .9));
   pointer-events: none;
 }
-.nebula-tilt__caption {
+/* 全息 / 内容 / 眩光 / 描边层 — 参考 shared/3d-perspective-hover-tilt-stack.html 分层 translateZ 方案 */
+.nebula-tilt__layer {
   position: absolute;
-  left: 18px;
-  bottom: 16px;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.nebula-tilt__layer--holo {
+  transform: translateZ(6px);
+  background: conic-gradient(from var(--neb-holo) at var(--neb-mx) var(--neb-my),
+    color-mix(in srgb, var(--c) 62%, transparent),
+    color-mix(in srgb, #4FC3F7 62%, transparent),
+    color-mix(in srgb, #FFD54F 62%, transparent),
+    color-mix(in srgb, var(--c) 62%, transparent));
+  mix-blend-mode: color-dodge;
+  opacity: .3;
+  animation: nebula-holo-spin 10s linear infinite;
+}
+.nebula-tilt__card--deep .nebula-tilt__layer--holo {
+  transform: translateZ(22px); /* 补偿卡片 -16px，有效 z=+6 与主卡一致 */
+}
+.nebula-tilt__layer--content {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  pointer-events: none;
+  justify-content: flex-end;
+  padding: 0 18px 16px 18px;
+  transform: translateZ(20px);
+}
+.nebula-tilt__card--deep .nebula-tilt__layer--content {
+  transform: translateZ(36px); /* 补偿卡片 -16px，有效 z=+20 与主卡一致 */
+}
+.nebula-tilt__layer--glare {
+  transform: translateZ(25px);
+  background: radial-gradient(220px circle at var(--neb-mx) var(--neb-my), rgba(255, 255, 255, .32), transparent 58%);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity .35s;
+}
+.nebula-tilt__card--deep .nebula-tilt__layer--glare {
+  transform: translateZ(41px);
+}
+.nebula-tilt__layer--border {
+  transform: translateZ(28px);
+  padding: 2px;
+  background: conic-gradient(from var(--neb-holo), var(--c), #4FC3F7, #FFD54F, var(--c));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .72;
+  transition: opacity .35s;
+}
+.nebula-tilt__card--deep .nebula-tilt__layer--border {
+  transform: translateZ(44px);
 }
 .nebula-tilt__name {
   display: inline-flex;
@@ -1109,52 +1230,16 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   text-transform: uppercase;
   color: color-mix(in srgb, var(--c) 72%, #fff);
 }
-/* 全息 / 眩光 / 描边层 */
-.nebula-tilt__layer {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-.nebula-tilt__layer--holo {
-  background: conic-gradient(from var(--neb-holo) at var(--neb-mx) var(--neb-my),
-    color-mix(in srgb, var(--c) 62%, transparent),
-    color-mix(in srgb, #4FC3F7 62%, transparent),
-    color-mix(in srgb, #FFD54F 62%, transparent),
-    color-mix(in srgb, var(--c) 62%, transparent));
-  mix-blend-mode: color-dodge;
-  opacity: .3;
-  animation: nebula-holo-spin 10s linear infinite;
-}
-.nebula-tilt__layer--glare {
-  background: radial-gradient(220px circle at var(--neb-mx) var(--neb-my), rgba(255, 255, 255, .32), transparent 58%);
-  mix-blend-mode: overlay;
-  opacity: 0;
-  transition: opacity .35s;
-}
-.nebula-tilt__layer--border {
-  padding: 2px;
-  background: conic-gradient(from var(--neb-holo), var(--c), #4FC3F7, #FFD54F, var(--c));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: .72;
-  transition: opacity .35s;
-}
-.nebula-tilt__deck:hover .nebula-tilt__layer--glare,
-.nebula-tilt__deck:focus-visible .nebula-tilt__layer--glare,
-.nebula-tilt__deck:hover .nebula-tilt__layer--border,
-.nebula-tilt__deck:focus-visible .nebula-tilt__layer--border {
+.nebula-tilt__card:hover .nebula-tilt__layer--glare,
+.nebula-tilt__card:focus-visible .nebula-tilt__layer--glare,
+.nebula-tilt__card:hover .nebula-tilt__layer--border,
+.nebula-tilt__card:focus-visible .nebula-tilt__layer--border {
   opacity: 1;
 }
-.nebula-tilt__deck:hover,
-.nebula-tilt__deck:focus-visible {
+.nebula-tilt__card:hover {
   cursor: grabbing;
 }
-.nebula-tilt__deck:focus-visible {
-  outline: none;
-  transform: rotateX(9deg) rotateY(-11deg);
-}
+/* 键盘焦点：聚焦 deck 时场景加轮廓（deck 失去 3D 变换后，聚焦轮廓改到容器层级） */
 .nebula-tilt:has(.nebula-tilt__deck:focus-visible) {
   outline: 3px solid color-mix(in srgb, var(--c) 78%, #fff);
   outline-offset: 10px;
@@ -1173,8 +1258,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .body-deck:has(#body-deck-3:checked) .body-deck__tab[for="body-deck-3"],
 .body-deck:has(#body-deck-4:checked) .body-deck__tab[for="body-deck-4"],
 .body-deck:has(#body-deck-5:checked) .body-deck__tab[for="body-deck-5"],
-.body-deck:has(#body-deck-6:checked) .body-deck__tab[for="body-deck-6"],
-.body-deck:has(#body-deck-7:checked) .body-deck__tab[for="body-deck-7"] {
+.body-deck:has(#body-deck-6:checked) .body-deck__tab[for="body-deck-6"] {
   filter: brightness(1);
   transform: translateY(-4px);
 }
@@ -1185,8 +1269,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 #body-deck-3:checked ~ .body-deck__card:nth-of-type(4),
 #body-deck-4:checked ~ .body-deck__card:nth-of-type(5),
 #body-deck-5:checked ~ .body-deck__card:nth-of-type(6),
-#body-deck-6:checked ~ .body-deck__card:nth-of-type(7),
-#body-deck-7:checked ~ .body-deck__card:nth-of-type(8) {
+#body-deck-6:checked ~ .body-deck__card:nth-of-type(7) {
   transform: translateY(0) scale(1);
   z-index: 4;
 }
@@ -1209,21 +1292,32 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .body-deck {
     --deck-tab-h: 36px;
     --deck-tab-gap: 6px;
-    --deck-card-top: var(--deck-tab-h);
+    --deck-card-top: calc(var(--deck-tab-h) + 6px);
     height: 600px;
   }
   .body-deck__tab { font-size: 15px; min-width: 88px; }
   .body-deck__card { padding: 20px; }
   .body-deck__inner { gap: 18px; }
-  .body-deck__img { width: 130px; height: 130px; }
   .body-deck__title { font-size: 24px; }
   .body-deck__row, .body-deck__list li { font-size: 16px; }
-  /* 星云卡片：两卡并列居上、文字居下的纵向布局，窄屏不破版 */
-  .body-deck__card--nebula .body-deck__inner {
+  /* 非星云天体双图画廊：窄屏缩放 */
+  .body-deck__gallery {
+    width: min(280px, 100%);
+    height: 184px;
+    margin: 0 auto 8px;
+    align-self: center;
+  }
+  .body-deck__gallery-label { padding: 0 10px 10px 10px; }
+  .body-deck__gallery-name { font-size: 15px; }
+  .body-deck__gallery-sub { font-size: 9px; }
+  /* 窄屏下所有双图卡片（星云 + 非星云）改为纵向布局：图片居上、文字居下 */
+  .body-deck__card--nebula .body-deck__inner,
+  .body-deck__card .body-deck__inner:has(.body-deck__gallery) {
     flex-direction: column;
     align-items: center;
   }
-  .body-deck__card--nebula .body-deck__info { width: 100%; }
+  .body-deck__card--nebula .body-deck__info,
+  .body-deck__card:has(.body-deck__gallery) .body-deck__info { width: 100%; }
   .nebula-tilt {
     width: min(280px, 100%);
     height: 184px; /* 两卡并列，单卡保持 340:460 比例 */
@@ -1231,9 +1325,9 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
     align-self: center;
   }
   .nebula-tilt__deck { gap: 8px; }
+  .nebula-tilt__layer--content { padding: 0 10px 10px 10px; }
   .nebula-tilt__name { font-size: 15px; }
   .nebula-tilt__sub { font-size: 9px; }
-  .nebula-tilt__caption { left: 10px; bottom: 10px; }
 }
 
 /* 动效偏好：减少动态 */
@@ -1633,4 +1727,212 @@ body.review-mode #review { padding-top: 40px; }
     transform: translateX(-50%);
   }
   .solar3d__note { top: 10px; left: 10px; font-size: 14px; }
+}
+
+/* ============================================================
+   图片查看器（Image Lightbox） — .ilb- 前缀
+   ============================================================ */
+.ilb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 6, 16, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .35s var(--ease), visibility 0s .35s;
+}
+.ilb-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .35s var(--ease), visibility 0s 0s;
+}
+
+.ilb-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(90vw, 1200px);
+  max-height: 90vh;
+  background: #141a38;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  transform: scale(0.92) translateY(12px);
+  transition: transform .35s var(--ease);
+}
+.ilb-overlay.is-open .ilb-panel {
+  transform: scale(1) translateY(0);
+}
+
+.ilb-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: grab;
+  min-height: 200px;
+  min-width: 300px;
+}
+.ilb-viewport.is-dragging { cursor: grabbing; }
+.ilb-viewport.is-dragging .ilb-img { transition: none; }
+
+.ilb-img {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform: translate(0, 0) scale(1);
+  transform-origin: center center;
+  transition: transform .25s var(--ease);
+  will-change: transform;
+}
+
+.ilb-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(232, 234, 246, 0.7);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .35s var(--ease), background .35s var(--ease), box-shadow .35s var(--ease);
+}
+.ilb-close:hover,
+.ilb-close:focus-visible {
+  color: var(--gold);
+  background: rgba(255, 213, 79, 0.15);
+  box-shadow: 0 0 16px rgba(255, 213, 79, 0.3);
+  outline: none;
+}
+
+.ilb-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #141a38;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  width: 100%;
+  justify-content: center;
+}
+
+.ilb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(232, 234, 246, 0.7);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .35s var(--ease), background .35s var(--ease), border-color .35s var(--ease), box-shadow .35s var(--ease);
+  user-select: none;
+}
+.ilb-btn:hover,
+.ilb-btn:focus-visible {
+  color: var(--cyan);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.25);
+  outline: none;
+}
+.ilb-btn:active { transform: scale(0.94); }
+
+.ilb-btn--reset {
+  width: auto;
+  min-width: 52px;
+  padding: 0 12px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.ilb-btn--reset:hover,
+.ilb-btn--reset:focus-visible {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.3);
+}
+
+.ilb-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.ilb-spinner.is-active { opacity: 1; }
+.ilb-spinner::after {
+  content: '';
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.14);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: ilb-spin .7s linear infinite;
+}
+@keyframes ilb-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ilb-hint {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(232, 234, 246, 0.7);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s;
+}
+.ilb-overlay.is-open .ilb-hint {
+  opacity: 1;
+  transition: opacity .6s .8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ilb-overlay,
+  .ilb-panel,
+  .ilb-img,
+  .ilb-close,
+  .ilb-btn,
+  .ilb-spinner,
+  .ilb-hint {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

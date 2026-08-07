@@ -39,7 +39,7 @@ const lessonDir = resolveLessonDir()
 export default defineConfig({
   root: `lessons/${lessonDir}`,
   base: './',
-  plugins: [viteSingleFile()],
+  plugins: [viteSingleFile({ useRecommendedBuildConfig: false })],
   resolve: {
     alias: {
       // 单课源码快捷导入（示例：import { $ } from '@/utils/dom'）
@@ -52,9 +52,16 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2018',
     chunkSizeWarningLimit: 800,
-    // 图片/字体等资源以 base64 内联进 index.html（file:// 双击可用）；
-    // 视频/3D 等超大文件请放课程 public/ 目录（原样复制、不内联）
-    assetsInlineLimit: 50 * 1024 * 1024
+    // 小于 4KB 的资源 base64 内联；大于 4KB 的图片输出为独立文件到 dist/assets/
+    // 独立文件在 file:// 协议下通过 <img> 标签加载正常，不受 CORS 影响
+    assetsInlineLimit: 4 * 1024,
+    // 以下两项替代 viteSingleFile 的 useRecommendedBuildConfig，保证 JS/CSS 单文件输出
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true
+      }
+    }
   },
   server: {
     port: 5173,

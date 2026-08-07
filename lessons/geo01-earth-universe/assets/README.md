@@ -14,7 +14,7 @@
 ## 使用说明
 
 1. 资源文件一律放在 `assets/` 下，不要在 `css/` 或 `js/` 中混放。
-2. 文件名使用 snake_case（如 `celestial-nebula.jpg`），便于跨平台分发。
+2. 文件名使用 kebab-case（如 `celestial-nebula.jpg`），便于跨平台分发。
 3. 页面内引用使用相对路径，例如 `assets/images/celestial-nebula.jpg`。
 4. 所有资源须登记到本课 `lesson.json` 的 `resources` 数组（`path` + `type`），供 `npm run check` 校验与分发清单使用。
 5. 单课 HTML/CSS/JS 一律引用本地资源，禁止远程 URL。
