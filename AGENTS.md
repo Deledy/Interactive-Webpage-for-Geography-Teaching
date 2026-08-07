@@ -28,9 +28,10 @@
 6. `lessons/` 目录按课题保存单节课项目文件（Vite 工程，每课独立开发、独立构建），统一结构为：`lesson.json`、`index.html`（Vite 入口）、`src/`（`main.ts` 入口 + `styles/` `data/` `utils/` `modules/` 分层）、`assets/`、`public/`（视频/3D 等大资源，构建时原样复制、不内联）、`docs/`、`dist/`（构建产物，禁止手改）。
 7. `books/` 目录用于将单课汇编成整书（必修一 / 必修二），通过 `lesson.json` 自动汇总。
 8. `shared/` 目录存放多课复用的公共组件、样式、工具和资源。
-9. 单课开发文档统一放在该课 `docs/` 下，命名为 `01_教学设计交接包.md` ~ `05_开发文档.md`。
+9. 单课开发文档统一放在该课 `docs/` 下，命名为 `01_教学设计交接包.md` ~ `05_开发文档.md`，另设 `06_资源引用.md` 作为该课资源引用登记表（外部来源资源的版权登记页面）。
 10. 工程构建由根目录 `package.json` + `vite.config.ts` 驱动：`npm run dev` 开发、`npm run build` 单课构建（先类型检查）、`npm run build:all` 多课构建、`npm run check` 结构校验、`npm run test` 功能测试（vitest + jsdom）、`npm run preview` 预览产物。
 11. 第三方库优先 npm 引入（如 Three.js），不再手工维护本地 `libs/`。
+12. 所有外部来源资源（图片/视频/音频/字体等，非本课原创）必须登记到本课 `docs/06_资源引用.md`，写明作者/版权方、许可类型与来源链接，保持引用格式统一、可追溯；`npm run check` 会校验该文件是否存在。
 
 ## 推荐工作流
 1. 读取 `agents/current_task.md`

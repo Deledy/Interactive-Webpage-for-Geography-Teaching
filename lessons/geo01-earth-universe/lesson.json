@@ -9,7 +9,7 @@
   "entry": "dist/index.html",
   "resources": [
     { "path": "assets/images/universe-intro.jpg", "type": "image" },
-    { "path": "assets/images/celestial-nebula.jpg", "type": "image" },
+    { "path": "assets/images/celestial-nebula-pillars.jpg", "type": "image" },
     { "path": "assets/images/celestial-star.jpg", "type": "image" },
     { "path": "assets/images/celestial-planet.jpg", "type": "image" },
     { "path": "assets/images/celestial-moon.jpg", "type": "image" },

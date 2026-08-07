@@ -991,6 +991,180 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   line-height: 1.6;
 }
 
+/* ------------------------------------------------------------
+   星云卡片 · 创生之柱 3D 倾斜堆叠
+   （效果借鉴 shared/3d-perspective-hover-tilt-stack.html：指针跟随
+   倾斜 + 全息扫光 + 眩光 + 描边；左为两卡并列——空白卡（内容暂定）
+   + 创生之柱图片卡，右为星云文字。配色沿用课程设计令牌 var(--c)）
+   ------------------------------------------------------------ */
+@property --neb-holo {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.nebula-tilt {
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: relative;
+  /* 单卡比例沿用 shared/3d-perspective-hover-tilt-stack.html（340:460 竖卡，宽高比≈0.74）；
+     整体为两卡并列：放大至接近档案卡内容区高度（380px），宽度按比例得出，减少下方空白 */
+  width: 574px;
+  height: 380px;
+  margin: 6px 0 0 4px;
+  perspective: 1100px;
+  perspective-origin: 50% 30%;
+}
+/* 底部氛围光 */
+.nebula-tilt::before {
+  content: '';
+  position: absolute;
+  inset: 8% -6% -4%;
+  background: radial-gradient(60% 50% at 50% 78%, color-mix(in srgb, var(--c) 26%, transparent), transparent 70%);
+  filter: blur(22px);
+  opacity: .8;
+  pointer-events: none;
+}
+.nebula-tilt__deck {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  /* 倾斜由 JS 直接驱动 transform（rAF 缓动），不依赖 @property，兼容性最佳；
+     不加 will-change，避免常驻 GPU 合成层导致卡内文字亚像素抗锯齿失效（发虚） */
+  transform: rotateX(0deg) rotateY(0deg);
+  touch-action: pan-y;
+  cursor: grab;
+}
+.nebula-tilt__card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #191b30, #0e101f);
+  border: 1px solid color-mix(in srgb, var(--c) 26%, #2a2d48);
+  box-shadow:
+    0 26px 46px -24px rgba(0, 0, 0, .85),
+    0 0 0 1px color-mix(in srgb, var(--c) 12%, transparent) inset;
+}
+/* 创生之柱图片卡：主卡置于 z=0，卡内文字不进入 3D 合成层，渲染清晰 */
+.nebula-tilt__card--img {
+  transform: translateZ(0);
+  background: #070a18;
+}
+/* 深空星云图片卡：垫后形成 z 轴视差（图片为位图，对合成层模糊不敏感） */
+.nebula-tilt__card--deep {
+  transform: translateZ(-36px);
+  filter: brightness(.85) saturate(.9);
+  background: #070a18;
+}
+.nebula-tilt__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.nebula-tilt__shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52%;
+  background: linear-gradient(180deg, transparent, rgba(4, 6, 14, .9));
+  pointer-events: none;
+}
+.nebula-tilt__caption {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+.nebula-tilt__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .7);
+}
+.nebula-tilt__name::before {
+  content: '';
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--c), transparent);
+}
+.nebula-tilt__sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c) 72%, #fff);
+}
+/* 全息 / 眩光 / 描边层 */
+.nebula-tilt__layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.nebula-tilt__layer--holo {
+  background: conic-gradient(from var(--neb-holo) at var(--neb-mx) var(--neb-my),
+    color-mix(in srgb, var(--c) 62%, transparent),
+    color-mix(in srgb, #4FC3F7 62%, transparent),
+    color-mix(in srgb, #FFD54F 62%, transparent),
+    color-mix(in srgb, var(--c) 62%, transparent));
+  mix-blend-mode: color-dodge;
+  opacity: .3;
+  animation: nebula-holo-spin 10s linear infinite;
+}
+.nebula-tilt__layer--glare {
+  background: radial-gradient(220px circle at var(--neb-mx) var(--neb-my), rgba(255, 255, 255, .32), transparent 58%);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity .35s;
+}
+.nebula-tilt__layer--border {
+  padding: 2px;
+  background: conic-gradient(from var(--neb-holo), var(--c), #4FC3F7, #FFD54F, var(--c));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .72;
+  transition: opacity .35s;
+}
+.nebula-tilt__deck:hover .nebula-tilt__layer--glare,
+.nebula-tilt__deck:focus-visible .nebula-tilt__layer--glare,
+.nebula-tilt__deck:hover .nebula-tilt__layer--border,
+.nebula-tilt__deck:focus-visible .nebula-tilt__layer--border {
+  opacity: 1;
+}
+.nebula-tilt__deck:hover,
+.nebula-tilt__deck:focus-visible {
+  cursor: grabbing;
+}
+.nebula-tilt__deck:focus-visible {
+  outline: none;
+  transform: rotateX(9deg) rotateY(-11deg);
+}
+.nebula-tilt:has(.nebula-tilt__deck:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--c) 78%, #fff);
+  outline-offset: 10px;
+  border-radius: 22px;
+}
+@keyframes nebula-holo-spin {
+  from { --neb-holo: 0deg; }
+  to { --neb-holo: 360deg; }
+}
+
 /* 选中态：对应页签提亮上浮（页签已包进 .body-deck__tabs，改用 :has() 定位）；
    对应卡片提到最前并复位形变（卡片仍为 radio 的兄弟节点，用 ~ 选择器） */
 .body-deck:has(#body-deck-0:checked) .body-deck__tab[for="body-deck-0"],
@@ -1044,11 +1218,28 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .body-deck__img { width: 130px; height: 130px; }
   .body-deck__title { font-size: 24px; }
   .body-deck__row, .body-deck__list li { font-size: 16px; }
+  /* 星云卡片：两卡并列居上、文字居下的纵向布局，窄屏不破版 */
+  .body-deck__card--nebula .body-deck__inner {
+    flex-direction: column;
+    align-items: center;
+  }
+  .body-deck__card--nebula .body-deck__info { width: 100%; }
+  .nebula-tilt {
+    width: min(280px, 100%);
+    height: 184px; /* 两卡并列，单卡保持 340:460 比例 */
+    margin: 0 auto 8px;
+    align-self: center;
+  }
+  .nebula-tilt__deck { gap: 8px; }
+  .nebula-tilt__name { font-size: 15px; }
+  .nebula-tilt__sub { font-size: 9px; }
+  .nebula-tilt__caption { left: 10px; bottom: 10px; }
 }
 
 /* 动效偏好：减少动态 */
 @media (prefers-reduced-motion: reduce) {
   .body-deck__tab, .body-deck__card { transition: none; }
+  .nebula-tilt__layer--holo { animation: none; }
 }
 
 /* 底部：全部天体按"自然天体 / 人造天体"两类水平排列展示 */

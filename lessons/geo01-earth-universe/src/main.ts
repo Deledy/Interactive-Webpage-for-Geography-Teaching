@@ -11,6 +11,7 @@ import { initSolarSystem } from './modules/solar'
 import { initPlanetCategories } from './modules/planets'
 import { initLifeChain } from './modules/life'
 import { initReviewTree } from './modules/review'
+import { initNebulaTilt } from './modules/nebulaTilt'
 
 export function init(): void {
   initStarfield();
@@ -23,6 +24,7 @@ export function init(): void {
   initPlanetCategories();
   initLifeChain();
   initReviewTree();
+  initNebulaTilt();
 }
 
 if (document.readyState === 'loading') {

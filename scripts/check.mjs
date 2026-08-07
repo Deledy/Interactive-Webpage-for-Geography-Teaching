@@ -24,7 +24,8 @@ const DOC_REQUIRED = [
   '02_页面设计交接包.md',
   '03_技术实现交接包.md',
   '04_总控摘要.md',
-  '05_开发文档.md'
+  '05_开发文档.md',
+  '06_资源引用.md'
 ]
 const TEXT_EXTS = new Set(['.html', '.ts', '.css', '.js', '.json', '.md'])
 const REMOTE_URL_RE = /https?:\/\/[^\s"'<>()]+/g
@@ -98,7 +99,7 @@ function checkLesson(name) {
     )
   }
 
-  // docs 01~05 齐备（宽松：仅告警）
+  // docs 01~06 齐备（宽松：仅告警）
   const docsDir = join(lessonRoot, 'docs')
   const missing = DOC_REQUIRED.filter((f) => !existsSync(join(docsDir, f)))
   if (missing.length > 0) {

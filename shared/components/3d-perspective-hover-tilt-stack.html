@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D 透视悬停倾斜卡片堆叠（Perspective Hover Tilt Stack）— shared 组件</title>
+
+<!--
+  组件：3D 透视悬停倾斜卡片堆叠
+  用途：交互式 3D 卡片堆叠（重点概念强调、封面式知识卡片、课堂演示开场等）
+  实现：CSS @property 注册变量 + 原生 JS（pointermove 驱动倾斜，rAF 节流），零外部依赖
+  前缀：phts-（Perspective Hover Tilt Stack），多课复制时避免与其它组件冲突
+  颜色：oklch / color-mix 主色，内置十六进制降级；prefers-reduced-motion 下自动停用动效
+  定制：复制进单课时改脚本顶部 CFG 配置即可换文案与主色；
+        iframe 嵌入时可用 URL 参数覆盖：?eyebrow=&title=&desc=&accent=&accent-b=&accent-c=（中文需 URL 编码）
+-->
+<style>
+@property --phts-tilt-x {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: true;
+}
+
+@property --phts-tilt-y {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: true;
+}
+
+@property --phts-mx {
+  syntax: '<percentage>';
+  initial-value: 50%;
+  inherits: true;
+}
+
+@property --phts-my {
+  syntax: '<percentage>';
+  initial-value: 50%;
+  inherits: true;
+}
+
+@property --phts-holo-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.phts,
+.phts *,
+.phts *::before,
+.phts *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.phts {
+  --phts-accent: oklch(0.72 0.18 320);
+  --phts-accent-hex: #b06ae0; /* 旧浏览器降级色 */
+  --phts-accent-b: oklch(0.68 0.20 200);
+  --phts-accent-c: oklch(0.75 0.19 60);
+  font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: radial-gradient(circle at 50% 100%, #0a0b14, #04050a);
+  background: radial-gradient(circle at 20% 30%, color-mix(in oklch, var(--phts-accent) 22%, transparent), transparent 60%), radial-gradient(circle at 80% 70%, color-mix(in oklch, var(--phts-accent-b) 22%, transparent), transparent 60%), radial-gradient(circle at 50% 100%, #0a0b14, #04050a);
+}
+
+.phts__scene {
+  perspective: 1200px;
+  perspective-origin: center 40%;
+  width: min(340px, 100%);
+  height: 460px;
+  position: relative;
+}
+
+.phts__deck {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--phts-tilt-x)) rotateY(var(--phts-tilt-y));
+  transition: --phts-tilt-x .4s cubic-bezier(.22, 1, .36, 1), --phts-tilt-y .4s cubic-bezier(.22, 1, .36, 1);
+  cursor: grab;
+}
+
+.phts__card {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #1a1c2e, #0f1120);
+  border: 1px solid #2a2d48;
+  border: 1px solid color-mix(in oklch, var(--phts-accent) 25%, #2a2d48);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .9);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .9), 0 0 0 1px color-mix(in oklch, var(--phts-accent) 15%, transparent) inset;
+}
+
+.phts__card--back {
+  transform: translateZ(-100px) translateY(20px) scale(.92);
+  filter: brightness(.5);
+}
+
+.phts__card--mid {
+  transform: translateZ(-50px) translateY(10px) scale(.96);
+  filter: brightness(.72);
+}
+
+.phts__cardnum {
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  font-weight: 800;
+  color: #4a5080;
+  color: color-mix(in oklch, var(--phts-accent) 40%, #4a5080);
+  font-size: 14px;
+  letter-spacing: .05em;
+}
+
+.phts__card--front {
+  transform: translateZ(0);
+  overflow: hidden;
+  filter: brightness(1);
+  background: linear-gradient(155deg, #1a1c2e 0%, #0f1120 100%);
+  background: linear-gradient(155deg, color-mix(in oklch, var(--phts-accent) 12%, #1a1c2e) 0%, #0f1120 100%);
+}
+
+.phts__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.phts__layer--bg {
+  transform: translateZ(4px);
+  background: radial-gradient(circle at 30% 30%, rgba(176, 106, 224, .35), transparent 50%), radial-gradient(circle at 70% 70%, rgba(53, 176, 207, .35), transparent 50%);
+  background: radial-gradient(circle at 30% 30%, color-mix(in oklch, var(--phts-accent) 35%, transparent), transparent 50%), radial-gradient(circle at 70% 70%, color-mix(in oklch, var(--phts-accent-b) 35%, transparent), transparent 50%);
+  filter: blur(20px);
+  opacity: .85;
+}
+
+.phts__layer--holo {
+  transform: translateZ(6px);
+  background: conic-gradient(from var(--phts-holo-angle) at var(--phts-mx) var(--phts-my), rgba(176, 106, 224, .7), rgba(53, 176, 207, .7), rgba(242, 169, 59, .7), rgba(176, 106, 224, .7));
+  background: conic-gradient(from var(--phts-holo-angle) at var(--phts-mx) var(--phts-my), color-mix(in oklch, var(--phts-accent) 70%, transparent), color-mix(in oklch, var(--phts-accent-b) 70%, transparent), color-mix(in oklch, var(--phts-accent-c) 70%, transparent), color-mix(in oklch, var(--phts-accent) 70%, transparent));
+  mix-blend-mode: color-dodge;
+  opacity: .32;
+  animation: phts-holo-spin 8s linear infinite;
+}
+
+.phts__layer--content {
+  padding: 32px 30px;
+  transform: translateZ(30px);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 100%;
+}
+
+.phts__eyebrow {
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--phts-accent-hex, #b06ae0);
+  color: var(--phts-accent);
+  font-weight: 700;
+}
+
+.phts__title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  color: #ffffff;
+  color: color-mix(in oklch, var(--phts-accent) 20%, #ffffff);
+}
+
+.phts__desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #c3c7de;
+  color: color-mix(in oklch, var(--phts-accent) 8%, #c3c7de);
+  max-width: 26ch;
+}
+
+.phts__layer--glare {
+  transform: translateZ(35px);
+  background: radial-gradient(200px circle at var(--phts-mx) var(--phts-my), rgba(255, 255, 255, .35), transparent 55%);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity .3s;
+}
+
+.phts__deck:hover .phts__layer--glare,
+.phts__deck:focus-visible .phts__layer--glare {
+  opacity: 1;
+}
+
+.phts__layer--border {
+  transform: translateZ(38px);
+  padding: 2px;
+  background: conic-gradient(from var(--phts-holo-angle), #b06ae0, #35b0cf, #f2a93b, #b06ae0);
+  background: conic-gradient(from var(--phts-holo-angle), var(--phts-accent), var(--phts-accent-b), var(--phts-accent-c), var(--phts-accent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .7;
+  transition: opacity .3s;
+}
+
+.phts__deck:hover .phts__layer--border,
+.phts__deck:focus-visible .phts__layer--border {
+  opacity: 1;
+}
+
+.phts__deck:hover,
+.phts__deck:focus-visible {
+  cursor: grabbing;
+}
+
+@keyframes phts-holo-spin {
+  from {
+    --phts-holo-angle: 0deg;
+  }
+
+  to {
+    --phts-holo-angle: 360deg;
+  }
+}
+
+.phts__deck:focus-visible {
+  outline: none;
+  --phts-tilt-x: 10deg;
+  --phts-tilt-y: -12deg;
+}
+
+.phts__scene:has(.phts__deck:focus-visible) {
+  outline: 3px solid #b06ae0;
+  outline: 3px solid var(--phts-accent);
+  outline-offset: 12px;
+  border-radius: 26px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phts__deck {
+    transition: none;
+  }
+
+  .phts__layer--holo {
+    animation: none;
+  }
+}
+</style>
+</head>
+<body>
+<section class="phts" aria-label="3D 透视倾斜卡片堆叠">
+  <div class="phts__scene">
+    <div class="phts__deck" id="phts-deck" tabindex="0" role="button" aria-label="可交互的 3D 卡片组，移动指针可倾斜">
+      <div class="phts__card phts__card--back" aria-hidden="true">
+        <span class="phts__cardnum">03</span>
+      </div>
+      <div class="phts__card phts__card--mid" aria-hidden="true">
+        <span class="phts__cardnum">02</span>
+      </div>
+      <div class="phts__card phts__card--front">
+        <div class="phts__layer phts__layer--bg" aria-hidden="true"></div>
+        <div class="phts__layer phts__layer--holo" aria-hidden="true"></div>
+        <div class="phts__layer phts__layer--content">
+          <p class="phts__eyebrow" data-cfg="eyebrow">立体视差 · 01</p>
+          <h3 class="phts__title" data-cfg="title">纵深卡片</h3>
+          <p class="phts__desc" data-cfg="desc">移动指针可倾斜整组卡片：层次视差、虹彩流光、高光反光随指针位置实时变化。</p>
+        </div>
+        <div class="phts__layer phts__layer--glare" aria-hidden="true"></div>
+        <div class="phts__layer phts__layer--border" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(() => {
+  const root = document.querySelector('.phts');
+  if (!root) return;
+  const deck = root.querySelector('#phts-deck');
+
+  // ===== 通用配置：复制进单课时直接修改这里即可 =====
+  const CFG = {
+    eyebrow: '立体视差 · 01',
+    title: '纵深卡片',
+    desc: '移动指针可倾斜整组卡片：层次视差、虹彩流光、高光反光随指针位置实时变化。',
+  };
+  // =================================================
+
+  // iframe 嵌入时可用 URL 参数覆盖（中文需 URL 编码）：
+  // ?eyebrow=&title=&desc=&accent=&accent-b=&accent-c=
+  const q = new URLSearchParams(location.search);
+  const apply = (key) => {
+    const v = q.get(key);
+    if (v === null) return;
+    if (key in CFG) {
+      const el = root.querySelector('[data-cfg="' + key + '"]');
+      if (el) el.textContent = v;
+    } else {
+      root.style.setProperty('--phts-' + key, v);
+      if (key === 'accent') root.style.setProperty('--phts-accent-hex', v);
+    }
+  };
+  ['eyebrow', 'title', 'desc', 'accent', 'accent-b', 'accent-c'].forEach(apply);
+
+  const MAX_DEG = 14;
+  const supportsHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!supportsHover || reduceMotion) return;
+  let raf = 0;
+  const setTilt = (rx, ry, mx, my) => {
+    deck.style.setProperty('--phts-tilt-x', rx + 'deg');
+    deck.style.setProperty('--phts-tilt-y', ry + 'deg');
+    deck.style.setProperty('--phts-mx', mx + '%');
+    deck.style.setProperty('--phts-my', my + '%');
+  };
+  deck.addEventListener('pointermove', (e) => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const r = deck.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width;
+      const py = (e.clientY - r.top) / r.height;
+      const ry = ((px - 0.5) * 2 * MAX_DEG).toFixed(2);
+      const rx = ((0.5 - py) * 2 * MAX_DEG).toFixed(2);
+      setTilt(rx, ry, (px * 100).toFixed(1), (py * 100).toFixed(1));
+    });
+  });
+  deck.addEventListener('pointerleave', () => {
+    if (raf) cancelAnimationFrame(raf);
+    setTilt(0, 0, 50, 50);
+  });
+})();
+</script>
+</body>
+</html>

@@ -109,14 +109,34 @@
             <label class="body-deck__tab" for="body-deck-6" style="--c:var(--dc-sat)"><span class="body-deck__name">人造卫星</span></label>
             <label class="body-deck__tab" for="body-deck-7" style="--c:var(--dc-ship)"><span class="body-deck__name">载人飞船</span></label>
           </div>
-          <article class="body-deck__card" style="--c:var(--dc-nebula)"><div class="body-deck__inner">
-            <figure class="body-deck__fig"><img class="body-deck__img" src="./assets/images/celestial-nebula.jpg" alt="星云示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+          <article class="body-deck__card body-deck__card--nebula" style="--c:var(--dc-nebula)"><div class="body-deck__inner">
+            <!-- 左：3D 倾斜堆叠——空白卡与创生之柱图片卡并列（效果借鉴 shared/3d-perspective-hover-tilt-stack.html，配色沿用课程设计令牌） -->
+            <div class="nebula-tilt" id="nebula-tilt">
+              <div class="nebula-tilt__deck" tabindex="0" role="img" aria-label="创生之柱——鹰状星云（M16）中由气体和尘埃组成的云雾状柱体">
+                <div class="nebula-tilt__card nebula-tilt__card--img">
+                  <div class="nebula-tilt__layer nebula-tilt__layer--holo" aria-hidden="true"></div>
+                  <img class="nebula-tilt__img" src="./assets/images/celestial-nebula-pillars.jpg" alt="创生之柱——鹰状星云（M16）中由气体和尘埃组成的云雾状柱体" loading="lazy" onerror="this.style.display='none'">
+                  <div class="nebula-tilt__shade" aria-hidden="true"></div>
+                  <div class="nebula-tilt__caption">
+                    <span class="nebula-tilt__name">创生之柱</span>
+                    <span class="nebula-tilt__sub">M16 · 鹰状星云</span>
+                  </div>
+                  <div class="nebula-tilt__layer nebula-tilt__layer--glare" aria-hidden="true"></div>
+                  <div class="nebula-tilt__layer nebula-tilt__layer--border" aria-hidden="true"></div>
+                </div>
+                <!-- 深空星云图片卡：与创生之柱卡片并列展示不同图片（垫后形成 z 轴视差） -->
+                <div class="nebula-tilt__card nebula-tilt__card--deep">
+                  <img class="nebula-tilt__img" src="./assets/images/universe-intro.jpg" alt="深空星云与银河星系" loading="lazy" onerror="this.style.display='none'">
+                  <div class="nebula-tilt__shade" aria-hidden="true"></div>
+                </div>
+              </div>
+            </div>
             <div class="body-deck__info">
               <h3 class="body-deck__title">星云</h3>
-              <p class="body-deck__row"><span class="body-deck__label">组成</span>气体（氢）和尘埃</p>
+              <p class="body-deck__row"><span class="body-deck__label">组成</span>气体和尘埃，主要物质是氢</p>
               <p class="body-deck__row body-deck__row--list"><span class="body-deck__label">特点</span></p>
-              <ul class="body-deck__list"><li>云雾状外表</li><li>密度非常小</li><li>体积和质量极其庞大，通常相当于上千个太阳</li></ul>
-              <p class="body-deck__note">既是恒星的摇篮，也是恒星消亡后的物质残体。</p>
+              <ul class="body-deck__list"><li>呈云雾状外表</li></ul>
+              <p class="body-deck__note">由气体和尘埃组成的呈云雾状外表的天体，主要物质是氢。</p>
             </div>
           </div></article>
           <article class="body-deck__card" style="--c:var(--dc-star)"><div class="body-deck__inner">

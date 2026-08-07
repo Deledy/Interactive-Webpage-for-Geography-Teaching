@@ -165,8 +165,42 @@ footer {
      注意：保留 .tsd 前缀，避免与页面其它组件样式冲突 --&gt;</code></pre>
     </details>
   </section>
+
+  <section class="comp">
+    <div class="comp__head">
+      <h2>2. 3D 透视悬停倾斜卡片堆叠 <small>3d-perspective-hover-tilt-stack</small></h2>
+      <dl class="comp__meta">
+        <dt>文件</dt>
+        <dd><code>components/3d-perspective-hover-tilt-stack.html</code></dd>
+        <dt>用途</dt>
+        <dd>交互式 3D 倾斜卡片堆叠（重点概念强调、封面式知识卡片、课堂演示开场等）</dd>
+        <dt>实现</dt>
+        <dd>CSS @property 注册变量 + 原生 JS（pointermove 驱动倾斜，rAF 节流），零外部依赖</dd>
+        <dt>兼容性</dt>
+        <dd>oklch / color-mix 主色内置十六进制降级，旧浏览器自动回退；prefers-reduced-motion 下停用动效</dd>
+        <dt>定制</dt>
+        <dd>复制进单课时改脚本顶部 CFG 配置；iframe 嵌入时可用 URL 参数覆盖文案与主色</dd>
+      </dl>
+    </div>
+    <div class="comp__preview">
+      <iframe src="components/3d-perspective-hover-tilt-stack.html" title="3D 透视悬停倾斜卡片堆叠预览" loading="lazy"></iframe>
+    </div>
+    <details class="comp__use">
+      <summary>查看调用方式</summary>
+      <pre><code>&lt;!-- 方式一：整页 iframe 嵌入（样式完全隔离，推荐） --&gt;
+&lt;iframe src="../../shared/components/3d-perspective-hover-tilt-stack.html"
+        style="width:100%;height:480px;border:0"&gt;&lt;/iframe&gt;
+
+&lt;!-- 方式二：抽取 CSS + HTML 片段复制进课程页面，改脚本顶部 CFG 配置即可换文案与主色
+     注意：保留 .phts 前缀，避免与页面其它组件样式冲突 --&gt;
+
+&lt;!-- 方式三：iframe 用 URL 参数覆盖文案与主色（中文需 URL 编码） --&gt;
+&lt;iframe src="../../shared/components/3d-perspective-hover-tilt-stack.html?title=Earth%20Motion&amp;accent=oklch(0.7%200.16%20220)"
+        style="width:100%;height:480px;border:0"&gt;&lt;/iframe&gt;</code></pre>
+    </details>
+  </section>
 </main>
 
-<footer>shared/ 目录当前共 1 个组件</footer>
+<footer>shared/ 目录当前共 2 个组件</footer>
 </body>
 </html>
