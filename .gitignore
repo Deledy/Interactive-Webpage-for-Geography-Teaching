@@ -9,3 +9,13 @@ Thumbs.db
 # 临时文件
 *.tmp
 *.log
+
+# 依赖与构建产物
+node_modules/
+lessons/*/dist/
+dist/
+
+# 环境变量
+.env
+.env.local
+.env.*.local

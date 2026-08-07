@@ -653,12 +653,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .cover__title { font-size: 40px; letter-spacing: 3px; }
   .cover__subtitle { font-size: 18px; }
   .modal__panel { padding: 28px 20px; }
-  /* M2 天体卡片：窄屏内容改上下排布、底部分类单列 */
-  .body-card__head { min-height: 56px; font-size: 20px; padding: 10px 14px 10px 12px; }
-  .body-card__icon { font-size: 26px; }
-  .body-card__type { display: none; }
-  .body-card__inner { flex-direction: column; padding: 14px 18px; }
-  .body-card__img { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+  /* M2 底部分类：窄屏单列（页签式堆叠卡组的窄屏适配见 .body-deck 内部媒体查询） */
   .body-classify { grid-template-columns: 1fr; }
 }
 
@@ -855,170 +850,206 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .body-concept__classify { margin: 0; color: var(--text-dim); font-size: var(--fs-body); }
 .body-concept__classify .tag { margin: 0 6px; vertical-align: 2px; }
 
-/* 露头式堆叠卡片（Peeking Stacked Cards）：
-   所有卡片绝对定位在同一位置（left:0, top:0），以 peek 间距纵向错开，
-   像一摞文件纸只露出顶部页签。点击某张卡片后向下展开内容，
-   JS 动态撑开容器高度，确保不与下方区域重叠。 */
+/* 页签式堆叠卡组（Tabbed Stack Deck）
+   架构：radio(:checked) 纯 CSS 状态机，交互零 JS —— 严格参照 shared/dynamic-tabbed-stack-deck.html。
+   结构：input[type=radio] × N + label(页签) × N + article(卡片) × N，全部绝对定位叠放；
+   选中页签的卡片 z-index 提到最前并复位形变，其余卡片下移缩小退后，形成"牌堆"层次。
+   配色沿用课程设计令牌（恒星金/星云青/提示橙/状态色），并扩展紫、青绿、玫红等宇宙色相。 */
+.body-deck {
+  /* 天体档案色板（自然天体 6 色 + 人造天体 2 色） */
+  --dc-nebula: #B39DDB;    /* 星云 · 星云紫 */
+  --dc-star: #FFD54F;      /* 恒星 · 恒星金 */
+  --dc-planet: #4FC3F7;    /* 行星 · 星云青 */
+  --dc-satellite: #81C784; /* 卫星 · 青绿 */
+  --dc-meteoroid: #FFB74D; /* 流星体 · 暖橙 */
+  --dc-comet: #64B5F6;     /* 彗星 · 冰蓝 */
+  --dc-sat: #FFA726;       /* 人造卫星 · 橙 */
+  --dc-ship: #F06292;      /* 载人飞船 · 玫红 */
 
-/* 基础状态（无 JS 或 html.js 未添加前）：流式排列，兼容降级 */
-.body-stack { position: relative; margin-bottom: 8px; }
-.body-card {
-  border-radius: var(--radius-card);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  overflow: hidden;
-  margin-bottom: 8px;
-  box-shadow:
-    0 3px 0 rgba(255, 255, 255, 0.03),
-    0 6px 0 rgba(255, 255, 255, 0.02),
-    0 12px 24px rgba(0, 0, 0, 0.38);
-  transition: border-color var(--dur) var(--ease),
-              box-shadow var(--dur) var(--ease),
-              transform var(--dur) var(--ease);
-}
-.body-card.is-open {
-  border-color: rgba(255, 213, 79, 0.55);
-  box-shadow:
-    0 3px 0 rgba(255, 255, 255, 0.04),
-    0 6px 0 rgba(255, 255, 255, 0.03),
-    0 0 26px rgba(255, 213, 79, 0.22),
-    0 16px 34px rgba(0, 0, 0, 0.5);
+  /* 页签几何（8 个页签平铺一行；窄屏不足时整行横向滚动） */
+  --deck-tab-h: 40px;
+  --deck-tab-gap: 6px;
+  --deck-card-top: var(--deck-tab-h);
+
+  position: relative;
+  width: min(860px, 100%);
+  margin-inline: auto;
+  height: 500px;
 }
 
-/* JS 启用后的堆叠行为：所有卡片绝对定位在同一位置 */
-html.js .body-stack {
-  /* height 由 JS 动态设置：展开时为卡片实际高度，收起时为 (n-1)*peek + headerHeight */
-}
-html.js .body-card {
+/* 隐藏的 radio 状态机：保留焦点与语义，视觉上移除 */
+.body-deck__r {
   position: absolute;
-  left: 0;
-  top: calc(var(--i, 0) * 46px);
-  width: 100%;
-  margin-bottom: 0;
-  z-index: calc(100 - var(--i, 0));
-}
-html.js .body-card.is-open {
-  z-index: 200;
-  transform: translateY(-2px);
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 
-/* 头部页签：撑满卡片宽度，左缘强调色区分自然 / 人造天体 */
-.body-card__head {
+/* 页签行：8 个页签平铺一行，窄屏不足时横向滚动（隐藏滚动条） */
+.body-deck__tabs {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  gap: var(--deck-tab-gap);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.body-deck__tabs::-webkit-scrollbar { display: none; }
+
+/* 页签：仅保留天体名称文字，带天体专属色相；min-width 保证窄屏时触发整行滚动 */
+.body-deck__tab {
+  flex: 1 1 0;
+  min-width: 88px;
+  height: var(--deck-tab-h);
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 62px;
-  padding: 12px 18px 12px 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
-  border: none;
-  border-left: 4px solid var(--cyan);
-  color: var(--text-main);
-  cursor: pointer;
-  font-size: 22px;
-  text-align: left;
-  transition: background 0.3s, border-left-color 0.3s, color 0.3s;
-}
-.body-card--artificial .body-card__head { border-left-color: var(--warn); }
-.body-card__head:hover { background: rgba(255, 255, 255, 0.07); }
-.body-card.is-open .body-card__head {
-  background: rgba(255, 213, 79, 0.10);
-  border-left-color: var(--gold);
-}
-.body-card__icon { font-size: 30px; color: var(--cyan); transition: color 0.3s; }
-.body-card--artificial .body-card__icon { color: var(--warn); }
-.body-card.is-open .body-card__icon { color: var(--gold); }
-.body-card__name { font-weight: 700; white-space: nowrap; }
-
-/* 类别小标签 */
-.body-card__type {
-  flex-shrink: 0;
-  font-size: 13px;
-  line-height: 1;
-  padding: 5px 10px;
-  border-radius: 999px;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--glass-border);
-  white-space: nowrap;
-}
-.body-card__type--artificial {
-  color: var(--warn);
-  border-color: rgba(255, 183, 77, 0.5);
-}
-
-/* 箭头：收起时指向下（提示向下展开），展开时指向上（提示收起） */
-.body-card__arrow {
-  margin-left: auto;
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
-  border-right: 2px solid var(--text-dim);
-  border-bottom: 2px solid var(--text-dim);
-  transform: rotate(45deg);
-  transition: transform var(--dur) var(--ease);
-}
-.body-card.is-open .body-card__arrow { transform: rotate(-135deg); }
-
-/* 内容区：grid-template-rows 0fr → 1fr 向下展开 */
-.body-card__body {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition: grid-template-rows var(--dur) var(--ease);
-}
-html.js .body-card__body { grid-template-rows: 0fr; }
-html.js .body-card.is-open .body-card__body { grid-template-rows: 1fr; }
-
-.body-card__inner {
-  overflow: hidden;
-  min-height: 0;
-  display: flex;
-  gap: 22px;
-  padding: 18px 26px;
-  border-top: 1px solid var(--glass-border);
-  color: var(--text-dim);
-  font-size: 18px;
-}
-html.js .body-card.is-open .body-card__inner { animation: card-open 0.45s var(--ease); }
-
-@keyframes card-open {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.body-card__fig { flex-shrink: 0; align-self: flex-start; margin: 0; }
-.body-card__img {
-  display: block;
-  width: 200px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid var(--glass-border);
-  background: #0b1030;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
-}
-.body-card__info { flex: 1; min-width: 0; }
-.body-card__title {
-  margin: 0 0 10px;
-  font-size: 26px;
+  justify-content: center;
+  padding: 0 10px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--gold);
+  color: #fff;
+  white-space: nowrap;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--c) 58%, #0B1026),
+    color-mix(in srgb, var(--c) 32%, #0B1026));
+  border: 1px solid color-mix(in srgb, var(--c) 55%, var(--glass-border));
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  filter: brightness(.78);
+  transition: filter .25s, transform .25s;
 }
-.body-card__row { margin: 2px 0; }
-.body-card__label {
-  display: inline-block;
-  min-width: 46px;
-  color: var(--cyan);
-  font-weight: 600;
+.body-deck__tab:hover { filter: brightness(.95); }
+.body-deck__name { letter-spacing: .5px; }
+
+/* 档案卡片：全部叠放同一位置，未选中时下移并缩小，露出"牌堆"边缘 */
+.body-deck__card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--deck-card-top);
+  height: calc(100% - var(--deck-card-top));
+  padding: 26px 30px;
+  overflow: hidden;
+  border-radius: 0 18px 18px 18px;
+  background: linear-gradient(165deg,
+    color-mix(in srgb, var(--c) 16%, #111730),
+    color-mix(in srgb, var(--c) 5%, #0c1126) 55%,
+    #090e1f);
+  border: 1px solid color-mix(in srgb, var(--c) 38%, var(--glass-border));
+  color: var(--text-main);
+  box-shadow:
+    0 26px 50px -28px rgba(0, 0, 0, 0.72),
+    0 0 34px color-mix(in srgb, var(--c) 13%, transparent);
+  transform: translateY(24px) scale(.94);
+  transform-origin: 50% 0;
+  transition: transform .45s cubic-bezier(.3, .9, .3, 1);
+  z-index: 1;
 }
-.body-card__list { margin: 6px 0 0; padding-left: 46px; }
-.body-card__list li { margin: 5px 0; }
-.body-card__note {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 213, 79, 0.10);
-  color: var(--gold);
+
+.body-deck__inner {
+  display: flex;
+  gap: 26px;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.body-deck__fig { flex-shrink: 0; align-self: flex-start; margin: 0; }
+.body-deck__img {
+  display: block;
+  width: 210px;
+  height: 210px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  background: #0b1030;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5);
+}
+
+.body-deck__info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.body-deck__title {
+  margin: 0 0 12px;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--c);
+  letter-spacing: .5px;
+}
+.body-deck__title .badge { margin-left: 10px; vertical-align: 5px; }
+.body-deck__row { margin: 3px 0; font-size: 18px; line-height: 1.65; }
+.body-deck__label { display: inline-block; min-width: 52px; color: var(--c); font-weight: 700; }
+.body-deck__list { margin: 8px 0 0; padding-left: 56px; }
+.body-deck__list li { margin: 6px 0; font-size: 18px; line-height: 1.6; }
+.body-deck__note {
+  margin-top: auto;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border-left: 3px solid var(--c);
+  color: color-mix(in srgb, var(--c) 55%, #fff);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* 选中态：对应页签提亮上浮（页签已包进 .body-deck__tabs，改用 :has() 定位）；
+   对应卡片提到最前并复位形变（卡片仍为 radio 的兄弟节点，用 ~ 选择器） */
+.body-deck:has(#body-deck-0:checked) .body-deck__tab[for="body-deck-0"],
+.body-deck:has(#body-deck-1:checked) .body-deck__tab[for="body-deck-1"],
+.body-deck:has(#body-deck-2:checked) .body-deck__tab[for="body-deck-2"],
+.body-deck:has(#body-deck-3:checked) .body-deck__tab[for="body-deck-3"],
+.body-deck:has(#body-deck-4:checked) .body-deck__tab[for="body-deck-4"],
+.body-deck:has(#body-deck-5:checked) .body-deck__tab[for="body-deck-5"],
+.body-deck:has(#body-deck-6:checked) .body-deck__tab[for="body-deck-6"],
+.body-deck:has(#body-deck-7:checked) .body-deck__tab[for="body-deck-7"] {
+  filter: brightness(1);
+  transform: translateY(-4px);
+}
+
+#body-deck-0:checked ~ .body-deck__card:nth-of-type(1),
+#body-deck-1:checked ~ .body-deck__card:nth-of-type(2),
+#body-deck-2:checked ~ .body-deck__card:nth-of-type(3),
+#body-deck-3:checked ~ .body-deck__card:nth-of-type(4),
+#body-deck-4:checked ~ .body-deck__card:nth-of-type(5),
+#body-deck-5:checked ~ .body-deck__card:nth-of-type(6),
+#body-deck-6:checked ~ .body-deck__card:nth-of-type(7),
+#body-deck-7:checked ~ .body-deck__card:nth-of-type(8) {
+  transform: translateY(0) scale(1);
+  z-index: 4;
+}
+
+/* 键盘焦点：聚焦 radio 时高亮其对应页签 */
+.body-deck:has(#body-deck-0:focus-visible) .body-deck__tab[for="body-deck-0"],
+.body-deck:has(#body-deck-1:focus-visible) .body-deck__tab[for="body-deck-1"],
+.body-deck:has(#body-deck-2:focus-visible) .body-deck__tab[for="body-deck-2"],
+.body-deck:has(#body-deck-3:focus-visible) .body-deck__tab[for="body-deck-3"],
+.body-deck:has(#body-deck-4:focus-visible) .body-deck__tab[for="body-deck-4"],
+.body-deck:has(#body-deck-5:focus-visible) .body-deck__tab[for="body-deck-5"],
+.body-deck:has(#body-deck-6:focus-visible) .body-deck__tab[for="body-deck-6"],
+.body-deck:has(#body-deck-7:focus-visible) .body-deck__tab[for="body-deck-7"] {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+/* 窄屏：页签字号缩小（min-width 88px 使整行横向滚动），卡片内容压缩 */
+@media (max-width: 900px) {
+  .body-deck {
+    --deck-tab-h: 36px;
+    --deck-tab-gap: 6px;
+    --deck-card-top: var(--deck-tab-h);
+    height: 600px;
+  }
+  .body-deck__tab { font-size: 15px; min-width: 88px; }
+  .body-deck__card { padding: 20px; }
+  .body-deck__inner { gap: 18px; }
+  .body-deck__img { width: 130px; height: 130px; }
+  .body-deck__title { font-size: 24px; }
+  .body-deck__row, .body-deck__list li { font-size: 16px; }
+}
+
+/* 动效偏好：减少动态 */
+@media (prefers-reduced-motion: reduce) {
+  .body-deck__tab, .body-deck__card { transition: none; }
 }
 
 /* 底部：全部天体按"自然天体 / 人造天体"两类水平排列展示 */

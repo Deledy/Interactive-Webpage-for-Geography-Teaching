@@ -25,10 +25,12 @@
 3. `templates/` 目录存放交接模板。
 4. `workflows/` 目录存放自动化流程与脚本。
 5. `output/` 目录存放各阶段输出结果。
-6. `lessons/` 目录按课题保存单节课项目文件，每课统一结构为：`lesson.json`、`index.html`、`css/`、`js/`、`libs/`、`assets/`、`docs/`、`dist/`。
+6. `lessons/` 目录按课题保存单节课项目文件（Vite 工程，每课独立开发、独立构建），统一结构为：`lesson.json`、`index.html`（Vite 入口）、`src/`（`main.ts` 入口 + `styles/` `data/` `utils/` `modules/` 分层）、`assets/`、`docs/`、`dist/`（构建产物，禁止手改）。
 7. `books/` 目录用于将单课汇编成整书（必修一 / 必修二），通过 `lesson.json` 自动汇总。
 8. `shared/` 目录存放多课复用的公共组件、样式、工具和资源。
 9. 单课开发文档统一放在该课 `docs/` 下，命名为 `01_教学设计交接包.md` ~ `05_开发文档.md`。
+10. 工程构建由根目录 `package.json` + `vite.config.ts` 驱动：`npm run dev` 开发、`npm run build` 构建（先类型检查）、`npm run test` 功能测试（vitest + jsdom）、`npm run preview` 预览产物。
+11. 第三方库优先 npm 引入（如 Three.js），不再手工维护本地 `libs/`。
 
 ## 推荐工作流
 1. 读取 `current_task.md`

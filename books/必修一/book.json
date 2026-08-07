@@ -3,9 +3,27 @@
   "subject": "地理",
   "grade": "高中必修",
   "publisher": "",
-  "chapters": [],
-  "lessons": [],
+  "chapters": [
+    {
+      "id": "ch1",
+      "name": "第一章 宇宙中的地球",
+      "order": 1,
+      "lessons": ["地球的宇宙环境"]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "地球的宇宙环境",
+      "path": "lessons/地球的宇宙环境",
+      "lessonTitle": "地球的宇宙环境",
+      "chapter": "第一章",
+      "order": 1,
+      "grade": "高中必修",
+      "status": "done",
+      "entry": "dist/index.html"
+    }
+  ],
   "cover": "",
-  "description": "",
+  "description": "由 lessons/ 各课 lesson.json 自动汇总生成（vite 迁移后单课发布产物为各课 dist/）",
   "status": "draft"
 }

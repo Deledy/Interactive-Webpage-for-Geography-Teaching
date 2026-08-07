@@ -5,7 +5,8 @@
   "lessonTitle": "地球的宇宙环境",
   "grade": "高中必修",
   "status": "done",
-  "entry": "index.html",
+  "engine": "vite",
+  "entry": "dist/index.html",
   "tags": ["宇宙", "天体", "太阳系", "地球", "基础概念"],
   "description": "围绕地球在宇宙中的位置与基本特征设计的互动教学网页，涵盖天体判别、天体系统层级、太阳系与八大行星、地球存在生命的原因等内容"
 }
