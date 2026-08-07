@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地球的宇宙环境 · 高中必修一</title>
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 全局星点背景：JS 开启时由 canvas 绘制并缓慢漂移；无 JS 时退化为 CSS 静态星点 -->
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <!-- 顶部固定导航 -->
+  <header class="topnav" id="topnav">
+    <div class="topnav__inner">
+      <a class="topnav__logo" href="#cover">地球的宇宙环境</a>
+      <nav class="topnav__links" aria-label="章节导航">
+        <a href="#cover" data-target="cover" class="is-active">封面</a>
+        <a href="#universe" data-target="universe">宇宙</a>
+        <a href="#celestial" data-target="celestial">天体</a>
+        <a href="#meteor" data-target="meteor">判别</a>
+        <a href="#hierarchy" data-target="hierarchy">层级</a>
+        <a href="#solar" data-target="solar">太阳系</a>
+        <a href="#planets" data-target="planets">行星</a>
+        <a href="#life" data-target="life">生命</a>
+        <a href="#review" data-target="review">复习</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ M0 封面与导航 ============ -->
+    <section id="cover" class="section cover">
+      <div class="cover__inner">
+        <p class="cover__kicker">第一章 第一节 · 高中必修一</p>
+        <h1 class="cover__title">地球的宇宙环境</h1>
+        <p class="cover__subtitle">认识我们所在的宇宙 —— 从地球出发，走向可观测宇宙</p>
+        <button type="button" class="btn btn--primary btn--lg" data-scroll-to="universe">开始学习</button>
+      </div>
+      <a class="cover__scroll-hint" href="#universe" aria-label="向下滚动">↓</a>
+    </section>
+
+    <!-- ============ M1 宇宙概念 ============ -->
+    <section id="universe" class="section" data-nav="宇宙">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 01</span>
+          <h2 class="section__title">宇宙概念</h2>
+          <p class="section__desc">宇宙是空间与时间的统一体，无边无际、无始无终；它是物质性的、运动性的，约 137 亿年前起源于一次大爆炸。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M1" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M1" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="universe">
+        <!-- 图文开篇：左侧深空图片 + 右侧核心概念（两栏布局，无 JS 亦可阅读） -->
+        <div class="universe-intro">
+          <figure class="universe-intro__media">
+            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=deep%20space%20nebula%20with%20blue%20and%20violet%20cosmic%20clouds%2C%20scattered%20bright%20stars%2C%20a%20distant%20spiral%20galaxy%2C%20dark%20navy%20background%2C%20astronomy%20education%20illustration%2C%20high%20detail%2C%20cinematic%20lighting&image_size=portrait_4_3" alt="深空星云与银河星系，展现宇宙的壮丽尺度" loading="lazy">
+          </figure>
+          <div class="universe-intro__text">
+            <p class="universe-quote">四方上下曰宇，往古来今曰宙</p>
+            <p class="universe-summary">宇宙是所有时间、空间和物质的总和</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ M2 天体卡片档案 ============ -->
+    <section id="celestial" class="section" data-nav="天体">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 02</span>
+          <h2 class="section__title">天体卡片档案</h2>
+          <p class="section__desc">天体是宇宙中物质的存在形式。按来源可分为自然天体与人造天体两大类。点击左侧卡片头部，档案内容向右拉出；底部按类别一览全部天体。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M2" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M2" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="celestial">
+        <!-- 概念介绍 + 分类体系（JS 启用时由数据渲染） -->
+        <div id="body-concept" class="body-concept" data-widget="body-concept">
+          <p class="body-concept__def"><strong>天体</strong>是宇宙中物质的存在形式。</p>
+          <p class="body-concept__classify">按来源，天体可分为 <span class="tag">自然天体</span> 与 <span class="tag">人造天体</span> 两大类。</p>
+        </div>
+
+        <!-- 露头式堆叠卡片：所有卡片绝对定位在同一位置，顶部错开露出页签；JS 启用时点击页签向下展开，一次仅一张 -->
+        <div id="body-stack" class="body-stack" data-widget="body-stack">
+          <article class="body-card body-card--natural" data-card="nebula" style="--i:0">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">☁</span><span class="body-card__name">星云</span><span class="body-card__type">自然天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=colorful%20nebula%20in%20deep%20space%2C%20glowing%20purple%20blue%20and%20orange%20cosmic%20gas%20clouds%2C%20scattered%20bright%20stars%2C%20astronomy%20education%20illustration%2C%20high%20detail&image_size=square_hd" alt="星云示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">星云</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>气体（氢）和尘埃</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>云雾状外表</li><li>密度非常小</li><li>体积和质量极其庞大，通常相当于上千个太阳</li></ul>
+                <p class="body-card__note">既是恒星的摇篮，也是恒星消亡后的物质残体。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--natural" data-card="star" style="--i:1">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">★</span><span class="body-card__name">恒星</span><span class="badge badge--warn">易错</span><span class="body-card__type">自然天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bright%20glowing%20star%20sun%20in%20deep%20space%20with%20orange%20yellow%20corona%20and%20plasma%20surface%2C%20astronomy%20education%20illustration&image_size=square_hd" alt="恒星示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">恒星</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>炽热气体（氢和氦）</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>体积、质量较大</li><li>自身能发出光和热</li><li>通过核聚变反应输出能量</li></ul>
+                <p class="body-card__note">夜空中的"点点繁星"，大多是一颗颗恒星。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--natural" data-card="planet" style="--i:2">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">●</span><span class="body-card__name">行星</span><span class="body-card__type">自然天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=rocky%20planet%20earth-like%20with%20blue%20oceans%2C%20green%20land%20and%20white%20clouds%20in%20deep%20space%2C%20astronomy%20education%20illustration&image_size=square_hd" alt="行星示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">行星</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>岩石、气体等（如八大行星）</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>绕恒星公转</li><li>质量较小</li><li>本身不发光，依靠反射恒星的光而发亮</li></ul>
+                <p class="body-card__note">我们看到的行星亮光，其实是反射的太阳光。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--natural" data-card="satellite" style="--i:3">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">◐</span><span class="body-card__name">卫星</span><span class="body-card__type">自然天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=gray%20rocky%20moon%20with%20craters%20in%20deep%20space%2C%20astronomy%20education%20illustration&image_size=square_hd" alt="卫星示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">卫星</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>岩石等（如月球）</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>绕行星公转</li><li>本身不发光</li><li>依靠反射恒星的光而发亮</li></ul>
+                <p class="body-card__note">月球是地球唯一的天然卫星。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--natural" data-card="meteoroid" style="--i:4">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">✧</span><span class="body-card__name">流星体</span><span class="body-card__type">自然天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=small%20meteoroid%20rock%20with%20glowing%20fire%20trail%20streaking%20across%20night%20sky%2C%20astronomy%20education%20illustration&image_size=square_hd" alt="流星体示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">流星体</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>尘粒、固体岩石块</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>体积很小</li><li>闯入地球大气层时与大气摩擦生热燃烧发光</li><li>划过夜空形成流星现象</li></ul>
+                <p class="body-card__note">流星体是天体；流星现象不是天体。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--natural" data-card="comet" style="--i:5">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">☄</span><span class="body-card__name">彗星</span><span class="badge badge--warn">易错</span><span class="body-card__type">自然天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bright%20comet%20with%20long%20glowing%20tail%20in%20deep%20space%2C%20blue%20and%20white%20tail%2C%20astronomy%20education%20illustration&image_size=square_hd" alt="彗星示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">彗星</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>冰物质和尘埃（犹如"脏雪球"）</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>体积大、密度小（彗核密度 &gt; 彗尾）</li><li>有云雾状外表</li><li>彗尾背向太阳，呈扫帚状</li></ul>
+                <p class="body-card__note">彗尾总是背向太阳。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--artificial" data-card="artificial-satellite" style="--i:6">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">🛰</span><span class="body-card__name">人造卫星</span><span class="body-card__type body-card__type--artificial">人造天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=artificial%20satellite%20with%20solar%20panels%20orbiting%20earth%20in%20space%2C%20communication%20satellite%2C%20astronomy%20education%20illustration&image_size=square_hd" alt="人造卫星示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">人造卫星</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>金属、电子元件等人工制造</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>围绕地球等天体运行</li><li>由人类发射并送入太空轨道</li><li>用于通信、导航、气象观测与科学研究</li></ul>
+                <p class="body-card__note">在太空中运行的人造卫星，属于人造天体。</p>
+              </div>
+            </div></div>
+          </article>
+          <article class="body-card body-card--artificial" data-card="spaceship" style="--i:7">
+            <button type="button" class="body-card__head" aria-expanded="true">
+              <span class="body-card__icon" aria-hidden="true">🚀</span><span class="body-card__name">载人飞船</span><span class="body-card__type body-card__type--artificial">人造天体</span><span class="body-card__arrow" aria-hidden="true"></span>
+            </button>
+            <div class="body-card__body"><div class="body-card__inner">
+              <figure class="body-card__fig"><img class="body-card__img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=manned%20spaceship%20spacecraft%20flying%20in%20deep%20space%20with%20earth%20below%2C%20white%20capsule%20with%20solar%20panels%2C%20science%20illustration&image_size=square_hd" alt="载人飞船示意图" loading="lazy" onerror="this.style.display='none'"></figure>
+              <div class="body-card__info">
+                <h3 class="body-card__title">载人飞船</h3>
+                <p class="body-card__row"><span class="body-card__label">组成</span>金属、复合材料等人工制造</p>
+                <p class="body-card__row body-card__row--list"><span class="body-card__label">特点</span></p>
+                <ul class="body-card__list"><li>搭载航天员往返地球与太空</li><li>由人类发射，在太空轨道中运行</li><li>例如中国的神舟载人飞船</li></ul>
+                <p class="body-card__note">在太空中运行的载人飞船，属于人造天体。</p>
+              </div>
+            </div></div>
+          </article>
+        </div>
+
+        <!-- 底部：全部天体按"自然天体 / 人造天体"两类水平排列展示（JS 启用时由数据渲染） -->
+        <div id="body-classify" class="body-classify" data-widget="body-classify">
+          <div class="body-classify__group body-classify__group--natural" data-group="natural">
+            <h3 class="body-classify__title">自然天体</h3>
+            <p class="body-classify__desc">宇宙中天然形成并独立运行的天体</p>
+            <div class="body-classify__items">
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">☁</i>星云</span>
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">★</i>恒星</span>
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">●</i>行星</span>
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">◐</i>卫星</span>
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">✧</i>流星体</span>
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">☄</i>彗星</span>
+            </div>
+          </div>
+          <div class="body-classify__group body-classify__group--artificial" data-group="artificial">
+            <h3 class="body-classify__title">人造天体</h3>
+            <p class="body-classify__desc">人类制造并发射进入太空运行的天体</p>
+            <div class="body-classify__items">
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">🛰</i>人造卫星</span>
+              <span class="body-classify__item"><i class="body-classify__icon" aria-hidden="true">🚀</i>载人飞船</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ M3 天体判别·流星案例 ============ -->
+    <section id="meteor" class="section" data-nav="判别">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 03</span>
+          <h2 class="section__title">天体判别 · 流星案例</h2>
+          <p class="section__desc">判断一个物体是不是天体，看三条标准：是物质不是现象、位于地球大气层之外、是独立个体。跟随流星案例，一步一步验证这三条标准。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M3" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M3" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="meteor">
+        <div class="split">
+          <!-- 分步示意图（JS 启用时替换为可交互的分步图） -->
+          <div id="meteor-stage" class="panel panel--hint" data-widget="meteor-stage">
+            <p class="panel__placeholder">流星分步示意图 · 流星体进入大气层 → 摩擦燃烧形成流星现象 → 未燃尽落至地面成陨石</p>
+          </div>
+          <!-- 三条件条目区（无 JS 时静态展示全部条件） -->
+          <div id="meteor-conditions" class="panel" data-widget="meteor-conditions">
+            <h3 class="conditions-title">判别三条件</h3>
+            <ul class="condition-list">
+              <li class="condition-item is-lit"><span class="condition-item__key">是物质</span><span class="condition-item__desc">是物质，不是现象</span></li>
+              <li class="condition-item is-lit"><span class="condition-item__key">大气层之外</span><span class="condition-item__desc">位于地球大气层之外</span></li>
+              <li class="condition-item is-lit"><span class="condition-item__key">独立个体</span><span class="condition-item__desc">独立运行，不是某一天体的一部分</span></li>
+            </ul>
+          </div>
+        </div>
+        <p id="meteor-conclusion" class="hint" data-widget="meteor-conclusion">流星现象发生在大气层内，是现象不是天体；落到地面的陨石，也不是天体。</p>
+        <div class="section__actions">
+          <button type="button" class="btn btn--primary" data-widget="meteor-next">下一步</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ M5 天体系统层级 ============ -->
+    <section id="hierarchy" class="section" data-nav="层级">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 05</span>
+          <h2 class="section__title">天体系统层级</h2>
+          <p class="section__desc">天体之间相互吸引、相互绕转，构成不同级别的天体系统。从大到小依次为：可观测宇宙 → 银河系 → 太阳系 → 地月系。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M5" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M5" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="hierarchy">
+        <!-- 嵌套圆环图（JS 启用时替换为可点击聚焦的 SVG 圆环图） -->
+        <div id="hierarchy-ring" class="panel panel--hint" data-widget="hierarchy-ring">
+          <p class="panel__placeholder">嵌套圆环图（由内到外）· 地月系 → 太阳系 → 银河系 → 可观测宇宙<br>（启用 JavaScript 后可点击层级逐级放大聚焦）</p>
+        </div>
+        <!-- 无 JS 时静态展示四层说明；JS 启用时随聚焦层级更新 -->
+        <p id="hierarchy-info" class="hint" data-widget="hierarchy-info"><strong>地月系</strong>：地球与月球相互吸引、相互绕转。<span class="hint__example">同级别案例：火卫一绕火星运行（火星的卫星系统）</span><strong>太阳系</strong>：太阳与八大行星等天体相互绕转。<span class="hint__example">同级别案例：半人马座 α 星系（比邻星所在的三合星系统）</span><strong>银河系</strong>：太阳系等上千亿个恒星系统组成的巨大星系。<span class="hint__example">同级别案例：仙女座星系（河外星系）</span><strong>可观测宇宙</strong>：银河系等数千亿个星系构成的可观测范围。<span class="hint__example">人类目前所能观测到的宇宙边界</span></p>
+      </div>
+    </section>
+
+    <!-- ============ M6 太阳系与八大行星 ============ -->
+    <section id="solar" class="section" data-nav="太阳系">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 06</span>
+          <h2 class="section__title">太阳系与八大行星</h2>
+          <p class="section__desc">太阳系以太阳为中心，八大行星沿近似共面的轨道绕日公转，公转方向一致（自西向东）。图中行星大小与距离非按比例。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M6" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M6" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="solar">
+        <!-- 太阳系演示视窗：WebGL 可用且本地 Three.js 就绪时显示 3D，否则显示 2D 轨道图；无 JS 时显示静态行星列表 -->
+        <div id="solar-viewport" class="solar-viewport" data-widget="solar-viewport">
+          <div class="solar-viewport__fallback">
+            <p class="panel__placeholder">八大行星（由近及远）：水星 · 金星 · 地球 · 火星 · 木星 · 土星 · 天王星 · 海王星<br>示意图，非按比例。启用 JavaScript 后观看公转演示。</p>
+          </div>
+        </div>
+        <div id="solar-info" class="hint" data-widget="solar-info"></div>
+      </div>
+    </section>
+
+    <!-- ============ M7 行星分类与运动特征 ============ -->
+    <section id="planets" class="section" data-nav="行星">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 07</span>
+          <h2 class="section__title">行星分类与运动特征</h2>
+          <p class="section__desc">八大行星分为类地行星、巨行星与远日行星三大类；它们的公转运动具有同向性、近圆性与共面性。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M7" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M7" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="planets">
+        <div class="split">
+          <!-- 无 JS 时静态展示三分类；JS 启用时替换为可切换高亮的分类卡 -->
+          <div id="planet-categories" class="card-stack" data-widget="planet-categories">
+            <article class="category-card card"><h3 class="category-card__name">类地行星</h3><p class="category-card__members"><span class="tag">水星</span><span class="tag">金星</span><span class="tag">地球</span><span class="tag">火星</span></p><p class="category-card__feature">固体表面，有金属内核</p></article>
+            <article class="category-card card"><h3 class="category-card__name">巨行星</h3><p class="category-card__members"><span class="tag">木星</span><span class="tag">土星</span></p><p class="category-card__feature">气态，体积和质量很大</p></article>
+            <article class="category-card card"><h3 class="category-card__name">远日行星</h3><p class="category-card__members"><span class="tag">天王星</span><span class="tag">海王星</span></p><p class="category-card__feature">气态（冰巨星），距日较远</p></article>
+          </div>
+          <div id="motion-features" class="card-stack" data-widget="motion-features">
+            <div class="motion-feature card"><h4 class="motion-feature__name">同向性</h4><p class="motion-feature__desc">八大行星绕日公转的方向都是自西向东。</p></div>
+            <div class="motion-feature card"><h4 class="motion-feature__name">近圆性</h4><p class="motion-feature__desc">行星绕日公转的轨道近似圆形。</p></div>
+            <div class="motion-feature card"><h4 class="motion-feature__name">共面性</h4><p class="motion-feature__desc">行星轨道面几乎位于同一平面上。</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ M8 地球存在生命的原因 ============ -->
+    <section id="life" class="section" data-nav="生命">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 08</span>
+          <h2 class="section__title">地球存在生命的原因</h2>
+          <p class="section__desc">地球的特殊性来自外部条件（太阳与宇宙环境）与自身条件（温度、大气、液态水）的共同作用。点击"下一步"逐条点亮因果链。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M8" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M8" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="life">
+        <!-- 双分支因果链图（JS 启用时替换为可分步点亮的 SVG 因果链） -->
+        <div id="life-chain" class="panel panel--hint" data-widget="life-chain">
+          <p class="panel__placeholder">双分支因果链图<br>外部条件：太阳处于壮年 → 光照稳定；大小行星各行其道 → 宇宙环境安全<br>自身条件：日地距离适中 → 温度适宜；体积质量适中 → 形成适宜大气；水汽逸出 → 成云致雨汇聚成海</p>
+        </div>
+        <p id="life-conclusion" class="hint" data-widget="life-conclusion">外部条件 + 自身条件共同作用 → 地球成为目前已知唯一适宜生命存在的星球。</p>
+        <div class="section__actions">
+          <button type="button" class="btn btn--primary" data-widget="life-next">下一步</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ M9 复习与总结 ============ -->
+    <section id="review" class="section" data-nav="复习">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">模块 09</span>
+          <h2 class="section__title">复习与总结</h2>
+          <p class="section__desc">收束全课知识结构。进入复习模式后，讲解文字会被隐藏，只保留结构图与练习，方便自主复习巩固。</p>
+        </div>
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M9" aria-haspopup="dialog">⊕ 拓展</button>
+          <button type="button" class="practice-btn" data-practice="M9" aria-haspopup="dialog">✎ 练习</button>
+        </div>
+      </div>
+      <div class="section__body" data-module="review">
+        <!-- 知识结构树（JS 启用时替换为可折叠的结构树；无 JS 时静态展示） -->
+        <div id="review-tree" class="panel panel--hint" data-widget="review-tree">
+          <p class="panel__placeholder">知识结构树<br>宇宙 → 天体（自然天体：星云 / 恒星 / 行星 / 卫星 / 流星体 / 彗星；人造天体：人造卫星 / 载人飞船；判别三条件）与 天体系统（可观测宇宙 → 银河系 → 太阳系 → 地月系）<br>→ 太阳系（八大行星：类地 / 巨 / 远日；同向性 · 近圆性 · 共面性）<br>→ 地球的特殊性（外部条件 + 自身条件）</p>
+        </div>
+        <div class="section__actions">
+          <button type="button" class="btn btn--ghost" data-widget="review-mode">进入复习模式</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>高中必修一 · 第一章 宇宙中的地球 · 第一节 地球的宇宙环境</p>
+    <p>课时：1 课时 / 40 分钟 &nbsp;|&nbsp; 本页面离线可运行</p>
+  </footer>
+
+  <!-- M10 拓展材料浮层 -->
+  <div id="extend-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="extend-title" hidden>
+    <div class="modal__overlay" data-modal-close></div>
+    <div class="modal__panel">
+      <button type="button" class="modal__close" data-modal-close aria-label="关闭">&times;</button>
+      <h3 id="extend-title" class="modal__title">拓展材料</h3>
+      <div id="extend-content" class="modal__content"></div>
+    </div>
+  </div>
+
+  <!-- 随堂练习浮层（每模块“✎ 练习”入口） -->
+  <div id="practice-modal" class="modal modal--practice" role="dialog" aria-modal="true" aria-labelledby="practice-title" hidden>
+    <div class="modal__overlay" data-practice-close></div>
+    <div class="modal__panel">
+      <button type="button" class="modal__close" data-practice-close aria-label="关闭">&times;</button>
+      <h3 id="practice-title" class="modal__title">随堂练习</h3>
+      <div id="practice-content" class="modal__content"></div>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="noscript-note">
+      你的浏览器未启用 JavaScript。页面交互（卡片展开、拖拽分类、动画演示等）不可用，但各模块的静态讲解文字仍可阅读。
+    </div>
+  </noscript>
+
+  <!-- 本地化依赖：Three.js（仅 M6 3D 太阳系使用；加载失败或 WebGL 不可用时自动降级为 2D 轨道图） -->
+  <script src="libs/three.min.js"></script>
+  <script src="libs/OrbitControls.js"></script>
+  <script src="js/lesson-data.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

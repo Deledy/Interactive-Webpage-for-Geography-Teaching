@@ -1,0 +1,1415 @@
+/* ============================================================
+   地球的宇宙环境 · 全局视觉系统（骨架版）
+   依据：页面设计交接包 第3节 视觉系统 / 05_开发文档 E 全局视觉规范
+   ============================================================ */
+
+/* ---------- 1. 设计令牌 ---------- */
+:root {
+  /* 色彩系统 */
+  --bg-deep: #0B1026;          /* 深空蓝 */
+  --bg-purple: #1A1040;        /* 星云紫 */
+  --bg-dark: #0A0A18;          /* 深空底 */
+  --glass-bg: rgba(255, 255, 255, 0.06);   /* 深色玻璃面 */
+  --glass-border: rgba(255, 255, 255, 0.14); /* 玻璃描边 */
+  --gold: #FFD54F;             /* 恒星金：标题/重点/选中态 */
+  --cyan: #4FC3F7;             /* 星云青：次级/链接/行星动效 */
+  --success: #66BB6A;          /* 正确 */
+  --error: #EF5350;            /* 错误 */
+  --warn: #FFB74D;             /* 提示 */
+  --text-main: #E8EAF6;        /* 正文主色 */
+  --text-dim: rgba(232, 234, 246, 0.7); /* 注释/次要文字 */
+
+  /* 排版（投屏基准） */
+  --fs-title: 48px;
+  --fs-h2: 32px;
+  --fs-h3: 24px;
+  --fs-body: 20px;
+  --fs-note: 16px;
+  --lh-body: 1.6;
+  --font-stack: system-ui, "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+
+  /* 间距 / 圆角 / 动效 */
+  --space-module: 80px;   /* 模块间留白 */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --ease: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --dur: 0.35s;
+}
+
+/* ---------- 2. 基础重置 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-stack);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-main);
+  background: radial-gradient(1200px 800px at 50% -10%, var(--bg-purple), transparent 70%),
+              radial-gradient(1000px 900px at 85% 110%, var(--bg-deep), transparent 65%),
+              var(--bg-dark);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 全局星点背景：无 JS 时的 CSS 静态星点（有 JS 时由 canvas 覆盖绘制） */
+#starfield {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 23px 8px, rgba(255,255,255,.9), transparent 100%),
+    radial-gradient(1px 1px at 58px 42px, rgba(207,216,255,.7), transparent 100%),
+    radial-gradient(2px 2px at 95px 90px, rgba(255,213,79,.5), transparent 100%),
+    radial-gradient(1px 1px at 140px 30px, rgba(255,255,255,.6), transparent 100%),
+    radial-gradient(1px 1px at 172px 120px, rgba(79,195,247,.6), transparent 100%),
+    radial-gradient(1px 1px at 30px 170px, rgba(255,255,255,.5), transparent 100%);
+  background-repeat: repeat;
+  background-size: 220px 220px;
+}
+
+/* 页面主体内容层叠在星点之上 */
+main, header, footer, .modal { position: relative; z-index: 1; }
+
+a { color: var(--cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button { font-family: inherit; }
+
+/* 键盘导航焦点可见（无障碍） */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- 3. 顶部导航 ---------- */
+.topnav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  background: rgba(11, 16, 38, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.topnav__inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.topnav__logo {
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+.topnav__logo:hover { text-decoration: none; text-shadow: 0 0 12px rgba(255,213,79,.6); }
+
+.topnav__links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.topnav__links::-webkit-scrollbar { display: none; }
+
+.topnav__links a {
+  position: relative;
+  color: var(--text-dim);
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+.topnav__links a:hover { color: var(--text-main); text-decoration: none; }
+
+/* 当前模块高亮：恒星金文字 + 底部发光条 */
+.topnav__links a.is-active {
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(255, 213, 79, 0.45);
+}
+.topnav__links a.is-active::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+/* ---------- 4. Section 通用骨架 ---------- */
+.section {
+  scroll-margin-top: 70px;   /* 锚点跳转避开固定导航 */
+  padding: var(--space-module) max(24px, calc((100vw - 1200px) / 2));
+}
+
+.section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.section__tag {
+  display: inline-block;
+  font-size: var(--fs-note);
+  letter-spacing: 2px;
+  color: var(--cyan);
+  border: 1px solid rgba(79, 195, 247, 0.4);
+  border-radius: 999px;
+  padding: 2px 14px;
+  margin-bottom: 10px;
+}
+
+.section__title {
+  margin: 0;
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 1px;
+}
+
+.section__desc {
+  margin: 10px 0 0;
+  max-width: 820px;
+  color: var(--text-dim);
+  font-size: var(--fs-body);
+}
+
+.section__body { margin-top: 8px; }
+
+.section__actions {
+  margin-top: 28px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* “⊕ 拓展”入口：弱化呈现 */
+.extend-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+  border-radius: var(--radius-btn);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.extend-btn:hover {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.5);
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.2);
+}
+
+/* “✎ 练习”入口（随堂练习以模态弹窗呈现，结构复用 .modal） */
+.section__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.practice-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(79, 195, 247, 0.45);
+  color: var(--cyan);
+  font-size: var(--fs-note);
+  border-radius: var(--radius-btn);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.practice-btn:hover {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.5);
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.2);
+}
+
+/* 练习弹窗：比拓展浮层更宽，容纳拖拽分类与多道选择题 */
+.modal--practice .modal__panel { width: min(880px, 96vw); }
+.practice-intro {
+  margin: 0 0 18px;
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+}
+
+/* 练习题（选择题） */
+.practice-q { margin-top: 20px; }
+.practice-q:first-of-type { margin-top: 0; }
+.practice-q__text {
+  margin: 0 0 10px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+.practice-q__options { display: flex; flex-wrap: wrap; gap: 10px; }
+.practice-q__opt {
+  min-height: 44px;
+  padding: 8px 18px;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--text-main);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.practice-q__opt:hover { border-color: var(--cyan); color: var(--cyan); }
+.practice-q__opt.is-correct {
+  border-color: var(--success);
+  color: var(--success);
+  box-shadow: 0 0 12px rgba(102, 187, 106, 0.35);
+}
+.practice-q__opt.is-wrong {
+  border-color: var(--error);
+  color: var(--error);
+  box-shadow: 0 0 12px rgba(239, 83, 80, 0.3);
+}
+.practice-q__opt:disabled { cursor: default; }
+.practice-q__feedback { margin: 10px 0 0; font-size: 16px; min-height: 22px; }
+.practice-q__feedback.is-correct { color: var(--success); }
+.practice-q__feedback.is-wrong { color: var(--error); }
+
+/* ---------- 5. 通用组件 ---------- */
+/* 深色玻璃卡片 */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 面板：模块内部容器 */
+.panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+}
+.panel--hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border-style: dashed;
+}
+.panel__placeholder {
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+  text-align: center;
+  margin: 0;
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 28px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.15s var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.btn:active { transform: scale(0.98); }
+
+.btn--primary {
+  background: var(--gold);
+  color: #1a1405;
+}
+.btn--primary:hover {
+  box-shadow: 0 0 20px rgba(255, 213, 79, 0.55);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text-main);
+  border-color: var(--glass-border);
+}
+.btn--ghost:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 14px rgba(79, 195, 247, 0.25);
+}
+
+.btn--lg { font-size: 22px; padding: 14px 44px; min-height: 56px; }
+
+/* 标签 / 角标 */
+.tag {
+  display: inline-block;
+  font-size: var(--fs-note);
+  line-height: 1.2;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--text-main);
+  background: rgba(79, 195, 247, 0.16);
+  border: 1px solid rgba(79, 195, 247, 0.4);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.badge--warn { color: var(--warn); background: rgba(255, 183, 77, 0.16); border: 1px solid rgba(255, 183, 77, 0.5); }
+
+/* 提示条 / 反馈条 */
+.hint {
+  margin: 20px 0 0;
+  padding: 14px 18px;
+  border-radius: var(--radius-card);
+  background: rgba(79, 195, 247, 0.10);
+  border: 1px solid rgba(79, 195, 247, 0.35);
+  color: var(--text-main);
+  font-size: var(--fs-body);
+}
+
+.feedback {
+  margin: 20px 0 0;
+  min-height: 56px;
+  padding: 14px 18px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-dim);
+  font-size: var(--fs-body);
+}
+.feedback--correct { color: var(--success); border-color: rgba(102, 187, 106, 0.5); background: rgba(102, 187, 106, 0.12); }
+.feedback--error   { color: var(--error);   border-color: rgba(239, 83, 80, 0.5);  background: rgba(239, 83, 80, 0.12); }
+.feedback--warn    { color: var(--warn);    border-color: rgba(255, 183, 77, 0.5); background: rgba(255, 183, 77, 0.12); }
+
+/* 左右分栏 */
+.split {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ---------- 6. M0 封面 ---------- */
+.cover {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 60px;
+}
+
+.cover__kicker {
+  margin: 0 0 18px;
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-shadow: 0 0 14px rgba(79, 195, 247, 0.5);
+}
+
+.cover__title {
+  margin: 0;
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(255, 213, 79, 0.45), 0 0 80px rgba(255, 213, 79, 0.2);
+}
+
+.cover__subtitle {
+  margin: 24px 0 40px;
+  font-size: 24px;
+  color: var(--text-main);
+  opacity: 0.85;
+}
+
+.cover__scroll-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  color: var(--text-dim);
+  animation: float 2.2s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 10px); }
+}
+
+/* ---------- 7. M4 拖拽分类（骨架布局） ---------- */
+.drag-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 96px;
+  padding: 20px;
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.drag-zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-card);
+  padding: 18px;
+  min-height: 180px;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.drop-zone[data-type="celestial"] { border-color: rgba(79, 195, 247, 0.45); }
+.drop-zone[data-type="non"] { border-color: rgba(255, 183, 77, 0.45); }
+
+.drop-zone__title {
+  margin: 0 0 12px;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+.drop-zone[data-type="celestial"] .drop-zone__title { color: var(--cyan); }
+.drop-zone[data-type="non"] .drop-zone__title { color: var(--warn); }
+
+.drop-zone.is-dragover {
+  box-shadow: 0 0 18px rgba(79, 195, 247, 0.35);
+  border-style: solid;
+}
+
+.drop-zone__body { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* 案例卡片（骨架样式，拖拽交互后续开发） */
+.drag-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-btn);
+  font-size: 18px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s var(--ease), box-shadow var(--dur) var(--ease);
+}
+.drag-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); }
+
+/* ---------- 8. M6 太阳系视窗（骨架布局） ---------- */
+.solar-viewport {
+  min-height: 60vh;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ---------- 9. M10 拓展浮层 ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal[hidden] { display: none; }
+
+.modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 6, 16, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal__panel {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #141a38;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 36px 40px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  animation: modal-in 0.3s var(--ease);
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal__close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 40px; height: 40px;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.modal__close:hover { color: var(--gold); background: rgba(255, 255, 255, 0.08); }
+
+.modal__title {
+  margin: 0 0 16px;
+  font-size: var(--fs-h3);
+  color: var(--gold);
+}
+
+.modal__content { color: var(--text-main); font-size: 18px; }
+.modal__content p { margin: 10px 0; }
+.modal__content li { margin: 6px 0; }
+
+/* ---------- 10. 页脚 / 无 JS 提示 ---------- */
+.footer {
+  padding: 40px 24px 56px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+  border-top: 1px solid var(--glass-border);
+}
+.footer p { margin: 4px 0; }
+
+.noscript-note {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 200;
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 15px;
+  color: #1a1405;
+  background: var(--gold);
+}
+
+/* ---------- 11. 复习模式 ---------- */
+/* 隐藏全部模块讲解文字；只保留结构图（#review）与各模块“✎ 练习”入口 */
+body.review-mode .section__desc { display: none; }
+body.review-mode .section:not(#review) .section__body,
+body.review-mode .section:not(#review) .extend-btn { display: none; }
+
+/* ---------- 12. 响应式 ---------- */
+@media (max-width: 1024px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .split { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  body { font-size: 17px; }
+  .section { padding-top: 56px; padding-bottom: 56px; }
+  .section__head { flex-direction: column; gap: 14px; }
+  .section__title { font-size: 26px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .drag-zones { grid-template-columns: 1fr; }
+  .topnav__links a { font-size: 14px; }
+  .cover__title { font-size: 40px; letter-spacing: 3px; }
+  .cover__subtitle { font-size: 18px; }
+  .modal__panel { padding: 28px 20px; }
+  /* M2 天体卡片：窄屏内容改上下排布、底部分类单列 */
+  .body-card__head { min-height: 56px; font-size: 20px; padding: 10px 14px 10px 12px; }
+  .body-card__icon { font-size: 26px; }
+  .body-card__type { display: none; }
+  .body-card__inner { flex-direction: column; padding: 14px 18px; }
+  .body-card__img { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+  .body-classify { grid-template-columns: 1fr; }
+}
+
+/* 动效偏好：减少动态 */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   讲解模块组件样式（M1 / M2 / M3 / M7 / M8）
+   ============================================================ */
+
+/* ---------- 通用 ---------- */
+.btn--sm { min-height: 44px; padding: 8px 22px; font-size: 16px; }
+
+.hint:empty { display: none; }
+.hint--done { color: var(--gold); border-color: rgba(255, 213, 79, 0.5); background: rgba(255, 213, 79, 0.10); }
+
+/* ---------- M1 宇宙概念 ---------- */
+/* 图文开篇：左侧深空图片 + 右侧核心概念（两栏布局） */
+.universe-intro {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) minmax(340px, 3fr);
+  gap: 44px;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.universe-intro__media {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
+  /* 图片加载中 / 离线时的深空渐变兜底，保证布局不破 */
+  background:
+    radial-gradient(70% 60% at 30% 25%, rgba(79, 195, 247, 0.35), transparent 65%),
+    radial-gradient(75% 70% at 75% 80%, rgba(255, 213, 79, 0.22), transparent 60%),
+    linear-gradient(160deg, #1a1040, #0b1026 70%);
+}
+.universe-intro__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 30px 45px, rgba(255, 255, 255, .9), transparent 100%),
+    radial-gradient(1px 1px at 120px 30px, rgba(255, 255, 255, .6), transparent 100%),
+    radial-gradient(2px 2px at 200px 120px, rgba(255, 213, 79, .5), transparent 100%),
+    radial-gradient(1px 1px at 90px 200px, rgba(207, 216, 255, .7), transparent 100%);
+  background-repeat: repeat;
+  background-size: 240px 240px;
+  pointer-events: none;
+}
+.universe-intro__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.universe-intro__text {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+}
+.universe-quote {
+  margin: 0;
+  font-size: clamp(26px, 2.8vw, 38px);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 213, 79, 0.35);
+  padding-left: 22px;
+  border-left: 4px solid rgba(255, 213, 79, 0.65);
+}
+.universe-summary {
+  margin: 0;
+  max-width: 540px;
+  font-size: clamp(22px, 2.2vw, 30px);
+  line-height: 1.7;
+  color: var(--text-main);
+}
+
+/* 拓展浮层中的逐级放大演示 */
+.modal__content .extend-demo { margin-top: 22px; }
+
+.universe-demo__view {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+/* 同心圆环：由内到外依次放大 */
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.02);
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.5s var(--ease), border-color 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+.ring.is-visible { opacity: 0.45; }
+.ring.is-active {
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow: 0 0 26px rgba(255, 213, 79, 0.35);
+  animation: ring-in 0.7s var(--ease) both;
+}
+@keyframes ring-in {
+  from { transform: translate(-50%, -50%) scale(0.55); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.ring__name { font-size: 20px; font-weight: 700; color: var(--text-main); text-align: center; }
+.ring.is-active .ring__name { color: var(--gold); }
+.ring__desc { display: none; font-size: 13px; color: var(--text-dim); text-align: center; }
+.ring.is-active .ring__desc { display: block; }
+
+.universe-demo__status {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-dim);
+}
+.universe-demo__status.is-done { color: var(--gold); }
+
+.universe-demo__steps {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+.universe-demo__step {
+  font-size: 15px;
+  color: var(--text-dim);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 4px 14px;
+  transition: color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.universe-demo__step.is-active {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.6);
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.25);
+}
+
+.universe-demo__controls {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* ---------- M2 天体卡片档案 ---------- */
+
+/* 概念介绍 + 分类体系 */
+.body-concept {
+  margin-bottom: 26px;
+  padding: 20px 26px;
+  background: linear-gradient(120deg, rgba(79, 195, 247, 0.10), rgba(255, 213, 79, 0.06));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+}
+.body-concept__def { margin: 0 0 8px; font-size: 26px; font-weight: 700; }
+.body-concept__def strong { color: var(--gold); }
+.body-concept__classify { margin: 0; color: var(--text-dim); font-size: var(--fs-body); }
+.body-concept__classify .tag { margin: 0 6px; vertical-align: 2px; }
+
+/* 露头式堆叠卡片（Peeking Stacked Cards）：
+   所有卡片绝对定位在同一位置（left:0, top:0），以 peek 间距纵向错开，
+   像一摞文件纸只露出顶部页签。点击某张卡片后向下展开内容，
+   JS 动态撑开容器高度，确保不与下方区域重叠。 */
+
+/* 基础状态（无 JS 或 html.js 未添加前）：流式排列，兼容降级 */
+.body-stack { position: relative; margin-bottom: 8px; }
+.body-card {
+  border-radius: var(--radius-card);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+  margin-bottom: 8px;
+  box-shadow:
+    0 3px 0 rgba(255, 255, 255, 0.03),
+    0 6px 0 rgba(255, 255, 255, 0.02),
+    0 12px 24px rgba(0, 0, 0, 0.38);
+  transition: border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              transform var(--dur) var(--ease);
+}
+.body-card.is-open {
+  border-color: rgba(255, 213, 79, 0.55);
+  box-shadow:
+    0 3px 0 rgba(255, 255, 255, 0.04),
+    0 6px 0 rgba(255, 255, 255, 0.03),
+    0 0 26px rgba(255, 213, 79, 0.22),
+    0 16px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* JS 启用后的堆叠行为：所有卡片绝对定位在同一位置 */
+html.js .body-stack {
+  /* height 由 JS 动态设置：展开时为卡片实际高度，收起时为 (n-1)*peek + headerHeight */
+}
+html.js .body-card {
+  position: absolute;
+  left: 0;
+  top: calc(var(--i, 0) * 46px);
+  width: 100%;
+  margin-bottom: 0;
+  z-index: calc(100 - var(--i, 0));
+}
+html.js .body-card.is-open {
+  z-index: 200;
+  transform: translateY(-2px);
+}
+
+/* 头部页签：撑满卡片宽度，左缘强调色区分自然 / 人造天体 */
+.body-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 12px 18px 12px 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+  border: none;
+  border-left: 4px solid var(--cyan);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 22px;
+  text-align: left;
+  transition: background 0.3s, border-left-color 0.3s, color 0.3s;
+}
+.body-card--artificial .body-card__head { border-left-color: var(--warn); }
+.body-card__head:hover { background: rgba(255, 255, 255, 0.07); }
+.body-card.is-open .body-card__head {
+  background: rgba(255, 213, 79, 0.10);
+  border-left-color: var(--gold);
+}
+.body-card__icon { font-size: 30px; color: var(--cyan); transition: color 0.3s; }
+.body-card--artificial .body-card__icon { color: var(--warn); }
+.body-card.is-open .body-card__icon { color: var(--gold); }
+.body-card__name { font-weight: 700; white-space: nowrap; }
+
+/* 类别小标签 */
+.body-card__type {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+.body-card__type--artificial {
+  color: var(--warn);
+  border-color: rgba(255, 183, 77, 0.5);
+}
+
+/* 箭头：收起时指向下（提示向下展开），展开时指向上（提示收起） */
+.body-card__arrow {
+  margin-left: auto;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: rotate(45deg);
+  transition: transform var(--dur) var(--ease);
+}
+.body-card.is-open .body-card__arrow { transform: rotate(-135deg); }
+
+/* 内容区：grid-template-rows 0fr → 1fr 向下展开 */
+.body-card__body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--dur) var(--ease);
+}
+html.js .body-card__body { grid-template-rows: 0fr; }
+html.js .body-card.is-open .body-card__body { grid-template-rows: 1fr; }
+
+.body-card__inner {
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  gap: 22px;
+  padding: 18px 26px;
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-dim);
+  font-size: 18px;
+}
+html.js .body-card.is-open .body-card__inner { animation: card-open 0.45s var(--ease); }
+
+@keyframes card-open {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.body-card__fig { flex-shrink: 0; align-self: flex-start; margin: 0; }
+.body-card__img {
+  display: block;
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: #0b1030;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+.body-card__info { flex: 1; min-width: 0; }
+.body-card__title {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.body-card__row { margin: 2px 0; }
+.body-card__label {
+  display: inline-block;
+  min-width: 46px;
+  color: var(--cyan);
+  font-weight: 600;
+}
+.body-card__list { margin: 6px 0 0; padding-left: 46px; }
+.body-card__list li { margin: 5px 0; }
+.body-card__note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 213, 79, 0.10);
+  color: var(--gold);
+}
+
+/* 底部：全部天体按"自然天体 / 人造天体"两类水平排列展示 */
+.body-classify {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 30px;
+}
+.body-classify__group {
+  padding: 20px 24px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+}
+.body-classify__group--natural { border-color: rgba(79, 195, 247, 0.45); }
+.body-classify__group--artificial { border-color: rgba(255, 183, 77, 0.45); }
+.body-classify__title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.body-classify__group--natural .body-classify__title { color: var(--cyan); }
+.body-classify__desc { margin: 0 0 14px; font-size: var(--fs-note); color: var(--text-dim); }
+.body-classify__items { display: flex; flex-wrap: wrap; gap: 12px; }
+.body-classify__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+}
+.body-classify__icon { font-style: normal; font-size: 20px; color: var(--cyan); }
+.body-classify__group--artificial .body-classify__icon { color: var(--warn); }
+
+/* ---------- M3 流星案例 ---------- */
+.meteor-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #060a1c;
+  border-radius: var(--radius-card);
+}
+.meteor-boundary { stroke: rgba(79, 195, 247, 0.5); stroke-dasharray: 4 4; }
+.meteor-ground { stroke: rgba(255, 255, 255, 0.25); }
+.meteor-layer-label { fill: var(--text-dim); font-size: 13px; }
+.meteor-star { fill: #cfd8ff; }
+.meteor-path { stroke: rgba(255, 255, 255, 0.28); stroke-dasharray: 5 7; }
+
+.meteor-node circle { fill: #3a4166; stroke: rgba(255, 255, 255, 0.4); transition: fill 0.3s, stroke 0.3s; }
+.meteor-node.is-current circle {
+  fill: var(--gold);
+  stroke: var(--gold);
+  animation: node-pulse 1.2s ease-in-out infinite;
+}
+@keyframes node-pulse {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--gold)); }
+  50%      { filter: drop-shadow(0 0 10px var(--gold)); }
+}
+.meteor-node.is-lit circle { fill: var(--cyan); stroke: var(--cyan); }
+.meteor-node-label { fill: var(--text-dim); font-size: 12px; opacity: 0; transition: opacity 0.3s; }
+.meteor-node.is-current .meteor-node-label,
+.meteor-node.is-lit .meteor-node-label { opacity: 1; }
+.meteor-node.is-current .meteor-node-label { fill: var(--gold); }
+
+.conditions-title { margin: 0 0 14px; font-size: 20px; color: var(--text-main); }
+.condition-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.condition-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  background: var(--glass-bg);
+  opacity: 0.4;
+  transition: opacity 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+.condition-item__key { flex-shrink: 0; font-weight: 700; font-size: 18px; }
+.condition-item__desc { color: var(--text-dim); font-size: 18px; }
+.condition-item.is-lit {
+  opacity: 1;
+  border-color: rgba(255, 213, 79, 0.6);
+  box-shadow: 0 0 14px rgba(255, 213, 79, 0.18);
+}
+.condition-item.is-lit .condition-item__key { color: var(--gold); }
+
+/* ---------- M7 行星分类与三性 ---------- */
+.category-card { padding: 22px; cursor: pointer; transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s; }
+.category-card:hover { transform: translateY(-2px); }
+.category-card.is-active { border-color: var(--gold); box-shadow: 0 0 18px rgba(255, 213, 79, 0.25); }
+.category-card__name { margin: 0 0 14px; font-size: 24px; }
+.category-card.is-active .category-card__name { color: var(--gold); }
+.category-card__members { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.category-card__feature { margin: 0; color: var(--text-dim); }
+
+.motion-feature { padding: 18px 20px; transition: border-color 0.3s, box-shadow 0.3s; }
+.motion-feature:hover,
+.motion-feature:focus-visible { border-color: var(--cyan); box-shadow: 0 0 14px rgba(79, 195, 247, 0.22); }
+.motion-feature__name { margin: 0 0 6px; font-size: 22px; color: var(--cyan); }
+.motion-feature__desc { margin: 0; color: var(--text-dim); }
+
+/* ---------- M8 生命条件因果链 ---------- */
+.life-chain { display: flex; flex-direction: column; gap: 36px; }
+.life-chain__row-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  font-size: 22px;
+  font-weight: 700;
+}
+.life-chain__chains {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(320px, 100%);
+}
+.chain-node {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.5;
+  opacity: 0.38;
+  transition: opacity 0.45s var(--ease), border-color 0.45s var(--ease), box-shadow 0.45s var(--ease), color 0.45s;
+}
+.chain-node--cond { background: rgba(79, 195, 247, 0.10); border: 1px solid rgba(79, 195, 247, 0.4); color: var(--text-main); }
+.chain-node--result { background: rgba(255, 213, 79, 0.10); border: 1px solid rgba(255, 213, 79, 0.4); color: var(--gold); }
+
+.chain-arrow { position: relative; width: 26px; height: 40px; }
+.chain-arrow::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: linear-gradient(var(--cyan), var(--gold));
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.55s var(--ease);
+}
+.chain-arrow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% - 4px);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-right: 2px solid var(--gold);
+  border-bottom: 2px solid var(--gold);
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.chain.is-lit .chain-node { opacity: 1; box-shadow: 0 0 16px rgba(255, 213, 79, 0.15); }
+.chain.is-lit .chain-arrow::after { transform: scaleY(1); }
+.chain.is-lit .chain-arrow::before { opacity: 1; }
+
+/* ---------- 讲解模块窄屏适配 ---------- */
+@media (max-width: 768px) {
+  .universe-intro { grid-template-columns: 1fr; gap: 24px; }
+  .universe-intro__media { aspect-ratio: 4 / 3; max-width: 460px; }
+  .universe-demo__view { max-width: 340px; }
+  .chain-node { font-size: 16px; }
+  .condition-item { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
+
+/* ============================================================
+   互动与可视化模块组件样式（M4 / M5 / M6 / M9）
+   ============================================================ */
+
+/* ---------- M4 拖拽分类：卡片状态与反馈 ---------- */
+.drag-card.is-correct {
+  background: rgba(102, 187, 106, 0.16);
+  border-color: var(--success);
+  color: var(--success);
+  cursor: default;
+}
+.drag-card.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(255, 213, 79, 0.4);
+}
+.drag-card.is-dragging { opacity: 0.5; }
+.drag-card.is-shake { animation: card-shake 0.5s var(--ease); border-color: var(--error); }
+@keyframes card-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-9px); }
+  50%      { transform: translateX(9px); }
+  75%      { transform: translateX(-5px); }
+}
+.feedback--success {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.6);
+  background: rgba(255, 213, 79, 0.10);
+}
+
+/* ---------- M5 天体系统层级：嵌套圆环 ---------- */
+.hierarchy-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.hierarchy-svg { width: 100%; max-width: 640px; height: auto; display: block; }
+.hier-ring { cursor: pointer; transition: opacity 0.35s var(--ease); }
+.hier-circle {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 2;
+  transition: fill 0.35s var(--ease), stroke 0.35s var(--ease);
+}
+.hier-ring:hover .hier-circle { stroke: var(--cyan); }
+.hier-ring.is-active .hier-circle {
+  stroke: var(--gold);
+  stroke-width: 3;
+  fill: rgba(255, 213, 79, 0.06);
+  filter: drop-shadow(0 0 12px rgba(255, 213, 79, 0.45));
+}
+.hierarchy-svg.has-focus .hier-ring:not(.is-active) { opacity: 0.26; }
+.hier-name {
+  fill: var(--text-dim);
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.hier-ring.is-active .hier-name { fill: var(--gold); }
+.hierarchy-controls { display: flex; gap: 14px; justify-content: center; }
+.hint__example { display: block; margin-top: 8px; color: var(--cyan); font-size: 16px; }
+
+/* ---------- M6 太阳系 2D 轨道图 ---------- */
+.solar-svg { width: 100%; height: auto; display: block; }
+.solar-sun {
+  fill: var(--gold);
+  filter: drop-shadow(0 0 20px rgba(255, 213, 79, 0.8));
+}
+.solar-sun-label { fill: #1a1405; font-size: 16px; font-weight: 700; text-anchor: middle; }
+.solar-orbit { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-dasharray: 3 6; }
+.solar-note { fill: var(--text-dim); font-size: 13px; }
+.solar-planet { cursor: pointer; }
+.solar-planet-dot { transition: filter 0.2s, stroke 0.2s; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; }
+.solar-planet:hover .solar-planet-dot,
+.solar-planet:focus-visible .solar-planet-dot { filter: drop-shadow(0 0 9px var(--cyan)); }
+.solar-planet.is-active .solar-planet-dot {
+  stroke: var(--gold);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 12px var(--gold));
+}
+.solar-planet-name { fill: var(--text-dim); font-size: 13px; text-anchor: middle; pointer-events: none; }
+.solar-planet.is-active .solar-planet-name { fill: var(--gold); font-weight: 700; }
+.solar-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: center; }
+.solar-legend__item { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; color: var(--text-dim); }
+.solar-legend__item i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.solar-status { margin: 14px 0 0; text-align: center; font-size: 18px; color: var(--text-dim); }
+.solar-status.is-active { color: var(--gold); }
+
+/* 无 JS 时各模块的静态降级内容 */
+.no-js-fallback {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-main);
+  font-size: 18px;
+}
+.no-js-fallback li {
+  padding: 12px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+}
+.no-js-fallback strong { color: var(--gold); }
+
+/* ---------- M6 太阳系 3D 视窗（Three.js） ---------- */
+.solar-viewport.is-3d { display: block; }
+.solar3d {
+  position: relative;
+  width: 100%;
+  height: clamp(420px, 60vh, 660px);
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: radial-gradient(80% 80% at 50% 50%, rgba(26, 16, 64, 0.55), rgba(10, 10, 24, 0.75));
+}
+.solar3d__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+.solar3d__canvas:active { cursor: grabbing; }
+.solar3d__note {
+  position: absolute;
+  top: 12px; left: 14px;
+  padding: 4px 12px;
+  font-size: 16px;
+  color: var(--text-dim);
+  background: rgba(11, 16, 38, 0.55);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.solar3d__controls {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+/* ---------- M9 复习结构树 ---------- */
+.tree { list-style: none; margin: 0; padding: 0; }
+.tree__children {
+  list-style: none;
+  margin: 8px 0 8px 14px;
+  padding-left: 18px;
+  border-left: 1px dashed rgba(255, 255, 255, 0.2);
+  display: none;
+}
+.tree__item.is-open > .tree__children { display: block; }
+.tree__item { margin: 8px 0; }
+.tree__label {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--text-main);
+}
+.tree__item.has-children > .tree__label {
+  font-weight: 700;
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.4);
+}
+.tree__toggle {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--cyan);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: middle;
+  transition: transform 0.25s var(--ease);
+}
+.tree__toggle::before { content: "▸"; display: inline-block; }
+.tree__item.is-open > .tree__toggle { transform: rotate(90deg); }
+
+/* 复习模式下结构树聚焦显示 */
+body.review-mode #review { padding-top: 40px; }
+
+/* 互动模块窄屏适配 */
+@media (max-width: 768px) {
+  .hierarchy-svg { max-width: 420px; }
+  .tree__label { font-size: 16px; padding: 6px 12px; }
+  .solar-legend__item { font-size: 14px; }
+  .solar3d__controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    padding: 0 12px;
+    transform: translateX(-50%);
+  }
+  .solar3d__note { top: 10px; left: 10px; font-size: 14px; }
+}
