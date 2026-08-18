@@ -5,13 +5,13 @@
    ============================================================ */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { App } from '../lessons/geo01-earth-universe/src/state'
 import { init } from '../lessons/geo01-earth-universe/src/main'
 import { initMeteorCase } from '../lessons/geo01-earth-universe/src/modules/meteor'
 import { initHierarchy } from '../lessons/geo01-earth-universe/src/modules/hierarchy'
 import { initLifeChain } from '../lessons/geo01-earth-universe/src/modules/life'
-import { initPlanetCategories } from '../lessons/geo01-earth-universe/src/modules/planets'
+import { initMotionFeatures } from '../lessons/geo01-earth-universe/src/modules/planets'
 import { initReviewTree } from '../lessons/geo01-earth-universe/src/modules/review'
 import { initPracticeModal } from '../lessons/geo01-earth-universe/src/modules/practiceModal'
 import { initExtendModal } from '../lessons/geo01-earth-universe/src/modules/extendModal'
@@ -31,6 +31,13 @@ function loadLessonBody(): string {
 
 const BODY = loadLessonBody()
 
+// jsdom 未实现 canvas 2D 上下文：静默降级为 null（避免 "Not implemented" 日志噪音），
+// 与无 WebGL / 无 canvas 时的降级路径一致，保证各模块仍可完成 DOM 层验证。
+beforeAll(() => {
+  const stub = (): CanvasRenderingContext2D | null => null
+  HTMLCanvasElement.prototype.getContext = stub as unknown as typeof HTMLCanvasElement.prototype.getContext
+})
+
 beforeEach(() => {
   document.body.innerHTML = BODY
 })
@@ -39,30 +46,55 @@ describe('无 JS 静态降级（兼容性）', () => {
   it('核心模块保留静态讲解与占位面板，可无脚本阅读', () => {
     expect(document.querySelector('#meteor-stage.panel--hint')).toBeTruthy()
     expect(document.querySelector('#hierarchy-ring .panel__placeholder')).toBeTruthy()
-    expect(document.querySelectorAll('#body-deck .body-deck__card').length).toBe(8)
+    expect(document.querySelectorAll('#body-deck .body-deck__card').length).toBe(7)
     expect(document.querySelectorAll('#meteor-conditions .condition-item.is-lit').length).toBe(3)
     expect(document.querySelector('#life-chain .panel__placeholder')).toBeTruthy()
+    expect(document.querySelector('#orbit-viewport .panel__placeholder')).toBeTruthy()
   })
 })
 
-describe('M3 流星案例（分步点亮）', () => {
-  it('初始化渲染 SVG 与三条件，逐步推进到完成', () => {
-    initMeteorCase()
-    expect(document.querySelector('.meteor-svg')).toBeTruthy()
+describe('M3 流星案例（循环动画 + 静态判别条件）', () => {
+  it('初始化渲染 Canvas 与控制条，无阶段页签，三条件静态全亮', () => {
+    const ctl = initMeteorCase()
+    expect(ctl).toBeTruthy()
+    expect(document.querySelector('.meteor-canvas')).toBeTruthy()
+    // 动画界面最下方的①流星体/②流星/③陨石文字提示已删除
+    expect(document.querySelectorAll('.meteor-stage-tab')).toHaveLength(0)
+    expect(document.querySelector('.meteor-demo__stages')).toBeNull()
+    expect(document.querySelectorAll('[data-meteor-action]')).toHaveLength(3)
+    // 判别三条件静态展示（全亮），不随动画步骤点亮
     expect(document.querySelectorAll('.condition-item')).toHaveLength(3)
-    expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(0)
+    expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(3)
+  })
 
-    const btn = document.querySelector('[data-widget="meteor-next"]') as HTMLElement
-    btn.click()
-    expect(App.meteorStep).toBe(1)
-    expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(1)
+  it('开始演示 → playing：控制条联动，判别条件与结论保持静态不变', () => {
+    const ctl = initMeteorCase()!
+    expect(ctl.playState).toBe('idle')
+    ;(document.querySelector('[data-meteor-action="start"]') as HTMLElement).click()
+    expect(ctl.playState).toBe('playing')
+    expect((document.querySelector('[data-meteor-action="pause"]') as HTMLButtonElement).disabled).toBe(false)
+    // 条件动画与动画播放解耦：不再随步骤点亮/熄灭
+    expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(3)
+    expect(document.getElementById('meteor-conclusion')!.textContent).toContain('不是天体')
+  })
 
-    btn.click()
-    btn.click()
-    btn.click()
-    expect(App.meteorStep).toBe(4)
-    expect(document.getElementById('meteor-conclusion')!.textContent).toContain('结论')
-    expect(btn.textContent).toBe('重新开始')
+  it('暂停/继续切换控制条', () => {
+    const ctl = initMeteorCase()!
+    ctl.start()
+    const pauseBtn = document.querySelector('[data-meteor-action="pause"]') as HTMLButtonElement
+    pauseBtn.click()
+    expect(ctl.playState).toBe('paused')
+    expect(pauseBtn.textContent).toContain('继续')
+    pauseBtn.click()
+    expect(ctl.playState).toBe('playing')
+  })
+
+  it('重播触发 replay 并复位场景', () => {
+    const ctl = initMeteorCase()!
+    ctl.start()
+    ;(document.querySelector('[data-meteor-action="replay"]') as HTMLElement).click()
+    expect(ctl.playState).toBe('playing')
+    expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(3)
   })
 })
 
@@ -98,15 +130,12 @@ describe('M8 生命条件因果链（分步点亮）', () => {
   })
 })
 
-describe('M7 行星分类与三性', () => {
-  it('渲染分类卡与三性卡，点击分类卡高亮', () => {
-    initPlanetCategories()
-    expect(document.querySelectorAll('.category-card')).toHaveLength(3)
+describe('M7 行星的运动特征', () => {
+  it('渲染同向性、近圆性、共面性三张特征卡', () => {
+    initMotionFeatures()
     expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
-
-    const first = document.querySelector('.category-card') as HTMLElement
-    first.click()
-    expect(first.classList.contains('is-active')).toBe(true)
+    const names = Array.from(document.querySelectorAll('.motion-feature__name')).map(n => n.textContent)
+    expect(names).toEqual(['同向性', '近圆性', '共面性'])
   })
 })
 
@@ -181,11 +210,12 @@ describe('M6 太阳系（WebGL 缺失自动降级 2D）', () => {
 describe('整页启动冒烟', () => {
   it('按 main.ts 顺序初始化所有模块不抛错，核心组件全部渲染', () => {
     expect(() => init()).not.toThrow()
-    expect(document.querySelector('.meteor-svg')).toBeTruthy()
+    expect(document.querySelector('.meteor-canvas')).toBeTruthy()
     expect(document.querySelector('.hierarchy-svg')).toBeTruthy()
     expect(document.querySelector('.solar-svg')).toBeTruthy()
     expect(document.querySelector('.tree')).toBeTruthy()
-    expect(document.querySelectorAll('.category-card')).toHaveLength(3)
+    expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
+    expect(document.querySelector('.orbit2d')).toBeTruthy()
     expect(document.querySelectorAll('.chain')).toHaveLength(5)
   })
 })

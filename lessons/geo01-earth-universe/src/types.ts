@@ -66,14 +66,7 @@ export interface Planet {
   desc: string
 }
 
-/** M7 行星分类 */
-export interface PlanetCategory {
-  id: string
-  name: string
-  members: string
-  feature: string
-}
-
+/** M7 行星运动特征 */
 export interface MotionFeature {
   name: string
   desc: string
@@ -141,7 +134,6 @@ export interface LessonData {
   dragCards: DragCard[]
   hierarchy: HierarchyLevel[]
   planets: Planet[]
-  planetCategories: PlanetCategory[]
   motionFeatures: MotionFeature[]
   lifeConditions: LifeConditions
   review: ReviewData

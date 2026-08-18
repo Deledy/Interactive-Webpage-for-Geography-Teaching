@@ -285,22 +285,24 @@
             <div class="body-deck__gallery">
               <div class="body-deck__gallery-card">
                 <div class="nebula-tilt__layer nebula-tilt__layer--holo" aria-hidden="true"></div>
-                <img class="body-deck__gallery-img" src="./assets/images/celestial-satellite.jpg" alt="人造卫星示意图" loading="lazy" onerror="this.style.display='none'" data-lightbox>
+                <a href="https://sat.huijiwiki.com/wiki/%E4%B8%9C%E6%96%B9%E7%BA%A2%E4%B8%80%E5%8F%B7" target="_blank" rel="noopener" class="body-deck__gallery-link" title="查看图片来源">
+                  <img class="body-deck__gallery-img" src="./assets/images/DFH1.jpeg" alt="东方红一号卫星" loading="lazy" onerror="this.style.display='none'" data-lightbox>
+                </a>
                 <div class="body-deck__gallery-shade" aria-hidden="true"></div>
                 <div class="body-deck__gallery-label">
-                  <span class="body-deck__gallery-name">人造卫星</span>
-                  <span class="body-deck__gallery-sub">图1 · 待补充</span>
+                  <span class="body-deck__gallery-name">东方红一号</span>
+                  <span class="body-deck__gallery-sub">图1 · 我国第一颗人造卫星</span>
                 </div>
                 <div class="nebula-tilt__layer nebula-tilt__layer--glare" aria-hidden="true"></div>
                 <div class="nebula-tilt__layer nebula-tilt__layer--border" aria-hidden="true"></div>
               </div>
               <div class="body-deck__gallery-card">
                 <div class="nebula-tilt__layer nebula-tilt__layer--holo" aria-hidden="true"></div>
-                <img class="body-deck__gallery-img" src="./assets/images/celestial-satellite-02.jpg" alt="人造卫星示意图" loading="lazy" onerror="this.style.display='none'" data-lightbox>
+                <img class="body-deck__gallery-img" src="./assets/images/FY_4A,_4B,_4C,_4D,_4E,_4F.jpg" alt="风云四号气象卫星" loading="lazy" onerror="this.style.display='none'" data-lightbox>
                 <div class="body-deck__gallery-shade" aria-hidden="true"></div>
                 <div class="body-deck__gallery-label">
-                  <span class="body-deck__gallery-name">人造卫星</span>
-                  <span class="body-deck__gallery-sub">图2 · 待补充</span>
+                  <span class="body-deck__gallery-name">风云四号</span>
+                  <span class="body-deck__gallery-sub">图2 · 气象卫星</span>
                 </div>
                 <div class="nebula-tilt__layer nebula-tilt__layer--glare" aria-hidden="true"></div>
                 <div class="nebula-tilt__layer nebula-tilt__layer--border" aria-hidden="true"></div>
@@ -382,7 +384,7 @@
         <div class="section__head-text">
           <span class="section__tag">模块 03</span>
           <h2 class="section__title">天体判别 · 流星案例</h2>
-          <p class="section__desc">判断一个物体是不是天体，看三条标准：是物质不是现象、位于地球大气层之外、是独立个体。跟随流星案例，一步一步验证这三条标准。</p>
+          <p class="section__desc">判断一个物体是不是天体，看三条标准：是物质不是现象、位于地球大气层之外、是独立个体。跟随流星案例动画，一步一步验证这三条标准。</p>
         </div>
         <div class="section__head-actions">
           <button type="button" class="extend-btn" data-section="M3" aria-haspopup="dialog">⊕ 拓展</button>
@@ -391,23 +393,22 @@
       </div>
       <div class="section__body" data-module="meteor">
         <div class="split">
-          <!-- 分步示意图（JS 启用时替换为可交互的分步图） -->
+          <!-- 三层动画演示（JS 启用时替换为 Canvas 演示：太空流星体 → 大气层流星 → 地面陨石，含开始/暂停/重播） -->
           <div id="meteor-stage" class="panel panel--hint" data-widget="meteor-stage">
-            <p class="panel__placeholder">流星分步示意图 · 流星体进入大气层 → 摩擦燃烧形成流星现象 → 未燃尽落至地面成陨石</p>
+            <p class="panel__placeholder">流星现象动画演示 · 流星体在太空中漂浮 → 进入大气层摩擦燃烧成流星 → 未燃尽落至地面成陨石<br>（启用 JavaScript 后可观看循环动画演示）</p>
           </div>
-          <!-- 三条件条目区（无 JS 时静态展示全部条件） -->
-          <div id="meteor-conditions" class="panel" data-widget="meteor-conditions">
-            <h3 class="conditions-title">判别三条件</h3>
-            <ul class="condition-list">
-              <li class="condition-item is-lit"><span class="condition-item__key">是物质</span><span class="condition-item__desc">是物质，不是现象</span></li>
-              <li class="condition-item is-lit"><span class="condition-item__key">大气层之外</span><span class="condition-item__desc">位于地球大气层之外</span></li>
-              <li class="condition-item is-lit"><span class="condition-item__key">独立个体</span><span class="condition-item__desc">独立运行，不是某一天体的一部分</span></li>
-            </ul>
+          <!-- 三条件条目区 + 判别结论：二者同处右侧栏，结论位于三条件下方 -->
+          <div class="meteor-side">
+            <div id="meteor-conditions" class="panel" data-widget="meteor-conditions">
+              <h3 class="conditions-title">判别三条件</h3>
+              <ul class="condition-list">
+                <li class="condition-item is-lit"><span class="condition-item__key">是物质</span><span class="condition-item__desc">是物质，不是现象</span></li>
+                <li class="condition-item is-lit"><span class="condition-item__key">大气层之外</span><span class="condition-item__desc">位于地球大气层之外</span></li>
+                <li class="condition-item is-lit"><span class="condition-item__key">独立个体</span><span class="condition-item__desc">独立运行，不是某一天体的一部分</span></li>
+              </ul>
+            </div>
+            <p id="meteor-conclusion" class="hint" data-widget="meteor-conclusion">流星现象发生在大气层内，是现象不是天体；落到地面的陨石，也不是天体。</p>
           </div>
-        </div>
-        <p id="meteor-conclusion" class="hint" data-widget="meteor-conclusion">流星现象发生在大气层内，是现象不是天体；落到地面的陨石，也不是天体。</p>
-        <div class="section__actions">
-          <button type="button" class="btn btn--primary" data-widget="meteor-next">下一步</button>
         </div>
       </div>
     </section>
@@ -449,23 +450,23 @@
         </div>
       </div>
       <div class="section__body" data-module="solar">
-        <!-- 太阳系演示视窗：WebGL 可用且本地 Three.js 就绪时显示 3D，否则显示 2D 轨道图；无 JS 时显示静态行星列表 -->
+        <!-- 太阳系演示视窗：WebGL 可用且本地 Three.js 就绪时显示 3D 行星模型（从左到右排列，含小行星带），否则显示 2D 示意；无 JS 时显示静态行星列表 -->
         <div id="solar-viewport" class="solar-viewport" data-widget="solar-viewport">
           <div class="solar-viewport__fallback">
-            <p class="panel__placeholder">八大行星（由近及远）：水星 · 金星 · 地球 · 火星 · 木星 · 土星 · 天王星 · 海王星<br>示意图，非按比例。启用 JavaScript 后观看公转演示。</p>
+            <p class="panel__placeholder">八大行星（由近及远）：水星 · 金星 · 地球 · 火星 · 木星 · 土星 · 天王星 · 海王星<br>示意图，非按比例。启用 JavaScript 后查看行星模型与小行星带。</p>
           </div>
         </div>
         <div id="solar-info" class="hint" data-widget="solar-info"></div>
       </div>
     </section>
 
-    <!-- ============ M7 行星分类与运动特征 ============ -->
+    <!-- ============ M7 行星的运动特征 ============ -->
     <section id="planets" class="section" data-nav="行星">
       <div class="section__head">
         <div class="section__head-text">
           <span class="section__tag">模块 07</span>
-          <h2 class="section__title">行星分类与运动特征</h2>
-          <p class="section__desc">八大行星分为类地行星、巨行星与远日行星三大类；它们的公转运动具有同向性、近圆性与共面性。</p>
+          <h2 class="section__title">行星的运动特征</h2>
+          <p class="section__desc">八大行星绕日公转方向一致（自西向东）、轨道近似圆形、轨道面几乎位于同一平面，分别体现同向性、近圆性与共面性。</p>
         </div>
         <div class="section__head-actions">
           <button type="button" class="extend-btn" data-section="M7" aria-haspopup="dialog">⊕ 拓展</button>
@@ -473,18 +474,21 @@
         </div>
       </div>
       <div class="section__body" data-module="planets">
-        <div class="split">
-          <!-- 无 JS 时静态展示三分类；JS 启用时替换为可切换高亮的分类卡 -->
-          <div id="planet-categories" class="card-stack" data-widget="planet-categories">
-            <article class="category-card card"><h3 class="category-card__name">类地行星</h3><p class="category-card__members"><span class="tag">水星</span><span class="tag">金星</span><span class="tag">地球</span><span class="tag">火星</span></p><p class="category-card__feature">固体表面，有金属内核</p></article>
-            <article class="category-card card"><h3 class="category-card__name">巨行星</h3><p class="category-card__members"><span class="tag">木星</span><span class="tag">土星</span></p><p class="category-card__feature">气态，体积和质量很大</p></article>
-            <article class="category-card card"><h3 class="category-card__name">远日行星</h3><p class="category-card__members"><span class="tag">天王星</span><span class="tag">海王星</span></p><p class="category-card__feature">气态（冰巨星），距日较远</p></article>
+        <!-- 无 JS 时静态展示三性；JS 启用时按数据重新渲染 -->
+        <div id="motion-features" class="card-grid" data-widget="motion-features">
+          <div class="motion-feature card"><h4 class="motion-feature__name">同向性</h4><p class="motion-feature__desc">八大行星绕日公转的方向都是自西向东。</p></div>
+          <div class="motion-feature card"><h4 class="motion-feature__name">近圆性</h4><p class="motion-feature__desc">行星绕日公转的轨道近似圆形。</p></div>
+          <div class="motion-feature card"><h4 class="motion-feature__name">共面性</h4><p class="motion-feature__desc">行星轨道面几乎位于同一平面上。</p></div>
+        </div>
+
+        <!-- 八大行星绕日公转演示：直观呈现同向性 / 近圆性 / 共面性（3D 模型，WebGL 不可用时降级 2D 圆形轨道图） -->
+        <div class="orbit-demo" id="orbit-demo">
+          <div id="orbit-viewport" class="orbit-viewport" data-widget="orbit-viewport">
+            <div class="orbit-viewport__fallback">
+              <p class="panel__placeholder">八大行星绕日公转演示（示意图，非按比例）：太阳居中，八大行星沿近似圆形轨道绕日公转，方向一致、轨道面几乎在同一平面。<br>启用 JavaScript 后查看公转模型。</p>
+            </div>
           </div>
-          <div id="motion-features" class="card-stack" data-widget="motion-features">
-            <div class="motion-feature card"><h4 class="motion-feature__name">同向性</h4><p class="motion-feature__desc">八大行星绕日公转的方向都是自西向东。</p></div>
-            <div class="motion-feature card"><h4 class="motion-feature__name">近圆性</h4><p class="motion-feature__desc">行星绕日公转的轨道近似圆形。</p></div>
-            <div class="motion-feature card"><h4 class="motion-feature__name">共面性</h4><p class="motion-feature__desc">行星轨道面几乎位于同一平面上。</p></div>
-          </div>
+          <div id="orbit-info" class="hint" data-widget="orbit-info"></div>
         </div>
       </div>
     </section>
@@ -495,7 +499,7 @@
         <div class="section__head-text">
           <span class="section__tag">模块 08</span>
           <h2 class="section__title">地球存在生命的原因</h2>
-          <p class="section__desc">地球的特殊性来自外部条件（太阳与宇宙环境）与自身条件（温度、大气、液态水）的共同作用。点击"下一步"逐条点亮因果链。</p>
+          <p class="section__desc">地球的特殊性来自外部条件（太阳与宇宙环境）与自身条件（温度、大气、液态水）的共同作用。以下将外部条件与自身条件分开呈现。</p>
         </div>
         <div class="section__head-actions">
           <button type="button" class="extend-btn" data-section="M8" aria-haspopup="dialog">⊕ 拓展</button>
@@ -503,14 +507,45 @@
         </div>
       </div>
       <div class="section__body" data-module="life">
-        <!-- 双分支因果链图（JS 启用时替换为可分步点亮的 SVG 因果链） -->
-        <div id="life-chain" class="panel panel--hint" data-widget="life-chain">
-          <p class="panel__placeholder">双分支因果链图<br>外部条件：太阳处于壮年 → 光照稳定；大小行星各行其道 → 宇宙环境安全<br>自身条件：日地距离适中 → 温度适宜；体积质量适中 → 形成适宜大气；水汽逸出 → 成云致雨汇聚成海</p>
+        <!-- 外部条件 / 自身条件 分开绘制为两个独立面板（无 JS 时静态展示；JS 启用时按 lessonData 重新渲染） -->
+        <div id="life-chain" class="life-panels" data-widget="life-chain">
+          <section class="life-panel">
+            <h3 class="life-panel__title"><span class="tag">外部条件</span></h3>
+            <div class="life-panel__chains">
+              <div class="chain">
+                <div class="chain-node chain-node--cond">太阳处于壮年</div>
+                <div class="chain-arrow" aria-hidden="true"></div>
+                <div class="chain-node chain-node--result">光照稳定，生命演化连续</div>
+              </div>
+              <div class="chain">
+                <div class="chain-node chain-node--cond">大小行星各行其道</div>
+                <div class="chain-arrow" aria-hidden="true"></div>
+                <div class="chain-node chain-node--result">互不干扰，宇宙环境安全</div>
+              </div>
+            </div>
+          </section>
+          <section class="life-panel">
+            <h3 class="life-panel__title"><span class="tag">自身条件</span></h3>
+            <div class="life-panel__chains">
+              <div class="chain">
+                <div class="chain-node chain-node--cond">日地距离适中、自转公转周期适宜</div>
+                <div class="chain-arrow" aria-hidden="true"></div>
+                <div class="chain-node chain-node--result">温度适宜，水以液态存在</div>
+              </div>
+              <div class="chain">
+                <div class="chain-node chain-node--cond">地球体积、质量适中</div>
+                <div class="chain-arrow" aria-hidden="true"></div>
+                <div class="chain-node chain-node--result">引力足够吸引大气，经漫长演化形成适宜大气</div>
+              </div>
+              <div class="chain">
+                <div class="chain-node chain-node--cond">原始地球内部升温产生水汽</div>
+                <div class="chain-arrow" aria-hidden="true"></div>
+                <div class="chain-node chain-node--result">水汽逸出地表成云致雨，汇聚成海，孕育生命</div>
+              </div>
+            </div>
+          </section>
         </div>
         <p id="life-conclusion" class="hint" data-widget="life-conclusion">外部条件 + 自身条件共同作用 → 地球成为目前已知唯一适宜生命存在的星球。</p>
-        <div class="section__actions">
-          <button type="button" class="btn btn--primary" data-widget="life-next">下一步</button>
-        </div>
       </div>
     </section>
 
@@ -530,7 +565,7 @@
       <div class="section__body" data-module="review">
         <!-- 知识结构树（JS 启用时替换为可折叠的结构树；无 JS 时静态展示） -->
         <div id="review-tree" class="panel panel--hint" data-widget="review-tree">
-          <p class="panel__placeholder">知识结构树<br>宇宙 → 天体（自然天体：星云 / 恒星 / 行星 / 卫星 / 流星体 / 彗星；人造天体：人造卫星 / 载人飞船；判别三条件）与 天体系统（可观测宇宙 → 银河系 → 太阳系 → 地月系）<br>→ 太阳系（八大行星：类地 / 巨 / 远日；同向性 · 近圆性 · 共面性）<br>→ 地球的特殊性（外部条件 + 自身条件）</p>
+          <p class="panel__placeholder">知识结构树<br>宇宙 → 天体（自然天体：星云 / 恒星 / 行星 / 卫星 / 流星体 / 彗星；人造天体：人造卫星 / 载人飞船；判别三条件）与 天体系统（可观测宇宙 → 银河系 → 太阳系 → 地月系）<br>→ 太阳系（八大行星：同向性 · 近圆性 · 共面性）<br>→ 地球的特殊性（外部条件 + 自身条件）</p>
         </div>
         <div class="section__actions">
           <button type="button" class="btn btn--ghost" data-widget="review-mode">进入复习模式</button>
@@ -571,7 +606,7 @@
   </noscript>
 
   <!-- 构建入口：Three.js 等依赖改为 npm 引入（见 src/modules/solar.ts）；
-       WebGL 不可用时自动降级为 2D 轨道图 -->
+       WebGL 不可用时自动降级为 2D 示意 -->
   <script type="module" src="./src/main.ts"></script>
 
   <!-- 图片查看器模板（由 src/modules/lightbox.ts 驱动） -->

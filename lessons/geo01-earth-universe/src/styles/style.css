@@ -536,16 +536,16 @@ button { font-family: inherit; }
 }
 .drag-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); }
 
-/* ---------- 8. M6 太阳系视窗（骨架布局） ---------- */
+/* ---------- 8. M6 太阳系视窗（骨架布局） ----------
+   不设卡片边框/背景，且整体满屏宽度：行星在更宽的深空里拉开距离，
+   突破 section 的 1200px 容器限制（无 JS 降级文本居中） */
 .solar-viewport {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
   min-height: 60vh;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
 /* ---------- 9. M10 拓展浮层 ---------- */
@@ -998,6 +998,18 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   height: 100%;
   object-fit: cover;
 }
+.body-deck__gallery-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.body-deck__gallery-link .body-deck__gallery-img {
+  transition: transform .3s ease;
+}
+.body-deck__gallery-link:hover .body-deck__gallery-img {
+  transform: scale(1.03);
+}
 .body-deck__gallery-shade {
   position: absolute;
   left: 0;
@@ -1374,34 +1386,49 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .body-classify__group--artificial .body-classify__icon { color: var(--warn); }
 
 /* ---------- M3 流星案例 ---------- */
-.meteor-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  background: #060a1c;
+/* 演示区域：Canvas 三层纵向布局，进一步增高以提升视觉展示效果（4:5 竖版）
+   宽 = min(100%, 70vh × 4/5)，使高可达 70vh；窄屏退化为按列宽等比缩放 */
+.meteor-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.meteor-stage__canvas {
+  position: relative;
+  width: min(100%, calc(70vh * 0.8));
+  aspect-ratio: 4 / 5;
+  margin-inline: auto;
+  overflow: hidden;
   border-radius: var(--radius-card);
+  background: #05081a;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 24px rgba(79, 195, 247, 0.08) inset;
 }
-.meteor-boundary { stroke: rgba(79, 195, 247, 0.5); stroke-dasharray: 4 4; }
-.meteor-ground { stroke: rgba(255, 255, 255, 0.25); }
-.meteor-layer-label { fill: var(--text-dim); font-size: 13px; }
-.meteor-star { fill: #cfd8ff; }
-.meteor-path { stroke: rgba(255, 255, 255, 0.28); stroke-dasharray: 5 7; }
+.meteor-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 
-.meteor-node circle { fill: #3a4166; stroke: rgba(255, 255, 255, 0.4); transition: fill 0.3s, stroke 0.3s; }
-.meteor-node.is-current circle {
-  fill: var(--gold);
-  stroke: var(--gold);
-  animation: node-pulse 1.2s ease-in-out infinite;
+/* 演示控制条：开始/暂停/重播 */
+.meteor-demo__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
-@keyframes node-pulse {
-  0%, 100% { filter: drop-shadow(0 0 3px var(--gold)); }
-  50%      { filter: drop-shadow(0 0 10px var(--gold)); }
+.meteor-ctl {
+  min-height: 40px;
+  padding: 8px 18px;
 }
-.meteor-node.is-lit circle { fill: var(--cyan); stroke: var(--cyan); }
-.meteor-node-label { fill: var(--text-dim); font-size: 12px; opacity: 0; transition: opacity 0.3s; }
-.meteor-node.is-current .meteor-node-label,
-.meteor-node.is-lit .meteor-node-label { opacity: 1; }
-.meteor-node.is-current .meteor-node-label { fill: var(--gold); }
+
+/* 判别三条件 + 结论：右侧栏内纵向排列，结论位于三条件下方 */
+.meteor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.meteor-side .hint { margin: 0; }
 
 .conditions-title { margin: 0 0 14px; font-size: 20px; color: var(--text-main); }
 .condition-list {
@@ -1421,7 +1448,6 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   border-radius: var(--radius-card);
   background: var(--glass-bg);
   opacity: 0.4;
-  transition: opacity 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
 .condition-item__key { flex-shrink: 0; font-weight: 700; font-size: 18px; }
 .condition-item__desc { color: var(--text-dim); font-size: 18px; }
@@ -1432,24 +1458,87 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 }
 .condition-item.is-lit .condition-item__key { color: var(--gold); }
 
-/* ---------- M7 行星分类与三性 ---------- */
-.category-card { padding: 22px; cursor: pointer; transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s; }
-.category-card:hover { transform: translateY(-2px); }
-.category-card.is-active { border-color: var(--gold); box-shadow: 0 0 18px rgba(255, 213, 79, 0.25); }
-.category-card__name { margin: 0 0 14px; font-size: 24px; }
-.category-card.is-active .category-card__name { color: var(--gold); }
-.category-card__members { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
-.category-card__feature { margin: 0; color: var(--text-dim); }
-
+/* ---------- M7 行星的运动特征（同向性 / 近圆性 / 共面性） ---------- */
 .motion-feature { padding: 18px 20px; transition: border-color 0.3s, box-shadow 0.3s; }
 .motion-feature:hover,
 .motion-feature:focus-visible { border-color: var(--cyan); box-shadow: 0 0 14px rgba(79, 195, 247, 0.22); }
 .motion-feature__name { margin: 0 0 6px; font-size: 22px; color: var(--cyan); }
 .motion-feature__desc { margin: 0; color: var(--text-dim); }
 
-/* ---------- M8 生命条件因果链 ---------- */
-.life-chain { display: flex; flex-direction: column; gap: 36px; }
-.life-chain__row-title {
+/* ---------- M7 八大行星绕日公转演示（3D 模型 / 2D 圆形轨道降级） ---------- */
+.orbit-demo { margin-top: 30px; }
+
+/* 正方形视窗：宽取容器宽度的 100%（最大 960px）并居中，长宽比恒为 1:1 */
+.orbit-viewport {
+  position: relative;
+  width: min(100%, 960px);
+  margin-inline: auto;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  background: radial-gradient(70% 70% at 50% 50%, rgba(72, 60, 155, 0.13), transparent 74%);
+}
+.orbit-viewport__fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3D 视图 */
+.orbit3d { position: relative; width: 100%; height: 100%; }
+.orbit3d__canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; cursor: grab; }
+.orbit3d__canvas:active { cursor: grabbing; }
+.orbit3d__note {
+  position: absolute;
+  top: 12px; left: 14px;
+  padding: 4px 12px;
+  font-size: 16px;
+  color: var(--text-dim);
+  background: rgba(11, 16, 38, 0.55);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.orbit3d__labels { position: absolute; inset: 0; pointer-events: none; }
+.orbit3d__label {
+  position: absolute;
+  top: 0; left: 0;
+  padding: 2px 8px;
+  font-size: 14px;
+  color: var(--text-dim);
+  background: rgba(11, 16, 38, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none; /* 纯名称标签，不拦截拖拽旋转 */
+}
+
+/* 2D 圆形轨道降级 */
+.orbit2d { display: block; width: 100%; height: 100%; }
+.orbit2d__path { fill: none; stroke: rgba(159, 180, 255, 0.4); stroke-width: 1.5; }
+.orbit2d__sun { fill: #ffc46b; }
+.orbit2d__sun-name { fill: var(--text-dim); font-size: 18px; }
+.orbit2d__dot { stroke: rgba(255, 255, 255, 0.5); stroke-width: 1; }
+.orbit2d__name { fill: var(--text-dim); font-size: 15px; }
+
+/* ---------- M8 生命条件因果链（外部/自身两组分开绘制） ---------- */
+.life-panels {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.life-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+}
+.life-panel__title {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1457,7 +1546,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   font-size: 22px;
   font-weight: 700;
 }
-.life-chain__chains {
+.life-panel__chains {
   display: flex;
   gap: 24px;
   justify-content: center;
@@ -1477,8 +1566,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   text-align: center;
   font-size: 18px;
   line-height: 1.5;
-  opacity: 0.38;
-  transition: opacity 0.45s var(--ease), border-color 0.45s var(--ease), box-shadow 0.45s var(--ease), color 0.45s;
+  opacity: 1;
 }
 .chain-node--cond { background: rgba(79, 195, 247, 0.10); border: 1px solid rgba(79, 195, 247, 0.4); color: var(--text-main); }
 .chain-node--result { background: rgba(255, 213, 79, 0.10); border: 1px solid rgba(255, 213, 79, 0.4); color: var(--gold); }
@@ -1493,9 +1581,8 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   width: 3px;
   margin-left: -1.5px;
   background: linear-gradient(var(--cyan), var(--gold));
-  transform: scaleY(0);
+  transform: scaleY(1);
   transform-origin: top;
-  transition: transform 0.55s var(--ease);
 }
 .chain-arrow::before {
   content: "";
@@ -1508,18 +1595,15 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   border-right: 2px solid var(--gold);
   border-bottom: 2px solid var(--gold);
   transform: rotate(45deg);
-  opacity: 0;
-  transition: opacity 0.4s;
+  opacity: 1;
 }
-.chain.is-lit .chain-node { opacity: 1; box-shadow: 0 0 16px rgba(255, 213, 79, 0.15); }
-.chain.is-lit .chain-arrow::after { transform: scaleY(1); }
-.chain.is-lit .chain-arrow::before { opacity: 1; }
 
 /* ---------- 讲解模块窄屏适配 ---------- */
 @media (max-width: 768px) {
   .universe-intro { grid-template-columns: 1fr; gap: 24px; }
   .universe-intro__media { aspect-ratio: 4 / 3; max-width: 460px; }
   .universe-demo__view { max-width: 340px; }
+  .life-panels { grid-template-columns: 1fr; }
   .chain-node { font-size: 16px; }
   .condition-item { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
@@ -1582,14 +1666,8 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .hierarchy-controls { display: flex; gap: 14px; justify-content: center; }
 .hint__example { display: block; margin-top: 8px; color: var(--cyan); font-size: 16px; }
 
-/* ---------- M6 太阳系 2D 轨道图 ---------- */
-.solar-svg { width: 100%; height: auto; display: block; }
-.solar-sun {
-  fill: var(--gold);
-  filter: drop-shadow(0 0 20px rgba(255, 213, 79, 0.8));
-}
-.solar-sun-label { fill: #1a1405; font-size: 16px; font-weight: 700; text-anchor: middle; }
-.solar-orbit { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-dasharray: 3 6; }
+/* ---------- M6 太阳系 2D 示意图（降级） ---------- */
+.solar-svg { width: 100%; max-width: 1100px; height: auto; display: block; margin: 0 auto; }
 .solar-note { fill: var(--text-dim); font-size: 13px; }
 .solar-planet { cursor: pointer; }
 .solar-planet-dot { transition: filter 0.2s, stroke 0.2s; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; }
@@ -1602,9 +1680,14 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 }
 .solar-planet-name { fill: var(--text-dim); font-size: 13px; text-anchor: middle; pointer-events: none; }
 .solar-planet.is-active .solar-planet-name { fill: var(--gold); font-weight: 700; }
-.solar-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: center; }
-.solar-legend__item { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; color: var(--text-dim); }
-.solar-legend__item i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.solar-ring { fill: none; stroke-width: 3; opacity: 0.55; }
+.solar-belt__dot { fill: #b8ae9e; }
+.solar-belt { cursor: pointer; }
+.solar-belt-label { fill: var(--text-dim); font-size: 12px; text-anchor: middle; pointer-events: none; }
+.solar-belt.is-active .solar-belt-label { fill: var(--gold); font-weight: 700; }
+/* 分组虚线圆角框（2D SVG） */
+.solar-group__box { fill: none; stroke: rgba(122, 160, 255, 0.5); stroke-width: 1.6; stroke-dasharray: 10 7; pointer-events: none; }
+.solar-group__label { fill: rgba(170, 200, 255, 0.85); font-size: 15px; letter-spacing: 3px; text-anchor: middle; pointer-events: none; }
 .solar-status { margin: 14px 0 0; text-align: center; font-size: 18px; color: var(--text-dim); }
 .solar-status.is-active { color: var(--gold); }
 
@@ -1634,17 +1717,15 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   width: 100%;
   height: clamp(420px, 60vh, 660px);
   overflow: hidden;
-  border-radius: var(--radius-card);
-  background: radial-gradient(80% 80% at 50% 50%, rgba(26, 16, 64, 0.55), rgba(10, 10, 24, 0.75));
+  /* 无卡片：仅一层极淡的星云辉光衬托行星，其余透出页面深空背景 */
+  background: radial-gradient(65% 65% at 50% 50%, rgba(72, 60, 155, 0.14), transparent 72%);
 }
 .solar3d__canvas {
   display: block;
   width: 100%;
   height: 100%;
-  touch-action: none;
-  cursor: grab;
+  touch-action: manipulation;
 }
-.solar3d__canvas:active { cursor: grabbing; }
 .solar3d__note {
   position: absolute;
   top: 12px; left: 14px;
@@ -1656,14 +1737,80 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   border-radius: 999px;
   pointer-events: none;
 }
-.solar3d__controls {
+/* 行星名称标签（覆盖层，位置由 JS 投影更新） */
+.solar3d__labels {
   position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
+  inset: 0;
+  pointer-events: none;
+}
+.solar3d__label {
+  position: absolute;
+  left: 0; top: 0;
+  padding: 3px 10px;
+  font-size: 15px;
+  line-height: 1.1;
+  color: var(--text-dim);
+  background: rgba(11, 16, 38, 0.62);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
   white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.solar3d__label:hover,
+.solar3d__label:focus-visible {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.6);
+}
+.solar3d__label.is-active {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.85);
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.35);
+}
+/* 小行星带标签（可交互：点击查看介绍） */
+.solar3d__label--belt {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.22);
+  border-style: dashed;
+  background: rgba(11, 16, 38, 0.4);
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.solar3d__label--belt:hover,
+.solar3d__label--belt:focus-visible {
+  color: var(--cyan);
+  border-color: rgba(79, 195, 247, 0.6);
+}
+.solar3d__label--belt.is-active {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.85);
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.3);
+}
+/* 行星分组虚线圆角框（覆盖层，随 3D 投影定位；仅示意，不拦截点击） */
+.solar3d__group {
+  position: absolute;
+  left: 0; top: 0;
+  border: 1.5px dashed rgba(122, 160, 255, 0.45);
+  border-radius: 20px;
+  pointer-events: none;
+}
+.solar3d__group-label {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 2px 12px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  color: rgba(170, 200, 255, 0.9);
+  background: rgba(11, 16, 38, 0.6);
+  border: 1px dashed rgba(122, 160, 255, 0.4);
+  border-radius: 999px;
+  pointer-events: none;
 }
 
 /* ---------- M9 复习结构树 ---------- */
@@ -1718,14 +1865,8 @@ body.review-mode #review { padding-top: 40px; }
 @media (max-width: 768px) {
   .hierarchy-svg { max-width: 420px; }
   .tree__label { font-size: 16px; padding: 6px 12px; }
-  .solar-legend__item { font-size: 14px; }
-  .solar3d__controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-    padding: 0 12px;
-    transform: translateX(-50%);
-  }
+  .solar3d__label { padding: 2px 8px; font-size: 13px; }
+  .solar3d__group-label { font-size: 11px; padding: 1px 8px; letter-spacing: 2px; }
   .solar3d__note { top: 10px; left: 10px; font-size: 14px; }
 }
 
@@ -1758,7 +1899,9 @@ body.review-mode #review { padding-top: 40px; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: min(90vw, 1200px);
+  width: 90vw;
+  max-width: 1200px;
+  height: 85vh;
   max-height: 90vh;
   background: #141a38;
   border-radius: 16px;
@@ -1789,7 +1932,7 @@ body.review-mode #review { padding-top: 40px; }
 .ilb-img {
   display: block;
   max-width: 100%;
-  max-height: 70vh;
+  max-height: 100%;
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;

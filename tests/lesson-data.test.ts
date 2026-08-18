@@ -61,8 +61,7 @@ describe('lessonData 数据完整性', () => {
     })
   })
 
-  it('M7 行星分类：3 类 + 3 三性', () => {
-    expect(lessonData.planetCategories).toHaveLength(3)
+  it('M7 行星运动特征：同向性、近圆性、共面性', () => {
     expect(lessonData.motionFeatures.map(f => f.name)).toEqual(['同向性', '近圆性', '共面性'])
   })
 

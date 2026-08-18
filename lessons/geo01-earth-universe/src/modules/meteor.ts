@@ -1,96 +1,92 @@
 /* ============================================================
-   M3 流星案例：SVG 分步示意图 + 三条件逐条点亮
+   M3 流星案例 · 模块入口
+   在 #meteor-stage 中装配 Canvas 演示动画（meteorScene）+ 控制条：
+     ▶ 开始演示 / ⏸ 暂停 / ▶ 继续 / ↻ 重播
+   动画为连续循环旅程，不采用"分阶段播放"方式：
+     流星体在太空中自由漂浮 → 漂到大气层上边界时被大气层自动吸引、
+     直接进入大气层燃烧成流星 → 未燃尽落至地面成陨石 → 短暂停留后重新生成。
+   右侧"判别三条件"为静态展示，不与动画步骤同步（无点亮动画）。
    ============================================================ */
-import { $, $$ } from '../utils/dom'
-import { App } from '../state'
+import { $ } from '../utils/dom'
 import { lessonData } from '../data/lessonData'
+import { MeteorController } from './meteorController'
+import type { MeteorPlayState } from './meteorController'
+import { MeteorScene } from './meteorScene'
 
-export function initMeteorCase(): void {
-  const stageEl = document.getElementById('meteor-stage');
-  const condsBoxEl = document.getElementById('meteor-conditions');
-  const conclusionEl = document.getElementById('meteor-conclusion');
-  const btnEl = document.querySelector('[data-widget="meteor-next"]');
-  if (!stageEl || !condsBoxEl || !conclusionEl || !btnEl || !lessonData.meteorCase) return;
-  const stage: HTMLElement = stageEl;
-  const condsBox: HTMLElement = condsBoxEl;
-  const conclusion: HTMLElement = conclusionEl;
-  const btn: Element = btnEl;
-  const mc = lessonData.meteorCase;
+/** 按钮文案配置：key = 演示状态，value = [是否可用, 文案] */
+const BTN_LABELS: Record<MeteorPlayState, {
+  start: [boolean, string]
+  pause: [boolean, string]
+  replay: [boolean, string]
+}> = {
+  idle:    { start: [true, '▶ 开始演示'], pause: [false, '⏸ 暂停'], replay: [false, '↻ 重播'] },
+  playing: { start: [false, '演示进行中…'], pause: [true, '⏸ 暂停'], replay: [true, '↻ 重播'] },
+  paused:  { start: [false, '演示已暂停'], pause: [true, '▶ 继续'], replay: [true, '↻ 重播'] },
+  done:    { start: [true, '↻ 重新开始'], pause: [false, '⏸ 暂停'], replay: [true, '↻ 重播'] }
+}
 
-  stage.classList.remove('panel--hint');
+/**
+ * 初始化 M3 流星案例模块。
+ * 返回控制器实例，便于单元测试直接驱动状态流转。
+ */
+export function initMeteorCase(): MeteorController | null {
+  const stageEl = document.getElementById('meteor-stage')
+  const condsBoxEl = document.getElementById('meteor-conditions')
+  const conclusionEl = document.getElementById('meteor-conclusion')
+  if (!stageEl || !condsBoxEl || !conclusionEl || !lessonData.meteorCase) return null
+  const stage: HTMLElement = stageEl
+
+  // 移除"无 JS 占位"样式，装配演示区域（判别三条件保持静态，不随动画同步）
+  stage.classList.remove('panel--hint')
   stage.innerHTML = `
-      <svg class="meteor-svg" viewBox="0 0 460 300" role="img" aria-label="流星案例分步示意图">
-        <!-- 太空 -->
-        <rect x="0" y="0" width="460" height="128" fill="#060a1c"/>
-        <circle class="meteor-star" cx="26" cy="34" r="1.4"/>
-        <circle class="meteor-star" cx="62" cy="18" r="1"/>
-        <circle class="meteor-star" cx="120" cy="46" r="1.2"/>
-        <circle class="meteor-star" cx="330" cy="90" r="1.1"/>
-        <circle class="meteor-star" cx="430" cy="52" r="1.3"/>
-        <!-- 大气层 -->
-        <rect x="0" y="128" width="460" height="86" fill="rgba(79,195,247,0.10)"/>
-        <line class="meteor-boundary" x1="0" y1="128" x2="460" y2="128"/>
-        <line class="meteor-boundary" x1="0" y1="214" x2="460" y2="214"/>
-        <text x="444" y="24" text-anchor="end" class="meteor-layer-label">太空</text>
-        <text x="444" y="172" text-anchor="end" class="meteor-layer-label">大气层</text>
-        <!-- 地面 -->
-        <rect x="0" y="214" width="460" height="86" fill="#0d1230"/>
-        <line class="meteor-ground" x1="0" y1="214" x2="460" y2="214"/>
-        <text x="26" y="252" class="meteor-layer-label">地面</text>
-        <!-- 流星路径 -->
-        <line class="meteor-path" x1="382" y1="22" x2="118" y2="232"/>
-        <!-- 节点：太空中 / 大气层燃烧 / 落到地面 -->
-        <g class="meteor-node" data-node="0">
-          <circle cx="382" cy="22" r="8"/>
-          <text x="382" y="8" text-anchor="middle" class="meteor-node-label">流星体（太空中）</text>
-        </g>
-        <g class="meteor-node" data-node="1">
-          <circle cx="250" cy="152" r="10"/>
-          <text x="250" y="180" text-anchor="middle" class="meteor-node-label">摩擦燃烧 → 流星现象</text>
-        </g>
-        <g class="meteor-node" data-node="2">
-          <circle cx="118" cy="232" r="7"/>
-          <text x="118" y="260" text-anchor="middle" class="meteor-node-label">陨石（落至地面）</text>
-        </g>
-      </svg>`;
+    <div class="meteor-demo" data-widget="meteor-demo">
+      <div class="meteor-stage__canvas">
+        <canvas class="meteor-canvas" role="img" aria-label="流星现象演示：流星体在太空漂浮 → 进入大气层摩擦燃烧成流星 → 未燃尽落至地面成陨石"></canvas>
+      </div>
+      <div class="meteor-demo__toolbar">
+        <button type="button" class="btn btn--primary meteor-ctl" data-meteor-action="start">▶ 开始演示</button>
+        <button type="button" class="btn meteor-ctl" data-meteor-action="pause" disabled>⏸ 暂停</button>
+        <button type="button" class="btn meteor-ctl" data-meteor-action="replay" disabled>↻ 重播</button>
+      </div>
+    </div>`;
 
-  condsBox.innerHTML = `
-      <h3 class="conditions-title">判别三条件</h3>
-      <ul class="condition-list">
-        ${mc.conditions.map((c, i) => `
-          <li class="condition-item" data-cond="${i}">
-            <span class="condition-item__key">${c.key}</span>
-            <span class="condition-item__desc">${c.desc}</span>
-          </li>`).join('')}
-      </ul>`;
+  const canvas = $('.meteor-canvas', stage) as HTMLCanvasElement | null
+  const startBtn = $('[data-meteor-action="start"]', stage) as HTMLButtonElement | null
+  const pauseBtn = $('[data-meteor-action="pause"]', stage) as HTMLButtonElement | null
+  const replayBtn = $('[data-meteor-action="replay"]', stage) as HTMLButtonElement | null
 
-  const nodes = $$('.meteor-node', stage);
-  const conds = $$('.condition-item', condsBox);
-  let step = 0; // 0=初始未开始, 1~3=三步, 4=完成
-
-  function render(): void {
-    nodes.forEach((n, i) => {
-      n.classList.toggle('is-current', step > 0 && i === step - 1);
-      n.classList.toggle('is-lit', step > 1 && i < step - 1);
-    });
-    conds.forEach((c, i) => c.classList.toggle('is-lit', i < step));
-
-    if (step === 0) {
-      conclusion.textContent = '';
-    } else if (step <= 3) {
-      conclusion.textContent = '第 ' + step + ' 步 · ' + mc.steps[step - 1].title + '：' + mc.steps[step - 1].desc;
-    } else {
-      conclusion.textContent = '结论：' + mc.conclusion;
-      conclusion.classList.add('hint--done');
-    }
-    if (step <= 3) conclusion.classList.remove('hint--done');
-    btn.textContent = step >= 4 ? '重新开始' : '下一步';
-    App.meteorStep = step;
+  // 场景随控制器播放状态联动（无画布时仅保留 DOM 控制条）
+  let scene: MeteorScene | null = null
+  if (canvas) {
+    scene = new MeteorScene(canvas)
+    scene.start()
   }
 
-  btn.addEventListener('click', () => {
-    step = step >= 4 ? 0 : step + 1;
-    render();
-  });
-  render();
+  /** 控制条状态：随演示运行状态更新按钮可用性与文案 */
+  function updateButtons(state: MeteorPlayState): void {
+    const cfg = BTN_LABELS[state]
+    if (startBtn) { startBtn.disabled = !cfg.start[0]; startBtn.textContent = cfg.start[1] }
+    if (pauseBtn) { pauseBtn.disabled = !cfg.pause[0]; pauseBtn.textContent = cfg.pause[1] }
+    if (replayBtn) { replayBtn.disabled = !cfg.replay[0]; replayBtn.textContent = cfg.replay[1] }
+  }
+
+  const ctl = new MeteorController({
+    onPlayState: state => {
+      updateButtons(state)
+      scene?.applyPlayState(state)
+    }
+  })
+  if (scene) scene.bind(ctl)
+
+  startBtn?.addEventListener('click', () => {
+    if (ctl.playState === 'done') ctl.replay()
+    else ctl.start()
+  })
+  pauseBtn?.addEventListener('click', () => ctl.togglePlay())
+  replayBtn?.addEventListener('click', () => {
+    ctl.replay()
+    scene?.resetDemo()
+  })
+
+  return ctl
 }

@@ -20,8 +20,19 @@
     { "path": "assets/images/celestial-satellite-europa.jpg", "type": "image" },
     { "path": "assets/images/celestial-comet-halley.jpg", "type": "image" },
     { "path": "assets/images/celestial-comet-hale-bopp.jpg", "type": "image" },
-    { "path": "assets/images/celestial-satellite.jpg", "type": "image" },
-    { "path": "assets/images/celestial-spaceship.jpg", "type": "image" }
+    { "path": "assets/images/DFH1.jpeg", "type": "image" },
+    { "path": "assets/images/FY_4A,_4B,_4C,_4D,_4E,_4F.jpg", "type": "image" },
+    { "path": "assets/images/celestial-spaceship.jpg", "type": "image" },
+    { "path": "public/textures/mercury.jpg", "type": "image" },
+    { "path": "public/textures/venus.jpg", "type": "image" },
+    { "path": "public/textures/earth.jpg", "type": "image" },
+    { "path": "public/textures/mars.jpg", "type": "image" },
+    { "path": "public/textures/jupiter.jpg", "type": "image" },
+    { "path": "public/textures/saturn.jpg", "type": "image" },
+    { "path": "public/textures/uranus.jpg", "type": "image" },
+    { "path": "public/textures/neptune.jpg", "type": "image" },
+    { "path": "public/textures/saturn_ring.png", "type": "image" },
+    { "path": "public/textures/uranus_ring.png", "type": "image" }
   ],
   "tags": ["宇宙", "天体", "太阳系", "地球", "基础概念"],
   "description": "围绕地球在宇宙中的位置与基本特征设计的互动教学网页，涵盖天体判别、天体系统层级、太阳系与八大行星、地球存在生命的原因等内容"

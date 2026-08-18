@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solar System : Explore the 3D Solar System</title>
+
+    <style>
+      body {
+        overflow: hidden;
+        margin: 0;
+        background-color: #000; /* Default dark */
+        color: white;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      /* Tooltip styling */
+      #tooltip {
+        position: absolute;
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        border-radius: 5px;
+        font-size: 12px;
+        display: none;
+        z-index: 2;
+        pointer-events: none;
+      }
+      body.light-mode {
+      background-color: #f4f4f4;
+      color: #222;
+      }
+
+      #toggle-theme {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1;
+        padding: 8px 12px;
+        background-color: #222;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      #toggle-theme:hover {
+        background-color: #444;
+      }
+
+      body.light-mode #toggle-theme {
+        background-color: #ddd;
+        color: #000;
+      }
+
+      body.light-mode #toggle-theme:hover {
+        background-color: #ccc;
+      }
+      /* Pause/Resume button styling */
+      #toggle-animation {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1;
+        padding: 8px 12px;
+        background-color: #222;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      #toggle-animation:hover {
+        background-color: #444;
+      }
+
+      /* Title styling */
+      #title {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 32px;
+        font-family: Arial, sans-serif;
+        color: white;
+        z-index: 5;
+        pointer-events: none;
+        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+      }
+      .label {
+        position: absolute;
+        color: white;
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 2px 6px;
+        border-radius: 4px;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+
+    </style>
+
+    <meta name="author" content="ankitjha2603" />
+    <meta name="robots" content="index, follow" />
+    <meta
+      name="description"
+      content="The Solar System 3D Visualization project is an interactive web-based application that allows users to explore the Solar System in a three-dimensional environment."
+    />
+    <meta
+      name="keywords"
+      content="three.js, solar system, 3D, space, planets, astronomy"
+    />
+
+    <meta
+      property="og:title"
+      content="Solar System : Explore the 3D Solar System"
+    />
+    <meta
+      property="og:description"
+      content="Interactive 3D Solar System project using Three.js"
+    />
+    <meta
+      property="og:url"
+      content="https://ankitjha2603.github.io/solar-system3D/"
+    />
+    <meta property="og:type" content="website" />
+
+    <!-- Sitemap -->
+    <link
+      rel="sitemap"
+      type="application/xml"
+      title="Sitemap"
+      href="https://ankitjha2603.github.io/sitemap.xml"
+    />
+
+    <!-- Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-4J64SC1QY7"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-4J64SC1QY7");
+    </script>
+
+    <!-- Google site verification -->
+    <meta
+      name="google-site-verification"
+      content="5QsjbXuM1buDwEtnxWDKN9dE1qgf_dgz646EdwUxSWg"
+    />
+
+    <!-- Favicon & external libs -->
+    <link rel="icon" type="image/png" href="./image/solar-system.png" />
+    <script type="text/javascript" src="./min.js/dat.gui.min.js"></script>
+  </head>
+
+  <body>
+    <!-- Title at the top center -->
+    <div id="title">Solar System</div>
+
+    <!-- Pause/Resume button -->
+    <button id="toggle-animation">Pause</button>
+
+    <!-- 🔘 Theme Toggle button -->
+    <button id="toggle-theme">Dark Mode</button>
+
+
+    <!-- Tooltip -->
+    <div id="tooltip"></div>
+
+    <!-- Main JS -->
+    <script src="./js/solarSystem.js" type="module"></script>
+    <script>
+      const toggleThemeButton = document.getElementById("toggle-theme");
+
+      toggleThemeButton.addEventListener("click", () => {
+        document.body.classList.toggle("light-mode");
+
+        // Update button label
+        if (document.body.classList.contains("light-mode")) {
+          toggleThemeButton.textContent = "Dark Mode";
+        } else {
+          toggleThemeButton.textContent = "Light Mode";
+        }
+      });
+</script>
+
+  </body>
+</html>

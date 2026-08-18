@@ -8,7 +8,8 @@ import { initPracticeModal } from './modules/practiceModal'
 import { initMeteorCase } from './modules/meteor'
 import { initHierarchy } from './modules/hierarchy'
 import { initSolarSystem } from './modules/solar'
-import { initPlanetCategories } from './modules/planets'
+import { initMotionFeatures } from './modules/planets'
+import { initOrbitDemo } from './modules/orbit'
 import { initLifeChain } from './modules/life'
 import { initReviewTree } from './modules/review'
 import { initNebulaTilt } from './modules/nebulaTilt'
@@ -22,7 +23,8 @@ export function init(): void {
   initMeteorCase();
   initHierarchy();
   initSolarSystem();
-  initPlanetCategories();
+  initMotionFeatures();
+  initOrbitDemo();
   initLifeChain();
   initReviewTree();
   initNebulaTilt();

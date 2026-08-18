@@ -13,8 +13,6 @@ export interface AppState {
   solarAuto: boolean
   /** M6 选中的行星 id */
   selectedPlanet: string | null
-  /** M8 因果链当前点亮步 */
-  lifeStep: number
   /** M9 复习模式开关 */
   reviewMode: boolean
   /** M10 拓展浮层状态 */
@@ -30,7 +28,6 @@ export const App: AppState = {
   level: 0,
   solarAuto: true,
   selectedPlanet: null,
-  lifeStep: 0,
   reviewMode: false,
   modal: { open: false, sectionId: null },
   practiceModal: { open: false, sectionId: null }

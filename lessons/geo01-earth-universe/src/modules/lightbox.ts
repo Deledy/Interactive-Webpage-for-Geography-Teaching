@@ -159,11 +159,8 @@ function updateLabel() {
 // ── 滚轮 ──────────────────────────────────────────────────
 function onWheel(e: WheelEvent) {
   e.preventDefault();
-  const r = viewport.getBoundingClientRect();
-  const cx = (e.clientX - r.left) / r.width;
-  const cy = (e.clientY - r.top) / r.height;
   const d = e.deltaY > 0 ? -CFG.wheelZoomSpeed : CFG.wheelZoomSpeed;
-  applyZoom(zoom + d, cx, cy);
+  applyZoom(zoom + d, 0.5, 0.5);
 }
 
 // ── 拖拽 ──────────────────────────────────────────────────
