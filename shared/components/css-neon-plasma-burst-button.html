@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>霓虹等离子爆发按钮（Neon Plasma Burst Button）— shared 组件</title>
+
+<!--
+  组件：霓虹等离子爆发按钮
+  用途：封面/开场的主行动按钮（“开始学习”“进入课程”等），胶囊形状 + 霓虹辉光 + 旋转等离子光晕 + 点击爆环
+  实现：纯 CSS（conic-gradient 旋转 + backdrop-filter 玻璃壳 + 点击爆环动画），零 JavaScript 依赖
+  前缀：npb-（Neon Plasma Burst），多课复制时避免与其它组件冲突
+  颜色：默认深空暖金配色（恒星金 #FFD54F + 琥珀 #FFB74D），全部 hex/rgba，无 oklch，天然兼容旧浏览器；
+        通过 .npb 上的 CSS 变量整体覆写（--npb-c1 / --npb-c2 / --npb-shell 等）
+  说明：源自 lessons/geo01-earth-universe 封面“开始学习”按钮，形状为两头纯圆弧（胶囊）、白色文字无发光
+-->
+<style>
+.npb,
+.npb *,
+.npb *::before,
+.npb *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 组件变量：默认深空暖金配色，课程页可在 .npb（或外层容器）上覆写 */
+.npb {
+  --npb-shell: rgba(24, 20, 12, 0.55);   /* 暖深色玻璃壳 */
+  --npb-c1: #FFD54F;                       /* 主色：恒星金 */
+  --npb-c2: #FFB74D;                       /* 副色：琥珀 */
+  --npb-text: #FFFFFF;                     /* 文字：白色，无发光 */
+  --npb-dur: 0.35s;
+  --npb-ease: cubic-bezier(0.25, 0.8, 0.35, 1);
+
+  /* 演示舞台（深空底色，供目录页 iframe 展示玻璃与霓虹效果；嵌入课程时可去掉） */
+  --npb-bg: radial-gradient(1200px 800px at 50% -10%, #1A1040, transparent 70%),
+            radial-gradient(1000px 900px at 85% 110%, #0B1026, transparent 65%),
+            #0A0A18;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1.5rem, 6vw, 4rem);
+  background: var(--npb-bg);
+  font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+/* ---- 按钮主体：胶囊（两头纯圆弧）+ 玻璃壳 + 霓虹灯管辉光 ---- */
+.npb__btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+  width: 280px;
+  height: 68px;
+  border: 1px solid rgba(255, 213, 79, 0.5);
+  border-radius: 999px;                       /* 两头纯圆弧（胶囊） */
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--npb-text);
+  background: var(--npb-shell);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:                                 /* 霓虹灯管：内光晕 + 描边环 + 外溢光 */
+    inset 0 0 14px rgba(255, 213, 79, 0.18),
+    0 0 0 1px rgba(255, 213, 79, 0.45),
+    0 0 30px -8px rgba(255, 213, 79, 0.4),
+    0 10px 30px rgba(2, 6, 23, 0.45);
+  transition: box-shadow var(--npb-dur) var(--npb-ease),
+              color 0.3s ease,
+              transform var(--npb-dur) var(--npb-ease);
+  animation: npb-flicker 6s ease-in-out infinite;
+}
+
+.npb__label {
+  position: relative;
+  z-index: 2;
+}
+
+/* 旋转等离子光晕：conic 渐变（金 → 琥珀 → 金）+ 模糊，铺在玻璃壳之上、文字之下 */
+.npb__plasma {
+  position: absolute;
+  inset: -40%;
+  z-index: 1;
+  opacity: 0.28;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, var(--npb-c1), var(--npb-c2), var(--npb-c1));
+  filter: blur(16px) saturate(1.4);
+  animation: npb-spin 7s linear infinite;
+  transition: opacity 0.4s ease;
+}
+
+@keyframes npb-flicker {
+  0%, 100% { opacity: 1; }
+  48% { opacity: 0.94; }
+  50% { opacity: 0.82; }
+  52% { opacity: 0.97; }
+}
+@keyframes npb-spin { to { transform: rotate(360deg); } }
+
+.npb__btn:hover,
+.npb__btn:focus-visible {
+  color: #f4feff;
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 22px rgba(255, 213, 79, 0.3),
+    0 0 0 1px rgba(255, 213, 79, 0.8),
+    0 0 46px -6px rgba(255, 213, 79, 0.5),
+    0 14px 34px rgba(2, 6, 23, 0.5);
+}
+.npb__btn:hover .npb__plasma {
+  opacity: 0.55;
+  animation-duration: 3.2s;
+}
+.npb__btn:focus-visible { outline: 2px solid var(--npb-c1); outline-offset: 4px; }
+.npb__btn:active { transform: translateY(-1px) scale(0.97); }
+
+/* 点击爆环 */
+.npb__burst {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 6rem;
+  height: 6rem;
+  margin: -3rem 0 0 -3rem;
+  border-radius: 50%;
+  border: 2px solid var(--npb-c1);
+  opacity: 0;
+  pointer-events: none;
+}
+.npb__btn:active .npb__burst {
+  animation: npb-burst 0.62s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes npb-burst {
+  0% { opacity: 0.9; transform: scale(0.15); }
+  100% { opacity: 0; transform: scale(3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .npb__btn { animation: none; transition: none; }
+  .npb__plasma { animation: none; }
+  .npb__burst { display: none; }
+}
+
+@media (forced-colors: active) {
+  .npb__btn {
+    background: ButtonFace;
+    color: ButtonText;
+    border: 1px solid ButtonText;
+    box-shadow: none;
+  }
+  .npb__plasma,
+  .npb__burst { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="npb">
+  <button class="npb__btn" type="button">
+    <span class="npb__plasma" aria-hidden="true"></span>
+    <span class="npb__burst" aria-hidden="true"></span>
+    <span class="npb__label">开始学习</span>
+  </button>
+</div>
+</body>
+</html>

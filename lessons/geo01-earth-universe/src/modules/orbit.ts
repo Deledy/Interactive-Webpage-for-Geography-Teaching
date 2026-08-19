@@ -12,7 +12,7 @@ import {
   Mesh, SphereGeometry, MeshStandardMaterial, MeshBasicMaterial,
   RingGeometry, LineLoop, BufferGeometry, LineBasicMaterial,
   Float32BufferAttribute, Texture, TextureLoader, Clock,
-  DoubleSide, Group
+  DoubleSide, Group, SRGBColorSpace
 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { $, $$, prefersReducedMotion } from '../utils/dom'
@@ -124,7 +124,12 @@ function initOrbit3D(vp: HTMLElement, info: HTMLElement): void {
 
   /* 太阳 */
   const loader = new TextureLoader();
-  const tex = (file: string): Texture => loader.load('./textures/' + file);
+  /* three r152+ 默认启用色彩管理：sRGB 贴图必须标记 colorSpace，否则渲染发灰、失真 */
+  const tex = (file: string): Texture => {
+    const t = loader.load('./textures/' + file);
+    t.colorSpace = SRGBColorSpace;
+    return t;
+  };
   const sun = new Mesh(
     new SphereGeometry(SUN_R, 48, 48),
     new MeshBasicMaterial({ map: tex('sun.jpg') })

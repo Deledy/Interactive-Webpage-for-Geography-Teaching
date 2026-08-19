@@ -52,9 +52,14 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2018',
     chunkSizeWarningLimit: 800,
-    // 小于 4KB 的资源 base64 内联；大于 4KB 的图片输出为独立文件到 dist/assets/
-    // 独立文件在 file:// 协议下通过 <img> 标签加载正常，不受 CORS 影响
-    assetsInlineLimit: 4 * 1024,
+    // 字体（woff2/ttf/otf）一律 base64 内联进单文件：file:// 下 @font-face 引用外部字体文件
+    // 会被 Chrome/Edge 以 CORS 拦截，必须内联才能保证双击离线可用；
+    // 其余资源仍按 4KB 阈值内联，大于 4KB 的图片输出为独立文件到 dist/assets/
+    // （独立文件在 file:// 协议下通过 <img> 标签加载正常，不受 CORS 影响）
+    assetsInlineLimit: (filePath, content) => {
+      if (/\.(woff2?|ttf|otf)$/i.test(filePath)) return true
+      return content.byteLength < 4 * 1024
+    },
     // 以下两项替代 viteSingleFile 的 useRecommendedBuildConfig，保证 JS/CSS 单文件输出
     cssCodeSplit: false,
     rollupOptions: {

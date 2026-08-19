@@ -26,7 +26,12 @@
   --fs-body: 20px;
   --fs-note: 16px;
   --lh-body: 1.6;
-  --font-stack: system-ui, "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  /* 思源黑体（正文/界面）：本地内置子集（400/700）+ 系统已装优先 + 系统兜底 */
+  --font-sans: "SourceHanSansSC", "Source Han Sans SC", "思源黑体", "Noto Sans SC",
+    "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+  /* 思源宋体（课程名/封面大标题，仅 900 一档）：本地内置子集 + 系统兜底 */
+  --font-serif: "SourceHanSerifSC", "Source Han Serif SC", "思源宋体", "Noto Serif SC",
+    "SimSun", serif;
 
   /* 间距 / 圆角 / 动效 */
   --space-module: 80px;   /* 模块间留白 */
@@ -34,6 +39,54 @@
   --radius-btn: 8px;
   --ease: cubic-bezier(0.25, 0.8, 0.35, 1);
   --dur: 0.35s;
+}
+
+/* ---------- 本地思源字体（思源黑体 / 思源宋体）----------
+   来源：Google Fonts 的 Noto Sans SC / Noto Serif SC（与 Adobe 思源黑体/思源宋体同源同字形，
+   SIL OFL 1.1 许可，可免费嵌入与分发，登记见 docs/06_资源引用.md）。
+   子集文件由 scripts/subset-fonts.mjs 按本课实际用字生成（`npm run fonts` 可重新生成），
+   构建时由 Vite 全部 base64 内联进单文件产物，保证 file:// 双击离线可用
+   （@font-face 引用外部字体文件会被 Chrome/Edge 以 CORS 拦截，故不可外置）。
+   系统已安装思源字体时优先 local() 命中；未安装时回退到内联子集，再回退系统默认字体。
+   权重说明：思源黑体仅内置 400/700 两档真实字形，正文 600/800 等中间权重由浏览器取相邻档合成。 */
+@font-face {
+  font-family: "SourceHanSansSC";
+  src:
+    local("Source Han Sans SC"),
+    local("SourceHanSansSC-Regular"),
+    local("思源黑体"),
+    local("Noto Sans SC"),
+    url("../../assets/fonts/noto-sans-sc-400-subset.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SourceHanSansSC";
+  src:
+    local("Source Han Sans SC"),
+    local("SourceHanSansSC-Bold"),
+    local("思源黑体"),
+    local("Noto Sans SC"),
+    url("../../assets/fonts/noto-sans-sc-700-subset.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SourceHanSerifSC";
+  src:
+    local("Source Han Serif SC"),
+    local("SourceHanSerifSC-Heavy"),
+    local("思源宋体"),
+    local("Noto Serif SC Black"),
+    local("NotoSerifSC-Black"),
+    url("../../assets/fonts/noto-serif-sc-900-subset.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* ---------- 2. 基础重置 ---------- */
@@ -46,7 +99,7 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-stack);
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--text-main);
@@ -96,68 +149,153 @@ button { font-family: inherit; }
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 50;
-  background: rgba(11, 16, 38, 0.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  height: 80px;                 /* 导航条固定高度 */
+  background: rgba(11, 16, 38, 0.58);   /* 半透明深蓝 */
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
   border-bottom: 1px solid var(--glass-border);
 }
 
 .topnav__inner {
-  max-width: 1440px;
+  max-width: none;                 /* 取消最大宽度：内容贴左，仅保留内边距 */
+  height: 100%;
   margin: 0 auto;
-  padding: 10px 24px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;   /* 品牌区 + 菜单区 + 全屏按钮（按钮居右） */
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---- 品牌区：白色星球 Logo + 中文课程名 + 英文副标题 ---- */
+.topnav__brand {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 14px;
+  min-width: 0;
+  text-decoration: none;
+}
+.topnav__brand:hover { text-decoration: none; }
+
+.topnav__brand-logo {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  filter: drop-shadow(0 0 10px rgba(79, 195, 247, 0.45));
 }
 
-.topnav__logo {
-  color: var(--gold);
-  font-size: 18px;
-  font-weight: 700;
+.topnav__brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.topnav__brand-title {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 28px;              /* 课程名：思源宋体 Heavy，白色 */
+  line-height: 1.15;
+  letter-spacing: 2px;
+  color: #FFFFFF;
   white-space: nowrap;
-  letter-spacing: 1px;
 }
-.topnav__logo:hover { text-decoration: none; text-shadow: 0 0 12px rgba(255,213,79,.6); }
 
+.topnav__brand-sub {
+  display: block;
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 3px;
+  color: rgba(232, 234, 246, 0.78);   /* 小号英文副标题 */
+  white-space: nowrap;
+}
+
+/* ---- 菜单区：水平排列，紧贴左侧标题区；当前项亮蓝高亮 + 蓝色下划线 ---- */
 .topnav__links {
   display: flex;
+  justify-self: start;          /* 菜单紧贴标题区向左排列 */
   gap: 4px;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
+  padding-bottom: 2px;          /* 为下划线留出空间 */
 }
 .topnav__links::-webkit-scrollbar { display: none; }
 
 .topnav__links a {
   position: relative;
-  color: var(--text-dim);
-  font-size: 16px;
-  padding: 8px 12px;
+  color: rgba(232, 234, 246, 0.85);
+  font-size: 22px;              /* 章节链接字号：小于课程标题（28px） */
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 4px 16px;
   border-radius: 6px;
   white-space: nowrap;
   transition: color var(--dur) var(--ease);
 }
-.topnav__links a:hover { color: var(--text-main); text-decoration: none; }
+.topnav__links a:hover { color: #FFFFFF; text-decoration: none; }
 
-/* 当前模块高亮：恒星金文字 + 底部发光条 */
+/* 当前页面（首页）高亮：亮蓝文字 + 底部蓝色下划线 */
 .topnav__links a.is-active {
-  color: var(--gold);
-  text-shadow: 0 0 10px rgba(255, 213, 79, 0.45);
+  color: var(--cyan);
+  text-shadow: 0 0 14px rgba(79, 195, 247, 0.55);
 }
 .topnav__links a.is-active::after {
   content: "";
   position: absolute;
-  left: 12px; right: 12px; bottom: 2px;
-  height: 2px;
+  left: 16px; right: 16px; bottom: 0;
+  height: 4px;
   border-radius: 2px;
-  background: var(--gold);
-  box-shadow: 0 0 8px var(--gold);
+  background: var(--cyan);
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.8);
 }
+
+/* ---- 全屏切换按钮：深空玻璃拟态，与顶部导航整体风格一致 ---- */
+.topnav__fs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cyan);
+  cursor: pointer;
+  transition:
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform 0.12s var(--ease);
+}
+.topnav__fs:hover {
+  color: #FFFFFF;
+  border-color: rgba(79, 195, 247, 0.55);
+  background: rgba(79, 195, 247, 0.12);
+  box-shadow: 0 0 14px rgba(79, 195, 247, 0.35);
+}
+.topnav__fs:active { transform: scale(0.94); }
+.topnav__fs-icon { width: 22px; height: 22px; fill: currentColor; }
+.topnav__fs-icon--compress { display: none; }   /* 默认显示"进入全屏"图标 */
+
+/* 全屏状态下：金色强调 + 切换为"退出全屏"图标 */
+.topnav__fs.is-fullscreen {
+  color: var(--gold);
+  border-color: rgba(255, 213, 79, 0.5);
+  background: rgba(255, 213, 79, 0.1);
+  box-shadow: 0 0 14px rgba(255, 213, 79, 0.3);
+}
+.topnav__fs.is-fullscreen .topnav__fs-icon--expand { display: none; }
+.topnav__fs.is-fullscreen .topnav__fs-icon--compress { display: block; }
 
 /* ---------- 4. Section 通用骨架 ---------- */
 .section {
-  scroll-margin-top: 70px;   /* 锚点跳转避开固定导航 */
+  scroll-margin-top: 92px;   /* 锚点跳转避开 80px 固定导航 */
   padding: var(--space-module) max(24px, calc((100vw - 1200px) / 2));
 }
 
@@ -428,52 +566,364 @@ button { font-family: inherit; }
   align-items: start;
 }
 
-/* ---------- 6. M0 封面 ---------- */
+/* ---------- 6. M0 封面 Hero ---------- */
 .cover {
+  position: relative;
   min-height: 100vh;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* 左侧预留图片位 + 右侧课程内容 */
   align-items: center;
-  justify-content: center;
+  gap: 24px;
+  padding: 116px max(48px, calc((100vw - 1500px) / 2)) 88px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 24% 45%, rgba(57, 139, 190, 0.22), transparent 34%),
+    radial-gradient(circle at 76% 24%, rgba(198, 140, 70, 0.1), transparent 26%),
+    radial-gradient(circle at 60% 92%, rgba(35, 100, 180, 0.16), transparent 34%);
+}
+.cover::after {   /* 四周暗角，压暗边缘保证文字可读 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* ---- 封面背景：左对齐、高度与幕布一致、右侧渐变淡出衔接 ---- */
+.cover__bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  height: 100%;                       /* 高度与幕布一致 */
+  width: auto;                        /* 宽度按原图比例等比缩放，不拉伸 */
+  pointer-events: none;
+  /* 渐变蒙版：右缘平滑淡出，遮盖图片与右侧空白的生硬过渡 */
+  -webkit-mask-image: linear-gradient(to right, #000 68%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 68%, transparent 100%);
+}
+
+/* ---- 课程内容区（覆盖在背景图之上，置于右栏，整体略向右移） ---- */
+.cover-content {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;               /* 内容固定占右侧一栏 */
+  max-width: 600px;
+  margin-inline: auto;
   text-align: center;
-  padding: 120px 24px 60px;
+  transform: translateX(clamp(32px, 6vw, 120px));   /* 除标题栏外整体右移 */
 }
 
 .cover__kicker {
-  margin: 0 0 18px;
-  font-size: 20px;
-  letter-spacing: 4px;
-  color: var(--cyan);
-  text-shadow: 0 0 14px rgba(79, 195, 247, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  font-size: 22px;
+  letter-spacing: 5px;
+  color: #f4e7c0;
+}
+.cover__kicker::before,
+.cover__kicker::after {
+  content: "";
+  width: 56px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 230, 170, 0.85));
+}
+.cover__kicker::after { background: linear-gradient(90deg, rgba(255, 230, 170, 0.85), transparent); }
+
+.cover__chapter {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 900;             /* 思源宋体 Heavy */
+  letter-spacing: 9px;
+  color: #33bfff;
+  text-shadow: 0 0 18px rgba(51, 191, 255, 0.55);
 }
 
 .cover__title {
+  position: relative;
   margin: 0;
-  font-size: clamp(44px, 6vw, 76px);
-  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ffffff;
+}
+/* 第一行：引导性修饰词 —— 字号略小于核心行、字重较轻（思源黑体 700）、字间距更大 */
+.cover__title-line--lead {
+  position: relative;
+  font-family: var(--font-sans);
+  font-size: clamp(30px, 3.6vw, 48px);
+  font-weight: 700;
+  letter-spacing: 18px;
+  padding-left: 18px;                 /* 抵消末字字间距，保持整体视觉居中 */
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+.cover__title-line--lead::after {   /* 两行之间的金色横向光效 */
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -8px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 218, 130, 0.95), transparent);
+  box-shadow: 0 0 22px rgba(255, 205, 96, 0.8);
+}
+/* 第二行：标题视觉核心 —— 字号较大、字重较重 */
+.cover__title-line--core {
+  margin-top: 22px;
+  font-family: var(--font-serif);
+  font-size: clamp(56px, 6.2vw, 92px);
+  font-weight: 900;
   letter-spacing: 6px;
-  color: var(--gold);
-  text-shadow: 0 0 30px rgba(255, 213, 79, 0.45), 0 0 80px rgba(255, 213, 79, 0.2);
+  padding-left: 6px;                  /* 抵消末字字间距，保持整体视觉居中 */
+  line-height: 1.12;
+  color: #ffffff;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 255, 255, 0.2);
 }
 
 .cover__subtitle {
-  margin: 24px 0 40px;
-  font-size: 24px;
-  color: var(--text-main);
-  opacity: 0.85;
+  margin: 26px 0 0;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.cover__scroll-hint {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 28px;
-  color: var(--text-dim);
-  animation: float 2.2s ease-in-out infinite;
+/* 学习目标卡片：深空玻璃拟态
+   参考双层玻璃卡片（透明面 + backdrop blur + 柔和大投影 + 内描边高光），
+   配色沿用课程设计令牌：玻璃面 --glass-bg、描边 --glass-border、强调恒星金 --gold */
+.goal-card {
+  margin: 32px auto 0;
+  width: min(520px, 100%);
+  padding: 30px 26px 28px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 8px 32px rgba(2, 6, 23, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-@keyframes float {
-  0%, 100% { transform: translate(-50%, 0); }
-  50% { transform: translate(-50%, 10px); }
+.goal-card__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 0 20px;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 900;             /* 思源宋体 Heavy */
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 213, 79, 0.4);
+}
+.goal-card__title::before,
+.goal-card__title::after {
+  content: "";
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 213, 79, 0.7));
+}
+.goal-card__title::after { background: linear-gradient(90deg, rgba(255, 213, 79, 0.7), transparent); }
+.goal-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.goal-card__item {
+  height: 58px;
+  display: grid;
+  grid-template-columns: 76px 1fr 46px;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.goal-card__item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 213, 79, 0.45);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.4);
+}
+.goal-card__num {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 900;             /* 思源宋体 Heavy */
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 213, 79, 0.55);
+}
+.goal-card__text {
+  font-size: 20px;
+  color: #ffffff;
+  text-align: left;
+}
+.goal-card__icon {   /* 学习目标条目末尾的 SVG 图标：统一白色 */
+  width: 28px;
+  height: 28px;
+  justify-self: center;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+/* 开始学习按钮：深空霓虹等离子
+   参考 shared/components/css-neon-plasma-burst-button.html（暗壳 + 旋转等离子光晕 + 点击爆环 + 微闪烁），
+   改为圆角矩形，配色沿用课程设计令牌：恒星金 --gold 主色、星云青 --cyan 副色；不引入外部字体 */
+.start-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 36px auto 0;
+  width: 280px;
+  height: 68px;
+  border-radius: 999px;                         /* 两头纯圆弧（胶囊） */
+  border: 1px solid rgba(255, 213, 79, 0.5);
+  background: rgba(24, 20, 12, 0.55);           /* 暖深色玻璃壳（与金色辉光同色调） */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-serif);               /* 思源宋体 */
+  font-weight: 900;                             /* 思源宋体 Heavy */
+  color: #ffffff;                               /* “开始学习”白色文字（无发光） */
+  font-size: 26px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow:                                   /* 霓虹灯管：内光晕 + 描边环 + 外溢光 */
+    inset 0 0 14px rgba(255, 213, 79, 0.18),
+    0 0 0 1px rgba(255, 213, 79, 0.45),
+    0 0 30px -8px rgba(255, 213, 79, 0.4),
+    0 10px 30px rgba(2, 6, 23, 0.45);
+  transition: transform var(--dur) var(--ease), box-shadow 0.3s ease, color 0.3s ease;
+  animation: start-btn-flicker 6s ease-in-out infinite;
+}
+.start-btn__label {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+/* 旋转等离子光晕：conic 渐变（金 → 青 → 金）+ 模糊，铺在暗壳之上、文字之下 */
+.start-btn__plasma {
+  position: absolute;
+  inset: -40%;
+  z-index: 1;
+  opacity: 0.28;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, var(--gold), var(--warn), var(--gold)); /* 全暖金调：金 → 琥珀 → 金 */
+  filter: blur(16px) saturate(1.4);
+  animation: start-btn-spin 7s linear infinite;
+  transition: opacity 0.4s ease;
+}
+.start-btn:hover,
+.start-btn:focus-visible {
+  color: #f4feff;
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 22px rgba(255, 213, 79, 0.3),
+    0 0 0 1px rgba(255, 213, 79, 0.8),
+    0 0 46px -6px rgba(255, 213, 79, 0.5),
+    0 14px 34px rgba(2, 6, 23, 0.5);
+}
+.start-btn:hover .start-btn__plasma {
+  opacity: 0.55;
+  animation-duration: 3.2s;
+}
+.start-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.start-btn:active { transform: translateY(-1px) scale(0.97); }
+/* 点击爆环 */
+.start-btn__burst {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 6rem;
+  height: 6rem;
+  margin: -3rem 0 0 -3rem;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  opacity: 0;
+  pointer-events: none;
+}
+.start-btn:active .start-btn__burst {
+  animation: start-btn-burst 0.62s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.start-btn__arrow { font-size: 30px; line-height: 1; }
+
+@keyframes start-btn-flicker {
+  0%, 100% { opacity: 1; }
+  48% { opacity: 0.94; }
+  50% { opacity: 0.82; }
+  52% { opacity: 0.97; }
+}
+@keyframes start-btn-spin { to { transform: rotate(360deg); } }
+@keyframes start-btn-burst {
+  0% { opacity: 0.9; transform: scale(0.15); }
+  100% { opacity: 0; transform: scale(3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-btn { animation: none; transition: none; }
+  .start-btn__plasma { animation: none; }
+  .start-btn__burst { display: none; }
+}
+
+/* 开始学习按钮 + 滚动提示：纵向排列，按钮居中，提示位于按钮下方居中 */
+.cover__cta {
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.cover__cta .start-btn { margin: 0; }   /* 外边距改由 .cover__cta 提供 */
+
+/* 滚动提示：按钮下方居中，尺寸缩小 */
+.cover__scroll-tip {
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cover__mouse {
+  width: 18px;
+  height: 30px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  position: relative;
+}
+.cover__mouse::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 3px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ffffff;
+  animation: cover-scroll 1.8s ease-in-out infinite;
+}
+
+@keyframes cover-scroll {
+  0% { transform: translate(-50%, 0); opacity: 1; }
+  70% { transform: translate(-50%, 7px); opacity: 0; }
+  100% { transform: translate(-50%, 7px); opacity: 0; }
 }
 
 /* ---------- 7. M4 拖拽分类（骨架布局） ---------- */
@@ -637,6 +1087,46 @@ body.review-mode .section:not(#review) .section__body,
 body.review-mode .section:not(#review) .extend-btn { display: none; }
 
 /* ---------- 12. 响应式 ---------- */
+/* 导航字号：章节链接始终小于课程标题（28px），空间不足时逐级降到 18 → 17 → 16 → 15px */
+@media (max-width: 1599px) {
+  .topnav__links a { font-size: 18px; }
+  .topnav__brand-title { font-size: 24px; }
+}
+
+@media (max-width: 1279px) {
+  .topnav__links a { font-size: 17px; }
+}
+
+@media (max-width: 1023px) {
+  .topnav__links a { font-size: 16px; }
+  .topnav__brand-logo { width: 44px; height: 44px; }
+  .topnav__brand-sub { display: none; }   /* 窄屏隐藏英文副标题，保留中文课程名 */
+}
+
+@media (max-width: 1279px) {
+  /* 封面：窄屏（单列居中内容）背景图退化为整幅铺满，避免方形图溢出/压在文字下方 */
+  .cover {
+    grid-template-columns: 1fr;
+    padding: 112px 24px 72px;
+  }
+  .cover__bg {
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .cover-content { grid-column: auto; max-width: 640px; transform: none; }
+  .cover__scroll-tip { display: none; }
+}
+
+@media (max-width: 767px) {
+  .topnav__links a { font-size: 15px; padding: 4px 12px; }
+  .topnav__inner { padding: 0 16px; gap: 12px; }
+}
+
 @media (max-width: 1024px) {
   .card-grid { grid-template-columns: repeat(2, 1fr); }
   .split { grid-template-columns: 1fr; }
@@ -649,12 +1139,39 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .section__title { font-size: 26px; }
   .card-grid { grid-template-columns: 1fr; }
   .drag-zones { grid-template-columns: 1fr; }
-  .topnav__links a { font-size: 14px; }
-  .cover__title { font-size: 40px; letter-spacing: 3px; }
-  .cover__subtitle { font-size: 18px; }
+  .cover { padding: 100px 16px 48px; }
+  .cover__kicker { font-size: 18px; letter-spacing: 3px; }
+  .cover__kicker::before,
+  .cover__kicker::after { display: none; }
+  .cover__chapter { font-size: 19px; letter-spacing: 6px; }
+  .cover__title-line--lead { font-size: 24px; letter-spacing: 12px; padding-left: 12px; }
+  .cover__title-line--core { font-size: 44px; letter-spacing: 4px; padding-left: 4px; margin-top: 16px; }
+  .cover__subtitle { font-size: 17px; margin-top: 18px; }
+  .goal-card { padding: 20px 16px 18px; }
+  .goal-card__item { height: 52px; grid-template-columns: 56px 1fr 32px; padding: 0 10px; }
+  .goal-card__num { font-size: 24px; }
+  .goal-card__text { font-size: 17px; }
+  .goal-card__icon { width: 22px; height: 22px; }
+  .start-btn { width: 240px; height: 60px; font-size: 22px; }
   .modal__panel { padding: 28px 20px; }
   /* M2 底部分类：窄屏单列（页签式堆叠卡组的窄屏适配见 .body-deck 内部媒体查询） */
   .body-classify { grid-template-columns: 1fr; }
+}
+
+/* 低矮视口（常见教室笔记本 1366×768 / 投屏）：压缩封面高度，保证首屏完整 */
+@media (max-height: 800px) {
+  .cover { padding: 88px 48px 48px; }
+  .cover__kicker { margin-bottom: 10px; }
+  .cover__chapter { margin-bottom: 4px; }
+  .cover__title-line--lead { font-size: clamp(26px, 2.6vw, 40px); }
+  .cover__title-line--core { font-size: clamp(44px, 4.8vw, 70px); margin-top: 16px; }
+  .cover__subtitle { margin-top: 16px; font-size: 18px; }
+  .goal-card { margin-top: 22px; padding: 18px 20px 16px; }
+  .goal-card__item { height: 50px; }
+  .goal-card__text { font-size: 18px; }
+  .start-btn { margin-top: 24px; height: 60px; font-size: 24px; }
+  .cover__cta { margin-top: 24px; }
+  .cover__scroll-tip { display: none; }
 }
 
 /* 动效偏好：减少动态 */
@@ -1546,10 +2063,12 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   font-size: 22px;
   font-weight: 700;
 }
+/* 因果链：每条链为一个矩形（条件在上、结果在下），多链水平平行排列且大小一致 */
 .life-panel__chains {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   justify-content: center;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
@@ -1557,21 +2076,29 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(320px, 100%);
+  justify-content: space-between;
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 18px 20px;
+  gap: 12px;
+  border-radius: var(--radius-card);
+  background: rgba(79, 195, 247, 0.06);
+  border: 1px solid rgba(79, 195, 247, 0.4);
 }
 .chain-node {
   width: 100%;
-  padding: 14px 16px;
-  border-radius: var(--radius-card);
   text-align: center;
   font-size: 18px;
   line-height: 1.5;
-  opacity: 1;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
-.chain-node--cond { background: rgba(79, 195, 247, 0.10); border: 1px solid rgba(79, 195, 247, 0.4); color: var(--text-main); }
-.chain-node--result { background: rgba(255, 213, 79, 0.10); border: 1px solid rgba(255, 213, 79, 0.4); color: var(--gold); }
+.chain-node--cond { color: var(--text-main); font-weight: 600; }
+.chain-node--result { color: var(--gold); font-weight: 600; }
 
-.chain-arrow { position: relative; width: 26px; height: 40px; }
+.chain-arrow { position: relative; width: 26px; height: 34px; flex-shrink: 0; }
 .chain-arrow::after {
   content: "";
   position: absolute;
@@ -1604,6 +2131,8 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .universe-intro__media { aspect-ratio: 4 / 3; max-width: 460px; }
   .universe-demo__view { max-width: 340px; }
   .life-panels { grid-template-columns: 1fr; }
+  .life-panel__chains { flex-direction: column; align-items: center; }
+  .chain { flex: none; width: 100%; max-width: 340px; }
   .chain-node { font-size: 16px; }
   .condition-item { flex-direction: column; align-items: flex-start; gap: 4px; }
 }

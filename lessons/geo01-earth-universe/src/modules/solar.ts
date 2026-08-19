@@ -12,7 +12,7 @@ import {
   Mesh, SphereGeometry, MeshStandardMaterial,
   RingGeometry, MeshBasicMaterial, IcosahedronGeometry,
   Raycaster, Vector2, Color, Texture, TextureLoader, Clock,
-  DoubleSide, Group, BoxGeometry
+  DoubleSide, Group, BoxGeometry, SRGBColorSpace
 } from 'three'
 import { $, $$, prefersReducedMotion } from '../utils/dom'
 import { App } from '../state'
@@ -237,9 +237,15 @@ function initSolar3D(vp: HTMLElement, info: HTMLElement): void {
   rimLight.position.set(-12, -6, -10);
   scene.add(rimLight);
 
-  /* 行星表面纹理（取自参考示例 solar-system-with-3js，public/textures/ 原样复制） */
+  /* 行星表面纹理（取自参考示例 solar-system-with-3js，public/textures/ 原样复制）。
+     注意：three r152+ 默认启用色彩管理，sRGB 贴图必须显式标记 colorSpace，
+     否则会被当作线性数据采样，导致贴图发灰、过亮、饱和度失真 */
   const loader = new TextureLoader();
-  const tex = (file: string): Texture => loader.load('./textures/' + file);
+  const tex = (file: string): Texture => {
+    const t = loader.load('./textures/' + file);
+    t.colorSpace = SRGBColorSpace;
+    return t;
+  };
   const TEX: Record<string, Texture> = {
     mercury: tex('mercury.jpg'),
     venus: tex('venus.jpg'),

@@ -233,8 +233,78 @@ footer {
 &lt;!-- 方式三：复制 &lt;style&gt; + &lt;template&gt; + &lt;script&gt; 内容到页面中 --&gt;</code></pre>
     </details>
   </section>
+
+  <section class="comp">
+    <div class="comp__head">
+      <h2>4. 深空玻璃目标卡片 <small>glass-goal-card</small></h2>
+      <dl class="comp__meta">
+        <dt>文件</dt>
+        <dd><code>components/glass-goal-card.html</code></dd>
+        <dt>用途</dt>
+        <dd>封面/开场的学习目标卡片，也可复用为通用玻璃清单卡片（学习要点、课堂任务等）</dd>
+        <dt>实现</dt>
+        <dd>纯 CSS（backdrop-filter 玻璃拟态 + 悬停微交互），零 JavaScript 依赖</dd>
+        <dt>兼容性</dt>
+        <dd>配色全部 hex/rgba，无 oklch，天然兼容旧浏览器；prefers-reduced-motion 下停用动效</dd>
+        <dt>定制</dt>
+        <dd>复制进单课时保留 .ggc 前缀；通过 CSS 变量整体覆写玻璃面/描边/恒星金主色</dd>
+      </dl>
+    </div>
+    <div class="comp__preview">
+      <iframe src="components/glass-goal-card.html" title="深空玻璃目标卡片预览" loading="lazy"></iframe>
+    </div>
+    <details class="comp__use">
+      <summary>查看调用方式</summary>
+      <pre><code>&lt;!-- 方式一：整页 iframe 嵌入（样式完全隔离，推荐） --&gt;
+&lt;iframe src="../../shared/components/glass-goal-card.html"
+        style="width:100%;height:480px;border:0"&gt;&lt;/iframe&gt;
+
+&lt;!-- 方式二：抽取 .ggc__* CSS + HTML 片段复制进课程页面，替换标题与条目文案即可
+     注意：保留 .ggc 前缀，避免与页面其它组件样式冲突；条目末尾图标可省略 --&gt;
+
+&lt;!-- 方式三：覆写主题色（在 .ggc 或外层容器上声明变量） --&gt;
+&lt;style&gt;
+.ggc { --ggc-glass-bg: rgba(255,255,255,.08); --ggc-gold: #7FD1FF; }
+&lt;/style&gt;</code></pre>
+    </details>
+  </section>
+
+  <section class="comp">
+    <div class="comp__head">
+      <h2>5. 霓虹等离子爆发按钮 <small>css-neon-plasma-burst-button</small></h2>
+      <dl class="comp__meta">
+        <dt>文件</dt>
+        <dd><code>components/css-neon-plasma-burst-button.html</code></dd>
+        <dt>用途</dt>
+        <dd>封面/开场的主行动按钮（“开始学习”“进入课程”等），胶囊形状 + 霓虹辉光 + 等离子光晕 + 点击爆环</dd>
+        <dt>实现</dt>
+        <dd>纯 CSS（conic-gradient 旋转 + backdrop-filter 玻璃壳 + 点击爆环动画），零 JavaScript 依赖</dd>
+        <dt>兼容性</dt>
+        <dd>配色全部 hex/rgba，无 oklch，天然兼容旧浏览器；prefers-reduced-motion 与 forced-colors 已适配</dd>
+        <dt>定制</dt>
+        <dd>复制进单课时保留 .npb 前缀；通过 CSS 变量整体覆写主色/副色/玻璃壳/文字色</dd>
+      </dl>
+    </div>
+    <div class="comp__preview">
+      <iframe src="components/css-neon-plasma-burst-button.html" title="霓虹等离子爆发按钮预览" loading="lazy"></iframe>
+    </div>
+    <details class="comp__use">
+      <summary>查看调用方式</summary>
+      <pre><code>&lt;!-- 方式一：整页 iframe 嵌入（样式完全隔离，推荐） --&gt;
+&lt;iframe src="../../shared/components/css-neon-plasma-burst-button.html"
+        style="width:100%;height:480px;border:0"&gt;&lt;/iframe&gt;
+
+&lt;!-- 方式二：抽取 .npb__* CSS + HTML 片段复制进课程页面，替换按钮文案即可
+     注意：保留 .npb 前缀，避免与页面其它组件样式冲突 --&gt;
+
+&lt;!-- 方式三：覆写主题色（在 .npb 或外层容器上声明变量） --&gt;
+&lt;style&gt;
+.npb { --npb-c1: #7FD1FF; --npb-c2: #22D3EE; }
+&lt;/style&gt;</code></pre>
+    </details>
+  </section>
 </main>
 
-<footer>shared/ 目录当前共 3 个组件</footer>
+<footer>shared/ 目录当前共 5 个组件</footer>
 </body>
 </html>

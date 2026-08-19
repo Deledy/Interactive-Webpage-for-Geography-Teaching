@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>深空玻璃目标卡片（Glass Goal Card）— shared 组件</title>
+
+<!--
+  组件：深空玻璃目标卡片
+  用途：封面/开场的学习目标列表，也可复用为通用玻璃清单卡片（学习要点、课堂任务等）
+  实现：纯 CSS（backdrop-filter 玻璃拟态 + 悬停微交互），零 JavaScript 依赖
+  前缀：ggc-（Glass Goal Card），多课复制时避免与其它组件冲突
+  颜色：默认深空配色（玻璃面 + 恒星金），全部 hex/rgba，无 oklch，天然兼容旧浏览器；
+        通过 .ggc 上的 CSS 变量整体覆写（--ggc-glass-bg / --ggc-glass-border / --ggc-gold 等）
+-->
+<style>
+.ggc,
+.ggc *,
+.ggc *::before,
+.ggc *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 组件变量：默认深空配色，课程页可在 .ggc（或外层容器）上覆写 */
+.ggc {
+  --ggc-glass-bg: rgba(255, 255, 255, 0.06);    /* 玻璃面 */
+  --ggc-glass-border: rgba(255, 255, 255, 0.14); /* 玻璃描边 */
+  --ggc-gold: #FFD54F;                            /* 恒星金：标题 / 序号 / 悬停 */
+  --ggc-text: #FFFFFF;                            /* 正文 */
+  --ggc-item-border: rgba(255, 255, 255, 0.1);    /* 条目描边 */
+  --ggc-dur: 0.35s;
+  --ggc-ease: cubic-bezier(0.25, 0.8, 0.35, 1);
+
+  /* 演示舞台（深空底色，供目录页 iframe 展示玻璃效果；嵌入课程时可去掉） */
+  --ggc-bg: radial-gradient(1200px 800px at 50% -10%, #1A1040, transparent 70%),
+            radial-gradient(1000px 900px at 85% 110%, #0B1026, transparent 65%),
+            #0A0A18;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: var(--ggc-bg);
+  font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+/* ---- 卡片主体：双层玻璃（透明面 + backdrop blur + 柔和大投影 + 内描边高光） ---- */
+.ggc__card {
+  width: min(520px, 100%);
+  padding: 30px 26px 28px;
+  border: 1px solid var(--ggc-glass-border);
+  border-radius: 12px;
+  background: var(--ggc-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.ggc__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--ggc-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 213, 79, 0.4);
+}
+.ggc__title::before,
+.ggc__title::after {
+  content: "";
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 213, 79, 0.7));
+}
+.ggc__title::after { background: linear-gradient(90deg, rgba(255, 213, 79, 0.7), transparent); }
+
+.ggc__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ggc__item {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 76px 1fr 46px;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ggc-item-border);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  transition: transform var(--ggc-dur) var(--ggc-ease),
+              border-color var(--ggc-dur) var(--ggc-ease),
+              box-shadow var(--ggc-dur) var(--ggc-ease);
+}
+.ggc__item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 213, 79, 0.45);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.4);
+}
+
+.ggc__num {
+  font-family: Georgia, 'Times New Roman', 'Songti SC', 'SimSun', serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--ggc-gold);
+  text-shadow: 0 0 14px rgba(255, 213, 79, 0.55);
+}
+
+.ggc__text {
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--ggc-text);
+  text-align: left;
+}
+
+/* 条目末尾图标（可选，省略时不影响布局）；课程页可换成自己的 SVG/图片 */
+.ggc__icon {
+  width: 28px;
+  height: 28px;
+  justify-self: center;
+  color: var(--ggc-gold);
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ggc__item { transition: none; }
+  .ggc__item:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+<section class="ggc" aria-label="深空玻璃目标卡片演示">
+  <div class="ggc__card">
+    <h2 class="ggc__title">学习目标</h2>
+    <ul class="ggc__list">
+      <li class="ggc__item">
+        <span class="ggc__num">01</span>
+        <span class="ggc__text">认识宇宙中的主要天体类型</span>
+        <span class="ggc__icon" aria-hidden="true">★</span>
+      </li>
+      <li class="ggc__item">
+        <span class="ggc__num">02</span>
+        <span class="ggc__text">理解天体系统的层级结构</span>
+        <span class="ggc__icon" aria-hidden="true">★</span>
+      </li>
+      <li class="ggc__item">
+        <span class="ggc__num">03</span>
+        <span class="ggc__text">分析地球存在生命的宇宙条件</span>
+        <span class="ggc__icon" aria-hidden="true">★</span>
+      </li>
+    </ul>
+  </div>
+</section>
+</body>
+</html>

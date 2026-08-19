@@ -10,6 +10,9 @@ Thumbs.db
 *.tmp
 *.log
 
+# 字体子集化缓存（可变字体源文件与中间产物，可随时重下/重建）
+scripts/.font-cache/
+
 # 依赖与构建产物
 node_modules/
 lessons/*/dist/

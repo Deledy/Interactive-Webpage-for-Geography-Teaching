@@ -12,12 +12,18 @@
   <!-- 全局星点背景：JS 开启时由 canvas 绘制并缓慢漂移；无 JS 时退化为 CSS 静态星点 -->
   <canvas id="starfield" aria-hidden="true"></canvas>
 
-  <!-- 顶部固定导航 -->
+  <!-- 顶部固定导航：左侧品牌区（白色星球 Logo + 中文课程名 + 英文副标题），中间章节菜单 -->
   <header class="topnav" id="topnav">
     <div class="topnav__inner">
-      <a class="topnav__logo" href="#cover">地球的宇宙环境</a>
+      <a class="topnav__brand" href="#cover" aria-label="返回首页">
+        <img class="topnav__brand-logo" src="./assets/icons/planet-logo.svg" alt="" width="200" height="200">
+        <span class="topnav__brand-text">
+          <span class="topnav__brand-title">地球的宇宙环境</span>
+          <span class="topnav__brand-sub">THE UNIVERSE ENVIRONMENT</span>
+        </span>
+      </a>
       <nav class="topnav__links" aria-label="章节导航">
-        <a href="#cover" data-target="cover" class="is-active">封面</a>
+        <a href="#cover" data-target="cover" class="is-active">首页</a>
         <a href="#universe" data-target="universe">宇宙</a>
         <a href="#celestial" data-target="celestial">天体</a>
         <a href="#meteor" data-target="meteor">判别</a>
@@ -27,19 +33,67 @@
         <a href="#life" data-target="life">生命</a>
         <a href="#review" data-target="review">复习</a>
       </nav>
+      <!-- 全屏切换按钮：点击进入/退出全屏（JS 由 src/modules/fullscreen.ts 驱动） -->
+      <button type="button" class="topnav__fs" id="fs-toggle" aria-label="进入全屏" title="进入全屏">
+        <svg class="topnav__fs-icon topnav__fs-icon--expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path>
+        </svg>
+        <svg class="topnav__fs-icon topnav__fs-icon--compress" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path>
+        </svg>
+      </button>
     </div>
   </header>
 
   <main>
     <!-- ============ M0 封面与导航 ============ -->
     <section id="cover" class="section cover">
-      <div class="cover__inner">
-        <p class="cover__kicker">第一章 第一节 · 高中必修一</p>
-        <h1 class="cover__title">地球的宇宙环境</h1>
-        <p class="cover__subtitle">认识我们所在的宇宙 —— 从地球出发，走向可观测宇宙</p>
-        <button type="button" class="btn btn--primary btn--lg" data-scroll-to="universe">开始学习</button>
+      <!-- 封面背景：左对齐、高度与幕布一致，右侧用渐变蒙版淡出衔接 -->
+      <img class="cover__bg" src="./assets/images/cover-earth.png" alt="" aria-hidden="true">
+      <!-- 课程内容区 -->
+      <div class="cover-content">
+        <p class="cover__kicker">高中必修一</p>
+        <p class="cover__chapter">第一章 第1节</p>
+        <h1 class="cover__title">
+          <span class="cover__title-line cover__title-line--lead">地球的</span>
+          <span class="cover__title-line cover__title-line--core">宇宙环境</span>
+        </h1>
+        <p class="cover__subtitle">认识我们所在的宇宙 · 从地球出发 · 走向可观测宇宙</p>
+
+        <div class="goal-card">
+          <h2 class="goal-card__title">学习目标</h2>
+          <ul class="goal-card__list">
+            <li class="goal-card__item">
+              <span class="goal-card__num">01</span>
+              <span class="goal-card__text">认识宇宙中的主要天体类型</span>
+              <img class="goal-card__icon" src="./assets/icons/地球.svg" alt="">
+            </li>
+            <li class="goal-card__item">
+              <span class="goal-card__num">02</span>
+              <span class="goal-card__text">理解天体系统的层级结构</span>
+              <img class="goal-card__icon" src="./assets/icons/层级.svg" alt="">
+            </li>
+            <li class="goal-card__item">
+              <span class="goal-card__num">03</span>
+              <span class="goal-card__text">分析地球存在生命的宇宙条件</span>
+              <img class="goal-card__icon" src="./assets/icons/生命.svg" alt="">
+            </li>
+          </ul>
+        </div>
+
+        <div class="cover__cta">
+          <button type="button" class="start-btn" data-scroll-to="universe">
+            <span class="start-btn__plasma" aria-hidden="true"></span>
+            <span class="start-btn__burst" aria-hidden="true"></span>
+            <span class="start-btn__label">开始学习<span class="start-btn__arrow" aria-hidden="true">→</span></span>
+          </button>
+          <!-- 滚动提示：位于按钮下方居中 -->
+          <div class="cover__scroll-tip" aria-hidden="true">
+            <span class="cover__mouse"></span>
+            <span>向下滚动 探索宇宙</span>
+          </div>
+        </div>
       </div>
-      <a class="cover__scroll-hint" href="#universe" aria-label="向下滚动">↓</a>
     </section>
 
     <!-- ============ M1 宇宙概念 ============ -->

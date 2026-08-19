@@ -48,7 +48,7 @@ describe('无 JS 静态降级（兼容性）', () => {
     expect(document.querySelector('#hierarchy-ring .panel__placeholder')).toBeTruthy()
     expect(document.querySelectorAll('#body-deck .body-deck__card').length).toBe(7)
     expect(document.querySelectorAll('#meteor-conditions .condition-item.is-lit').length).toBe(3)
-    expect(document.querySelector('#life-chain .panel__placeholder')).toBeTruthy()
+    expect(document.querySelectorAll('#life-chain .chain').length).toBe(5)
     expect(document.querySelector('#orbit-viewport .panel__placeholder')).toBeTruthy()
   })
 })
@@ -116,17 +116,14 @@ describe('M5 天体系统层级（聚焦切换）', () => {
   })
 })
 
-describe('M8 生命条件因果链（分步点亮）', () => {
-  it('渲染 5 条链并逐条点亮至总结论', () => {
+describe('M8 生命条件因果链（静态分组）', () => {
+  it('按外部/自身条件渲染两组因果链与总结论', () => {
     initLifeChain()
+    expect(document.querySelectorAll('.life-panel')).toHaveLength(2)
     expect(document.querySelectorAll('.chain')).toHaveLength(5)
-    const btn = document.querySelector('[data-widget="life-next"]') as HTMLElement
-    expect(document.querySelectorAll('.chain.is-lit')).toHaveLength(0)
-
-    for (let i = 0; i < 6; i++) btn.click()
-    expect(App.lifeStep).toBe(6)
-    expect(document.getElementById('life-conclusion')!.textContent).toContain('总结论')
-    expect(btn.textContent).toBe('重新开始')
+    const tags = Array.from(document.querySelectorAll('.life-panel__title .tag')).map(t => t.textContent)
+    expect(tags).toEqual(['外部条件', '自身条件'])
+    expect(document.getElementById('life-conclusion')!.textContent).toContain('共同作用')
   })
 })
 
