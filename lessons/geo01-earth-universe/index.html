@@ -100,24 +100,59 @@
     <section id="universe" class="section" data-nav="宇宙">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 01</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">01</span>
+          </span>
           <h2 class="section__title">宇宙概念</h2>
-          <p class="section__desc">宇宙是空间与时间的统一体，无边无际、无始无终；它是物质性的、运动性的，约 137 亿年前起源于一次大爆炸。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M1" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M1" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M1" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M1" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="universe">
-        <!-- 图文开篇：左侧深空图片 + 右侧核心概念（两栏布局，无 JS 亦可阅读） -->
+        <!-- 图文开篇：左侧宇宙摄影图（3D 透视倾斜卡片堆叠）+ 右侧核心概念玻璃卡片（两栏布局，无 JS 亦可阅读） -->
         <div class="universe-intro">
-          <figure class="universe-intro__media">
-            <img src="./assets/images/universe-intro.jpg" alt="深空星云与银河星系，展现宇宙的壮丽尺度" loading="lazy" data-lightbox>
+          <!-- 左：著名宇宙摄影图 · 3D 透视悬停倾斜（效果借鉴 shared/3d-perspective-hover-tilt-stack.html，配色沿用课程设计令牌） -->
+          <figure class="universe-intro__media" id="universe-tilt">
+            <div class="nebula-tilt__deck" tabindex="0" role="img" aria-label="宇宙深空摄影——银河与星云，展现宇宙的壮丽尺度">
+              <div class="nebula-tilt__card nebula-tilt__card--img">
+                <div class="nebula-tilt__layer nebula-tilt__layer--holo" aria-hidden="true"></div>
+                <img class="nebula-tilt__img" src="./assets/images/universe-intro.jpg" alt="深空星云与银河星系，展现宇宙的壮丽尺度" loading="lazy" onerror="this.style.display='none'" data-lightbox>
+                <div class="nebula-tilt__shade" aria-hidden="true"></div>
+                <div class="nebula-tilt__layer nebula-tilt__layer--content">
+                  <span class="nebula-tilt__name">宇宙</span>
+                  <span class="nebula-tilt__sub">UNIVERSE · GALAXY</span>
+                </div>
+                <div class="nebula-tilt__layer nebula-tilt__layer--glare" aria-hidden="true"></div>
+                <div class="nebula-tilt__layer nebula-tilt__layer--border" aria-hidden="true"></div>
+              </div>
+            </div>
           </figure>
-          <div class="universe-intro__text">
-            <p class="universe-quote">四方上下曰宇，往古来今曰宙</p>
-            <p class="universe-summary">宇宙是所有时间、空间和物质的总和</p>
+          <!-- 右：核心概念玻璃卡片（效果借鉴 shared/glass-goal-card.html，行间分隔线 + 行首 SVG 图标） -->
+          <div class="universe-intro__side">
+            <p class="universe-intro__lead">宇宙是空间与时间的统一体，无边无际、无始无终；它是物质性的、运动性的，约 137 亿年前起源于一次大爆炸。</p>
+            <div class="universe-card">
+              <div class="universe-card__row universe-card__row--quote">
+                <svg class="universe-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4"/><path d="M20 11h-4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4"/></svg>
+                <p class="universe-card__quote">四方上下曰宇，往古来今曰宙</p>
+              </div>
+              <div class="universe-card__row">
+                <svg class="universe-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 9.5a8.5 8.5 0 0 1 8.5 8.5"/><path d="M12 14.5a8.5 8.5 0 0 0-8.5-8.5"/><path d="M12 9.5a8.5 8.5 0 0 0 8.5-8.5"/><path d="M12 14.5a8.5 8.5 0 0 1-8.5 8.5"/></svg>
+                <p class="universe-card__def">宇宙是所有时间、空间和物质的总和</p>
+              </div>
+              <div class="universe-card__row universe-card__row--think">
+                <svg class="universe-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1 1-1.1 1.9"/><path d="M12 17.2h.01"/></svg>
+                <p class="universe-card__think">我们看到的遥远星系，也是在观察宇宙的过去</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -127,12 +162,21 @@
     <section id="celestial" class="section" data-nav="天体">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 02</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">02</span>
+          </span>
           <h2 class="section__title">天体卡片档案</h2>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M2" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M2" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M2" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M2" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="celestial">
@@ -436,13 +480,22 @@
     <section id="meteor" class="section" data-nav="判别">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 03</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">03</span>
+          </span>
           <h2 class="section__title">天体判别 · 流星案例</h2>
           <p class="section__desc">判断一个物体是不是天体，看三条标准：是物质不是现象、位于地球大气层之外、是独立个体。跟随流星案例动画，一步一步验证这三条标准。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M3" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M3" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M3" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M3" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="meteor">
@@ -471,13 +524,22 @@
     <section id="hierarchy" class="section" data-nav="层级">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 05</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">05</span>
+          </span>
           <h2 class="section__title">天体系统层级</h2>
           <p class="section__desc">天体之间相互吸引、相互绕转，构成不同级别的天体系统。从大到小依次为：可观测宇宙 → 银河系 → 太阳系 → 地月系。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M5" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M5" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M5" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M5" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="hierarchy">
@@ -494,13 +556,22 @@
     <section id="solar" class="section" data-nav="太阳系">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 06</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">06</span>
+          </span>
           <h2 class="section__title">太阳系与八大行星</h2>
           <p class="section__desc">太阳系以太阳为中心，八大行星沿近似共面的轨道绕日公转，公转方向一致（自西向东）。图中行星大小与距离非按比例。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M6" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M6" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M6" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M6" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="solar">
@@ -518,13 +589,22 @@
     <section id="planets" class="section" data-nav="行星">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 07</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">07</span>
+          </span>
           <h2 class="section__title">行星的运动特征</h2>
           <p class="section__desc">八大行星绕日公转方向一致（自西向东）、轨道近似圆形、轨道面几乎位于同一平面，分别体现同向性、近圆性与共面性。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M7" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M7" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M7" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M7" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="planets">
@@ -551,13 +631,22 @@
     <section id="life" class="section" data-nav="生命">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 08</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">08</span>
+          </span>
           <h2 class="section__title">地球存在生命的原因</h2>
           <p class="section__desc">地球的特殊性来自外部条件（太阳与宇宙环境）与自身条件（温度、大气、液态水）的共同作用。以下将外部条件与自身条件分开呈现。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M8" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M8" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M8" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M8" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="life">
@@ -607,13 +696,22 @@
     <section id="review" class="section" data-nav="复习">
       <div class="section__head">
         <div class="section__head-text">
-          <span class="section__tag">模块 09</span>
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">09</span>
+          </span>
           <h2 class="section__title">复习与总结</h2>
           <p class="section__desc">收束全课知识结构。进入复习模式后，讲解文字会被隐藏，只保留结构图与练习，方便自主复习巩固。</p>
         </div>
         <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M9" aria-haspopup="dialog">⊕ 拓展</button>
-          <button type="button" class="practice-btn" data-practice="M9" aria-haspopup="dialog">✎ 练习</button>
+          <button type="button" class="extend-btn" data-section="M9" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M9" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
         </div>
       </div>
       <div class="section__body" data-module="review">

@@ -3,15 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>深空玻璃目标卡片（Glass Goal Card）— shared 组件</title>
+<title>深空玻璃概念卡片（Glass Concept Card）— shared 组件</title>
 
 <!--
-  组件：深空玻璃目标卡片
-  用途：封面/开场的学习目标列表，也可复用为通用玻璃清单卡片（学习要点、课堂任务等）
-  实现：纯 CSS（backdrop-filter 玻璃拟态 + 悬停微交互），零 JavaScript 依赖
+  组件：深空玻璃概念卡片
+  用途：概念讲解右侧信息卡（金色引导语 / 核心定义 / 思考问题），
+        行首预留 SVG 图标位，行与行之间用分割线分隔；
+        也可复用为通用玻璃清单卡片（学习要点、课堂任务等）
+  实现：纯 CSS（backdrop-filter 玻璃拟态），零 JavaScript 依赖
   前缀：ggc-（Glass Goal Card），多课复制时避免与其它组件冲突
   颜色：默认深空配色（玻璃面 + 恒星金），全部 hex/rgba，无 oklch，天然兼容旧浏览器；
         通过 .ggc 上的 CSS 变量整体覆写（--ggc-glass-bg / --ggc-glass-border / --ggc-gold 等）
+  示例内容：geo01 地球的宇宙环境 · M1 宇宙概念（行首图标请按需替换成课程内联 SVG）
 -->
 <style>
 .ggc,
@@ -29,9 +32,8 @@
   --ggc-glass-border: rgba(255, 255, 255, 0.14); /* 玻璃描边 */
   --ggc-gold: #FFD54F;                            /* 恒星金：标题 / 序号 / 悬停 */
   --ggc-text: #FFFFFF;                            /* 正文 */
-  --ggc-item-border: rgba(255, 255, 255, 0.1);    /* 条目描边 */
-  --ggc-dur: 0.35s;
-  --ggc-ease: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --ggc-item-border: rgba(255, 255, 255, 0.1);    /* 条目分割线 / 标签描边 */
+  --ggc-icon: #4FC3F7;                            /* 行首图标（默认星云青，引导语/思考问题可覆写为金） */
 
   /* 演示舞台（深空底色，供目录页 iframe 展示玻璃效果；嵌入课程时可去掉） */
   --ggc-bg: radial-gradient(1200px 800px at 50% -10%, #1A1040, transparent 70%),
@@ -48,8 +50,8 @@
 
 /* ---- 卡片主体：双层玻璃（透明面 + backdrop blur + 柔和大投影 + 内描边高光） ---- */
 .ggc__card {
-  width: min(520px, 100%);
-  padding: 30px 26px 28px;
+  width: min(560px, 100%);
+  padding: 26px 30px;
   border: 1px solid var(--ggc-glass-border);
   border-radius: 12px;
   background: var(--ggc-glass-bg);
@@ -58,105 +60,72 @@
   box-shadow: 0 8px 32px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.ggc__title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: var(--ggc-gold);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 213, 79, 0.4);
-}
-.ggc__title::before,
-.ggc__title::after {
-  content: "";
-  width: 40px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 213, 79, 0.7));
-}
-.ggc__title::after { background: linear-gradient(90deg, rgba(255, 213, 79, 0.7), transparent); }
-
 .ggc__list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
+/* ---- 条目：行首图标位 + 内容，行与行之间用分割线分隔 ---- */
 .ggc__item {
-  min-height: 58px;
-  display: grid;
-  grid-template-columns: 76px 1fr 46px;
-  align-items: center;
-  padding: 0 16px;
-  border-radius: 10px;
-  border: 1px solid var(--ggc-item-border);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-  transition: transform var(--ggc-dur) var(--ggc-ease),
-              border-color var(--ggc-dur) var(--ggc-ease),
-              box-shadow var(--ggc-dur) var(--ggc-ease);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 2px;
+  border-bottom: 1px solid var(--ggc-item-border);
 }
-.ggc__item:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 213, 79, 0.45);
-  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.4);
+.ggc__item:last-child {
+  border-bottom: none;
 }
 
-.ggc__num {
-  font-family: Georgia, 'Times New Roman', 'Songti SC', 'SimSun', serif;
-  font-size: 30px;
-  font-weight: 900;
+/* 行首 SVG 图标位：省略时不影响布局（内容区自动占满剩余宽度） */
+.ggc__icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin-top: 3px;
+  color: var(--ggc-icon);
+}
+/* 金色引导语 / 思考问题：图标与文字同色呼应（恒星金） */
+.ggc__item--quote .ggc__icon,
+.ggc__item--think .ggc__icon {
   color: var(--ggc-gold);
-  text-shadow: 0 0 14px rgba(255, 213, 79, 0.55);
+}
+
+.ggc__quote {
+  flex: 1;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1.5;
+  color: var(--ggc-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 213, 79, 0.35);
 }
 
 .ggc__text {
+  flex: 1;
   font-size: 20px;
-  line-height: 1.5;
+  line-height: 1.7;
   color: var(--ggc-text);
   text-align: left;
-}
-
-/* 条目末尾图标（可选，省略时不影响布局）；课程页可换成自己的 SVG/图片 */
-.ggc__icon {
-  width: 28px;
-  height: 28px;
-  justify-self: center;
-  color: var(--ggc-gold);
-  font-size: 20px;
-  line-height: 28px;
-  text-align: center;
-  opacity: 0.9;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ggc__item { transition: none; }
-  .ggc__item:hover { transform: none; }
 }
 </style>
 </head>
 <body>
-<section class="ggc" aria-label="深空玻璃目标卡片演示">
+<section class="ggc" aria-label="深空玻璃概念卡片演示">
   <div class="ggc__card">
-    <h2 class="ggc__title">学习目标</h2>
     <ul class="ggc__list">
-      <li class="ggc__item">
-        <span class="ggc__num">01</span>
-        <span class="ggc__text">认识宇宙中的主要天体类型</span>
-        <span class="ggc__icon" aria-hidden="true">★</span>
+      <li class="ggc__item ggc__item--quote">
+        <svg class="ggc__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4"/><path d="M20 11h-4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4"/></svg>
+        <p class="ggc__quote">四方上下曰宇，往古来今曰宙</p>
       </li>
       <li class="ggc__item">
-        <span class="ggc__num">02</span>
-        <span class="ggc__text">理解天体系统的层级结构</span>
-        <span class="ggc__icon" aria-hidden="true">★</span>
+        <svg class="ggc__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 9.5a8.5 8.5 0 0 1 8.5 8.5"/><path d="M12 14.5a8.5 8.5 0 0 0-8.5-8.5"/><path d="M12 9.5a8.5 8.5 0 0 0 8.5-8.5"/><path d="M12 14.5a8.5 8.5 0 0 1-8.5 8.5"/></svg>
+        <p class="ggc__text">宇宙是所有时间、空间和物质的总和</p>
       </li>
-      <li class="ggc__item">
-        <span class="ggc__num">03</span>
-        <span class="ggc__text">分析地球存在生命的宇宙条件</span>
-        <span class="ggc__icon" aria-hidden="true">★</span>
+      <li class="ggc__item ggc__item--think">
+        <svg class="ggc__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1 1-1.1 1.9"/><path d="M12 17.2h.01"/></svg>
+        <p class="ggc__text">我们看到的遥远星系，也是在观察宇宙的过去</p>
       </li>
     </ul>
   </div>
