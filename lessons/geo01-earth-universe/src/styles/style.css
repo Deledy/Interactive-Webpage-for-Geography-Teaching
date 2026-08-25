@@ -1302,23 +1302,20 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   position: relative;
   margin: 0;
   aspect-ratio: 3 / 4;
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
   /* 3D 透视：内部 .nebula-tilt__card 随指针独立倾斜，透视由卡片自身
-     transform 链的 perspective(1100px) 提供（与 shared/3d-perspective-hover-tilt-stack.html 一致） */
-  /* 图片加载中 / 离线时的深空渐变兜底，保证布局不破 */
-  background:
-    radial-gradient(70% 60% at 30% 25%, rgba(79, 195, 247, 0.35), transparent 65%),
-    radial-gradient(75% 70% at 75% 80%, rgba(255, 213, 79, 0.22), transparent 60%),
-    linear-gradient(160deg, #1a1040, #0b1026 70%);
+     transform 链的 perspective(1100px) 提供（与 shared/3d-perspective-hover-tilt-stack.html 一致）；
+     容器不设 overflow / 圆角，避免裁掉卡片倾斜时的轮廓（与 M2 画廊卡一致），
+     图片圆角由 .nebula-tilt__card 自身 overflow: hidden + border-radius 裁剪 */
 }
 /* 键盘焦点：聚焦 deck 时场景加轮廓（与 M2 星云卡片一致） */
 .universe-intro__media:has(.nebula-tilt__deck:focus-visible) {
   outline: 3px solid color-mix(in srgb, var(--c) 78%, #fff);
   outline-offset: 10px;
   border-radius: 18px;
+}
+/* 统一白色光晕：M1 宇宙摄影图关闭彩色全息扫光，悬停仅保留白色眩光（与 M2 画廊卡一致） */
+.universe-intro__media .nebula-tilt__layer--holo {
+  opacity: 0;
 }
 
 /* 右侧核心概念玻璃卡片（效果借鉴 shared/glass-goal-card.html，配色沿用课程设计令牌） */
@@ -1590,8 +1587,8 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   width: 574px;
   height: 380px;
   margin: 6px 0 0 4px;
-  perspective: 1100px;
-  perspective-origin: 50% 50%;
+  /* 透视已移入每张 .body-deck__gallery-card 自身 transform（perspective()），
+     避免共享父级消失点导致非对称甩出、边缘溢出容器 */
 }
 .body-deck__gallery-card {
   position: relative;
@@ -1605,7 +1602,9 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
     0 26px 46px -24px rgba(0, 0, 0, .85),
     0 0 0 1px color-mix(in srgb, var(--c) 12%, transparent) inset;
   transform-style: preserve-3d;
-  transform: rotateX(var(--neb-tilt-x)) rotateY(var(--neb-tilt-y));
+  /* 透视放回卡片自身（与 .nebula-tilt__card 一致），消失点锁定卡片中心，
+     旋转对称、边缘不外溢 */
+  transform: perspective(1100px) rotateX(var(--neb-tilt-x)) rotateY(var(--neb-tilt-y));
   transition:
     --neb-tilt-x .4s cubic-bezier(.22, 1, .36, 1),
     --neb-tilt-y .4s cubic-bezier(.22, 1, .36, 1);
@@ -1620,6 +1619,10 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   opacity: 1;
 }
 .body-deck__gallery-card .nebula-tilt__layer--holo {
+  opacity: 0;
+}
+/* 统一白色光晕：M2 星云卡关闭彩色全息扫光，悬停仅保留白色眩光（与画廊卡一致） */
+.body-deck__card--nebula .nebula-tilt__layer--holo {
   opacity: 0;
 }
 .body-deck__gallery-img {

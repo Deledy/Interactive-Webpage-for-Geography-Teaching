@@ -145,12 +145,12 @@
 
 .phts__layer--holo {
   transform: translateZ(6px);
-  /* 全息扫光颜色对齐课程画廊卡（太阳/地球/木星等）：主色/青/金 62% 循环，非缤纷彩色；
-     降级声明用课程令牌十六进制（--blue #64B5F6 / --cyan #4FC3F7 / --gold #FFD54F） */
+  /* 统一白色光晕：关闭彩色全息扫光，悬停仅显示白色眩光（.phts__layer--glare），
+     与课程 M2 画廊卡的白色光晕保持一致 */
   background: conic-gradient(from var(--phts-holo-angle) at var(--phts-mx) var(--phts-my), rgba(100, 181, 246, .62), rgba(79, 195, 247, .62), rgba(255, 213, 79, .62), rgba(100, 181, 246, .62));
   background: conic-gradient(from var(--phts-holo-angle) at var(--phts-mx) var(--phts-my), color-mix(in oklch, var(--phts-accent) 62%, transparent), color-mix(in oklch, var(--phts-accent-b) 62%, transparent), color-mix(in oklch, var(--phts-accent-c) 62%, transparent), color-mix(in oklch, var(--phts-accent) 62%, transparent));
   mix-blend-mode: color-dodge;
-  opacity: .32;
+  opacity: 0;
   animation: phts-holo-spin 8s linear infinite;
 }
 
