@@ -73,8 +73,6 @@ export interface QuizQuestion {
   answerKey: string
   /** 解析（逐题详解） */
   analysis: string
-  /** 作答小提示（题卡底部） */
-  hint: string
   /** 知识点关联（题源【点睛】要点，逐条呈现） */
   knowledge: { title: string; items: string[] }
 }

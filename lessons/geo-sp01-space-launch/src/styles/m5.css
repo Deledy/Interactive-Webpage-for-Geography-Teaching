@@ -312,6 +312,14 @@
 }
 
 /* 全部完成的"发射成功"特效 */
+.m5__effect {
+  /* 中心留亮：特效期间后方地图保持可见 */
+  background: radial-gradient(
+    circle at 50% 58%,
+    color-mix(in srgb, var(--c-mask) 22%, transparent),
+    color-mix(in srgb, var(--c-mask) 62%, transparent)
+  );
+}
 .m5__effect-arc {
   position: absolute;
   inset: 0;
@@ -319,17 +327,79 @@
   height: 100%;
   pointer-events: none;
 }
+/* 发射视频：WebM 自带 alpha（黑底已抠除），直接叠加即为"透明 PNG"效果 */
+.m5__launch-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+/* 预加载态：移出视口但不脱离文档（脱离文档浏览器会停止预加载） */
+.m5__launch-video.is-preload {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
 .m5__orbit {
   fill: none;
   stroke: var(--c-primary);
   stroke-width: 2;
   opacity: 0.9;
 }
-.m5__capsule {
+.m5__rocket {
+  color: var(--c-accent-warm);
+  overflow: visible;
+}
+.m5__flame {
+  fill: var(--c-accent-warm);
+  transform-box: fill-box;
+  transform-origin: 50% 8%;
+  animation: m5-flame 0.18s ease-in-out infinite alternate;
+}
+@keyframes m5-flame {
+  from {
+    transform: scaleY(0.82) scaleX(0.92);
+    opacity: 0.78;
+  }
+  to {
+    transform: scaleY(1.18) scaleX(1.06);
+    opacity: 1;
+  }
+}
+.m5__smoke-dot {
+  fill: var(--c-text-dim);
+}
+.m5__trail-dot {
   fill: var(--c-accent-warm);
 }
 .m5__spark {
   fill: var(--c-accent-warm);
+}
+.m5__effect.is-shake {
+  animation: m5-shake 0.4s ease-in-out;
+}
+@keyframes m5-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-6px, 4px);
+  }
+  40% {
+    transform: translate(5px, -3px);
+  }
+  60% {
+    transform: translate(-4px, -2px);
+  }
+  80% {
+    transform: translate(3px, 2px);
+  }
 }
 .m5__result {
   position: relative;

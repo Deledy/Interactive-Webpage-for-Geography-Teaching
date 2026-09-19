@@ -3,16 +3,46 @@ import { lessonData } from '../data/lessonData'
 import type { QuizQuestion } from '../types'
 import { highlight } from '../utils/dom'
 import { icon } from '../utils/icons'
-import { markDone } from '../state'
 import quizBg from '../../assets/images/练习题背景.png'
 
 /** 作答状态：idle 待作答 / right 答对 / wrong 答错 */
 type QuizState = 'idle' | 'right' | 'wrong'
 
-const STATE_META: Record<QuizState, { icon: string; title: string }> = {
-  idle: { icon: 'icon-info', title: '请选择你的答案' },
-  right: { icon: 'icon-check', title: '回答正确！' },
-  wrong: { icon: 'icon-close', title: '回答错误' }
+const STATE_META: Record<QuizState, string> = {
+  idle: '请选择你的答案',
+  right: '回答正确',
+  wrong: '回答错误'
+}
+
+/** 结论行的状态徽标图标 */
+const STATE_ICON: Record<QuizState, string> = {
+  idle: 'icon-info',
+  right: 'icon-check',
+  wrong: 'icon-close'
+}
+
+/**
+ * 知识归纳条目的图标：按条目前缀词（如「气象：……」的「气象」）取一枚线性图标，
+ * 条目增删或换课题后自动重排，找不到对应词则回退到默认图标。
+ */
+const KNOWLEDGE_ICON_RULES: [string, string][] = [
+  ['气象', 'icon-climate'],
+  ['气候', 'icon-climate'],
+  ['纬度', 'icon-rocket'],
+  ['地形', 'icon-terrain'],
+  ['地表', 'icon-terrain'],
+  ['海陆', 'icon-sea'],
+  ['水源', 'icon-water'],
+  ['交通', 'icon-truck'],
+  ['运输', 'icon-truck'],
+  ['安全', 'icon-shield'],
+  ['人口', 'icon-users'],
+  ['科技', 'icon-bulb']
+]
+
+function knowledgeIcon(text: string): string {
+  const label = text.split('：')[0]
+  return KNOWLEDGE_ICON_RULES.find(([word]) => label.includes(word))?.[1] ?? 'icon-spark'
 }
 
 let host: HTMLElement | null = null
@@ -68,36 +98,40 @@ function render(): void {
             )
             .join('')}
         </div>
-        <p class="m6__hint">${icon('icon-bulb', 22)}<span>小提示：${question.hint}</span></p>
       </div>
 
       <div class="m6__side" data-state="${state}">
-        <div class="m6__result">
-          <span class="m6__result-icon">${icon(meta.icon, 34)}</span>
-          <div class="m6__result-text">
-            <p class="m6__result-title">${meta.title}</p>
-            <p class="m6__result-sub">${
-              revealed ? `正确答案：<b class="num">${question.answerKey}</b>` : '点击选项即可作答'
-            }</p>
-          </div>
+        <div class="m6__verdict">
+          <span class="m6__verdict-badge" aria-hidden="true">${icon(STATE_ICON[state], 26)}</span>
+          <span class="m6__verdict-title">${meta}</span>
+          ${
+            revealed
+              ? `<span class="m6__verdict-key">正确答案：<b class="num">${question.answerKey}</b></span>`
+              : `<span class="m6__verdict-hint">点击选项即可作答</span>`
+          }
         </div>
 
         ${
           revealed
-            ? `<div class="m6__block m6__block--analysis">
-                <h3 class="m6__block-title">${icon('icon-list', 24)}<span>解析</span></h3>
-                <p class="m6__analysis">${question.analysis}</p>
-              </div>
-              <div class="m6__block m6__block--knowledge">
-                <h3 class="m6__block-title">${icon('icon-book', 24)}<span>知识点关联</span></h3>
+            ? `<section class="m6__block m6__block--analysis">
+                <h3 class="m6__block-title">${icon('icon-book', 26)}<span>解析</span></h3>
+                <div class="m6__analysis-box"><p class="m6__analysis">${question.analysis}</p></div>
+              </section>
+              <section class="m6__block m6__block--knowledge">
+                <h3 class="m6__block-title">${icon('icon-bulb', 26)}<span>知识归纳</span></h3>
                 <p class="m6__knowledge-title">${question.knowledge.title}</p>
                 <ul class="m6__knowledge-list">
                   ${question.knowledge.items
-                    .map((item) => `<li class="m6__knowledge-item">${item}</li>`)
+                    .map(
+                      (item) => `<li class="m6__knowledge-item">
+                        <span class="m6__knowledge-icon" aria-hidden="true">${icon(knowledgeIcon(item), 20)}</span>
+                        <span class="m6__knowledge-text">${item}</span>
+                      </li>`
+                    )
                     .join('')}
                 </ul>
-              </div>`
-            : `<p class="m6__locked">${icon('icon-list', 22)}<span>点击选项后显示解析与知识点关联</span></p>`
+              </section>`
+            : `<p class="m6__locked"><span>点击选项后显示解析与知识归纳</span></p>`
         }
 
         <div class="m6__actions">
@@ -118,7 +152,6 @@ function answer(key: string): void {
   selectedKey = key
   state = key === currentQuestion().answerKey ? 'right' : 'wrong'
   render()
-  markDone('m6')
 }
 
 function resetQuestion(): void {

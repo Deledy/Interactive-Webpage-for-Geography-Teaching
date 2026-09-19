@@ -164,7 +164,6 @@ export function initSiteCompare(root: HTMLElement): void {
       <span class="m4__hint-icon" aria-hidden="true">${icon('icon-info', 22)}</span>
       点图上「发射场」「着陆场」按钮，弹出对应选址条件卡片；「${SPEED_ANGLE}」卡片可打开线速度演示
     </p>
-    <span class="m4__map-note">${lessonData.mapNote}</span>
   `
 
   hotspots = Array.from(root.querySelectorAll<HTMLButtonElement>('.m4__hotspot'))

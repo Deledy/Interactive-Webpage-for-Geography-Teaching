@@ -16,13 +16,15 @@
   --c-info: #35c6f4;
   --c-mask: rgba(3, 7, 15, 0.72);
 
-  /* 字号：投屏最小字号 20px，任何内容不得低于此值 */
-  --fs-hero: 52px;
-  --fs-h2: 32px;
-  --fs-body: 22px;
-  --fs-table: 21px;
-  --fs-note: 20px;
-  --fs-num: 30px;
+  /* 字号：投屏最小字号 24px，任何内容不得低于此值；正文基准 32px（对应 PPT 24 号） */
+  --fs-hero: 72px;
+  --fs-h2: 48px;
+  --fs-h3: 36px;
+  --fs-body: 32px;
+  --fs-table: 28px;
+  --fs-note: 24px;
+  --fs-num: 40px;
+  --fs-display: 80px;
 
   /* 动效 */
   --t-fast: 150ms;
@@ -38,12 +40,12 @@
 
   /* 封面（M1）专用：仅 intro / nav 引用；字号按视口缩放，保证教室后排可读 */
   /* 标题实际字号见 shell.css（按标题区可用宽度自适应），此处为不支持容器查询单位时的回退 */
-  --fs-cover-title: clamp(60px, 6.6vw, 128px);
-  --fs-cover-slogan: clamp(22px, 2.6vw, 38px);
-  --fs-cover-goal: clamp(22px, 1.75vw, 29px);
-  --fs-cover-goal-no: clamp(26px, 2.4vw, 36px);
-  --fs-cover-goals-title: clamp(24px, 2.3vw, 34px);
-  --fs-cover-btn: clamp(22px, 1.9vw, 30px);
+  --fs-cover-title: clamp(72px, 8vw, 156px);
+  --fs-cover-slogan: clamp(28px, 3.3vw, 48px);
+  --fs-cover-goal: clamp(28px, 2.2vw, 37px);
+  --fs-cover-goal-no: clamp(32px, 3vw, 44px);
+  --fs-cover-goals-title: clamp(30px, 2.9vw, 43px);
+  --fs-cover-btn: clamp(28px, 2.4vw, 38px);
   --sz-cover-goal-icon: clamp(56px, 4.6vw, 72px);
   --sz-cover-goal-svg: clamp(28px, 2.2vw, 38px);
   --sz-cover-logo: 34px;
@@ -63,61 +65,64 @@
   --c-cover-logo: #bfe6ff;
 
   /* 选址条件弹窗（M4）专用：教室后排可读，字号与卡面整体放大 */
-  --fs-m4-title: 38px;
-  --fs-m4-card-title: 28px;
-  --fs-m4-card-text: 25px;
-  --fs-m4-note: 22px;
+  --fs-m4-title: 48px;
+  --fs-m4-card-title: 36px;
+  --fs-m4-card-text: 32px;
+  --fs-m4-note: 28px;
   --sz-m4-card-logo: 60px;
   --sz-m4-logo-svg: 32px;
 
   /* 线速度讲解浮层（M4 子）专用：关键数值需教室后排可读 */
-  --fs-lat-sub: 25px;
-  --fs-lat-val: 36px;
+  --fs-lat-sub: 32px;
+  --fs-lat-val: 46px;
   --sz-lat-stage: 500px;
 
   /* 选址条件表（M2 发射基地 / M3 着陆场）专用：材料描述常显，字号按视口放大，保证教室后排可读 */
-  --fs-ct-intro: clamp(24px, 1.3vw, 30px);
-  --fs-ct-text: clamp(24px, 1.5vw, 31px);
-  --fs-ct-idx: clamp(28px, 1.7vw, 36px);
-  --fs-ct-head: clamp(21px, 1.1vw, 25px);
-  --fs-ct-btn: clamp(22px, 1.25vw, 27px);
-  --fs-ct-benefit: clamp(24px, 1.45vw, 30px);
-  --fs-ct-tip: clamp(21px, 1.15vw, 26px);
+  --fs-ct-intro: clamp(30px, 1.6vw, 38px);
+  --fs-ct-text: clamp(30px, 1.9vw, 39px);
+  --fs-ct-idx: clamp(34px, 2.1vw, 44px);
+  --fs-ct-head: clamp(26px, 1.4vw, 31px);
+  --fs-ct-btn: clamp(28px, 1.6vw, 34px);
+  --fs-ct-benefit: clamp(30px, 1.8vw, 38px);
+  --fs-ct-tip: clamp(26px, 1.45vw, 32px);
   /* 「点击查看」按钮：尺寸固定，保证同行与两屏的按钮完全一致 */
   --sz-ct-peek-w: 240px;
   --sz-ct-peek-h: 58px;
 
   /* 随堂练习（M6）专用：整屏背景上的题干与解析需教室后排可读 */
-  --fs-m6-title: 40px;
-  --fs-m6-watermark: 46px;
-  --fs-m6-subtitle: 22px;
-  --fs-m6-counter: 24px;
-  --fs-m6-stem: 25px;
-  --fs-m6-option: 24px;
-  --fs-m6-result-title: 34px;
-  --fs-m6-block-title: 26px;
-  --fs-m6-body: 22px;
+  --fs-m6-title: 50px;
+  --fs-m6-watermark: 58px;
+  --fs-m6-subtitle: 28px;
+  --fs-m6-counter: 30px;
+  --fs-m6-stem: 32px;
+  --fs-m6-option: 30px;
+  --fs-m6-block-title: 32px;
+  --fs-m6-body: 28px;
   --sz-m6-key: 44px;
-  --sz-m6-result-icon: 72px;
+  /* 右栏讲评栏：状态徽标 / 结论文字 / 正确答案 / 知识条目图标 */
+  --fs-m6-verdict: 41px;
+  --fs-m6-answer: 39px;
+  --sz-m6-verdict-badge: 46px;
+  --sz-m6-know-icon: 34px;
 
   /* 综合题规范训练（M7）专用：材料与作答要求需教室后排可读，字号按视口放大 */
-  --fs-m7-badge: clamp(19px, 1.35vw, 26px);
-  --fs-m7-material: clamp(21px, 1.95vw, 36px);
-  --fs-m7-label: clamp(21px, 1.5vw, 29px);
-  --fs-m7-ask: clamp(23px, 1.7vw, 32px);
-  --fs-m7-act: clamp(21px, 1.6vw, 30px);
-  --fs-m7-criteria: clamp(19px, 1.5vw, 28px);
+  --fs-m7-badge: clamp(25px, 1.7vw, 32px);
+  --fs-m7-material: clamp(26px, 2.4vw, 44px);
+  --fs-m7-label: clamp(26px, 1.9vw, 36px);
+  --fs-m7-ask: clamp(29px, 2.1vw, 40px);
+  --fs-m7-act: clamp(26px, 2vw, 38px);
+  --fs-m7-criteria: clamp(25px, 1.9vw, 35px);
   --sz-m7-act-w: clamp(148px, 11vw, 208px);
   --sz-m7-act-h: clamp(48px, 6.9vh, 68px);
   /* M7 答题页·「材料信息梳理」表：五列信息密集，仍需教室后排可读 */
-  --fs-m7-sum-head: clamp(20px, 1.25vw, 27px);
-  --fs-m7-sum-cell: clamp(20px, 1.35vw, 29px);
+  --fs-m7-sum-head: clamp(25px, 1.6vw, 34px);
+  --fs-m7-sum-cell: clamp(25px, 1.7vw, 36px);
   --pad-m7-sum-cell: clamp(12px, 1.9vh, 20px) clamp(14px, 1.3vw, 22px);
   /* M7 答题页·材料关键词词云：按词长分三档，短词最大（核心术语），长句最小（材料原句）；
-     上限压住材料正文（--fs-m7-material）一档，保证词云是支架、不是主角；最小不低于 20px */
-  --fs-m7-cloud-l1: clamp(25px, 2vw, 34px);
-  --fs-m7-cloud-l2: clamp(22px, 1.7vw, 29px);
-  --fs-m7-cloud-l3: clamp(20px, 1.4vw, 25px);
+     上限压住材料正文（--fs-m7-material）一档，保证词云是支架、不是主角；最小不低于 25px */
+  --fs-m7-cloud-l1: clamp(30px, 2.5vw, 42px);
+  --fs-m7-cloud-l2: clamp(27px, 2.1vw, 36px);
+  --fs-m7-cloud-l3: clamp(25px, 1.75vw, 31px);
   --pad-m7-cloud-l1: clamp(11px, 1.2vh, 16px) clamp(22px, 1.8vw, 32px);
   --pad-m7-cloud-l2: clamp(9px, 1vh, 14px) clamp(18px, 1.5vw, 27px);
   --pad-m7-cloud-l3: clamp(8px, 0.9vh, 12px) clamp(16px, 1.3vw, 23px);
@@ -141,5 +146,10 @@
     --pad-m7-cloud-l1: 8px 19px;
     --pad-m7-cloud-l2: 7px 16px;
     --pad-m7-cloud-l3: 6px 14px;
+    /* 随堂练习右栏同理：讲评结论与知识条目整体缩一档，尽量一屏放下 */
+    --fs-m6-verdict: 35px;
+    --fs-m6-answer: 32px;
+    --sz-m6-verdict-badge: 38px;
+    --sz-m6-know-icon: 29px;
   }
 }

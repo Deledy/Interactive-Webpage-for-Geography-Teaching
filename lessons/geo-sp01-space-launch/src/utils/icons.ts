@@ -25,6 +25,7 @@ const ICONS: Record<string, string> = {
   'icon-check': '<path d="M4.5 12.5l5 5 10-11"/>',
   'icon-close': '<path d="M6 6l12 12M18 6L6 18"/>',
   'icon-play': '<path d="M8 5.5v13l11-6.5Z"/>',
+  'icon-stop': '<rect x="7" y="7" width="10" height="10" rx="1.5"/>',
   'icon-expand': '<path d="M4 9V4h5"/><path d="M15 4h5v5"/><path d="M20 15v5h-5"/><path d="M4 15v5h5"/>',
   'icon-compress': '<path d="M9 4v5H4"/><path d="M20 9h-5V4"/><path d="M15 20v-5h5"/><path d="M4 15h5v5"/>',
   'icon-clock': '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.2 1.9"/>',

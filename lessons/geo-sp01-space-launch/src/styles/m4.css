@@ -412,7 +412,7 @@
 }
 /* 弧长标注（837 / 1447 / 1670 km）：随扫掠淡入 */
 .lat__glabel--arc {
-  font-size: 20px;
+  font-size: var(--fs-note);
   font-weight: 400;
   color: var(--c-text-dim);
 }
@@ -585,7 +585,7 @@
 }
 .lat__f-label {
   fill: var(--c-text);
-  font-size: 17px;
+  font-size: var(--fs-note);
   font-weight: 700;
 }
 .lat__f-label--pole {
@@ -593,7 +593,7 @@
 }
 .lat__f-arc {
   fill: var(--c-text-dim);
-  font-size: 15px;
+  font-size: var(--fs-note);
 }
 
 @media (max-width: 1080px) {

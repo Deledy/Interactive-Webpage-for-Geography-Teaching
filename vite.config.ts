@@ -52,9 +52,14 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2018',
     chunkSizeWarningLimit: 800,
+    // 大资源（如图片）不内联时输出到 dist 根目录，而非默认的 dist/assets/。
+    // 原因：vite-plugin-singlefile 会把 JS 内联进 index.html，此时 JS 里由 Vite 生成的
+    // `new URL("文件名.png", import.meta.url)` 相对路径会基于 index.html 解析；
+    // 若资源仍在 assets/ 子目录，file:// 双击打开会 404。放根目录可保证相对路径正确解析。
+    assetsDir: '',
     // 字体（woff2/ttf/otf）一律 base64 内联进单文件：file:// 下 @font-face 引用外部字体文件
     // 会被 Chrome/Edge 以 CORS 拦截，必须内联才能保证双击离线可用；
-    // 其余资源仍按 4KB 阈值内联，大于 4KB 的图片输出为独立文件到 dist/assets/
+    // 其余资源仍按 4KB 阈值内联，大于 4KB 的图片输出为独立文件（见上方 assetsDir: ''，落在 dist 根目录）
     // （独立文件在 file:// 协议下通过 <img> 标签加载正常，不受 CORS 影响）
     assetsInlineLimit: (filePath, content) => {
       if (/\.(woff2?|ttf|otf)$/i.test(filePath)) return true

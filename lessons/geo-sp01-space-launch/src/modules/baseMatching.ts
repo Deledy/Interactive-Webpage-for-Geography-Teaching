@@ -14,7 +14,8 @@ import { lessonData } from '../data/lessonData'
 import { CHINA_MAIN_GEO, CHINA_NANHAI_GEO } from '../data/chinaGeo'
 import { on } from '../utils/dom'
 import { icon } from '../utils/icons'
-import { animate, dur, ease } from '../utils/motion'
+import { animate, dur, ease, reduced } from '../utils/motion'
+import rocketLogo from '../../assets/icons/icon-rocket.svg?raw'
 import { toast } from '../utils/toast'
 import { markDone } from '../state'
 
@@ -45,6 +46,8 @@ let selectedId: string | null = null
 const mounted = new Map<string, Set<string>>()
 /** 特效只播放一次 */
 let effectPlayed = false
+/** 火箭 logo 的内联路径（去掉外层 <svg>，供发射特效嵌套使用） */
+const ROCKET_PATHS = rocketLogo.replace(/<svg[^>]*>|<\/svg>/g, '').trim()
 
 /* ---------------- 令牌与地图配色 ---------------- */
 
@@ -113,7 +116,7 @@ function mapOption(): Record<string, unknown> {
       label: { show: false },
       emphasis: {
         itemStyle: { areaColor: c.areaHover, borderColor: c.borderHover },
-        label: { show: true, color: c.label, fontSize: 15 }
+        label: { show: true, color: c.label, fontSize: 24 }
       }
     },
     series: [
@@ -458,6 +461,75 @@ function bindDrag(card: HTMLButtonElement): void {
 
 /* ---------------- 全部完成的"发射成功"特效（仅一次） ---------------- */
 
+/**
+ * 发射视频源，按顺序尝试（浏览器取第一个能播的）：
+ * 1. HEVC + alpha 的 .mov —— 给 macOS / iOS 的 Safari（Safari 不支持 VP9 alpha）。
+ *    type 声明为 video/quicktime，避免"支持 HEVC 解码但不支持 alpha"的 Chrome 误选后丢 alpha、退化成黑底。
+ *    该文件需在 Mac 上用 VideoToolbox 生成（见 docs/06_资源引用.md），未提供时浏览器自动跳到下一源。
+ * 2. VP9 + alpha 的 .webm —— Chrome / Edge / Firefox。
+ * 3. 无 alpha 的 .mp4 —— 最后的兜底。
+ */
+const LAUNCH_VIDEO_SOURCES = [
+  { src: `${import.meta.env.BASE_URL}launch-hevc.mov`, type: 'video/quicktime' },
+  { src: `${import.meta.env.BASE_URL}launch.webm`, type: 'video/webm' },
+  { src: `${import.meta.env.BASE_URL}launch.mp4`, type: 'video/mp4' }
+]
+let launchVideo: HTMLVideoElement | null = null
+
+/** 模块初始化时预加载（此时距完成拖拽还很久，避免特效播放时等待） */
+function prepareLaunchVideo(): void {
+  if (launchVideo) return
+  const video = document.createElement('video')
+  video.className = 'm5__launch-video is-preload'
+  video.muted = true
+  video.playsInline = true
+  video.preload = 'auto'
+  video.setAttribute('aria-hidden', 'true')
+  LAUNCH_VIDEO_SOURCES.forEach(({ src, type }) => {
+    const source = document.createElement('source')
+    source.src = src
+    source.type = type
+    video.appendChild(source)
+  })
+  // 整条链都不可用才置空，交给 SVG 降级；单个 source 失败由浏览器自行顺延
+  video.addEventListener('error', () => {
+    launchVideo = null
+  })
+  video.lastElementChild?.addEventListener('error', () => {
+    launchVideo = null
+  })
+  document.body.appendChild(video)
+  launchVideo = video
+}
+
+let videoObserver: IntersectionObserver | null = null
+
+function disposeLaunchVideo(): void {
+  videoObserver?.disconnect()
+  videoObserver = null
+  launchVideo?.remove()
+  launchVideo = null
+}
+
+/** M5 进入视口后才开始预加载（视频 1.8MB，不进视口就不下载） */
+function loadLaunchVideoWhenVisible(root: HTMLElement): void {
+  if (launchVideo) return
+  if (typeof IntersectionObserver === 'undefined') {
+    prepareLaunchVideo()
+    return
+  }
+  videoObserver = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      prepareLaunchVideo()
+      videoObserver?.disconnect()
+      videoObserver = null
+    },
+    { rootMargin: '240px' }
+  )
+  videoObserver.observe(root)
+}
+
 function playLaunchEffect(): void {
   if (effectPlayed) return
   effectPlayed = true
@@ -475,28 +547,138 @@ function playLaunchEffect(): void {
       </div>
     </div>
   `
+  overlayHost.appendChild(overlay)
+  overlay.querySelector('[data-act="close"]')?.addEventListener('click', () => overlay.remove())
+
+  /** 特效收尾：结果卡淡入 + 轻微屏震 */
+  const reveal = (): void => {
+    overlay.classList.add('is-shake')
+    window.setTimeout(() => overlay.classList.remove('is-shake'), 500)
+    overlay.querySelector('.m5__result')?.classList.add('is-ready')
+  }
+
+  // 减少动效：直接出结果卡，不播特效
+  if (reduced()) {
+    reveal()
+    return
+  }
+  if (launchVideo) playVideoLaunch(overlay, reveal)
+  else playSvgLaunch(overlay, reveal)
+}
+
+/**
+ * 播放速率曲线（分两段）：
+ *   点火段 —— 素材前 HOLD_SECONDS 秒按 HOLD 倍速播，让点火 / 离架看得清；
+ *   冲刺段 —— 之后速率随进度指数上升至 MAX 倍速，营造"一飞冲天"。
+ * 4.1s 素材在 HOLD_SECONDS=1.5 / HOLD=1 / MAX=4 下实测约 2.92s 播完（冲刺段峰值 4 倍速）。
+ * HOLD_SECONDS 调大 → 冲刺起点更靠后、总时长更长；MAX 调大 → 末段更猛、总时长更短。
+ */
+const LAUNCH_RATE_HOLD_SECONDS = 1.5
+const LAUNCH_RATE_HOLD = 1
+const LAUNCH_RATE_MAX = 4
+
+/** 取某个素材时间点对应的播放速率 */
+function launchRateAt(mediaTime: number, total: number): number {
+  if (mediaTime <= LAUNCH_RATE_HOLD_SECONDS) return LAUNCH_RATE_HOLD
+  const span = total - LAUNCH_RATE_HOLD_SECONDS
+  const k = Math.log(LAUNCH_RATE_MAX / LAUNCH_RATE_HOLD) / span
+  return Math.min(LAUNCH_RATE_MAX, LAUNCH_RATE_HOLD * Math.exp(k * (mediaTime - LAUNCH_RATE_HOLD_SECONDS)))
+}
+
+/** 按上述曲线估算实际播放时长（秒），用于收尾兜底计时 */
+function rampedSeconds(mediaSeconds: number): number {
+  const hold = Math.min(LAUNCH_RATE_HOLD_SECONDS, mediaSeconds) / LAUNCH_RATE_HOLD
+  const span = mediaSeconds - LAUNCH_RATE_HOLD_SECONDS
+  if (span <= 0) return hold
+  const k = Math.log(LAUNCH_RATE_MAX / LAUNCH_RATE_HOLD) / span
+  return hold + (1 - LAUNCH_RATE_HOLD / LAUNCH_RATE_MAX) / (LAUNCH_RATE_HOLD * k)
+}
+
+/** 按曲线逐帧调整 playbackRate，返回停止函数（仅在变化明显时写入，避免频繁触发合成） */
+function startRateRamp(video: HTMLVideoElement): () => void {
+  const total = video.duration > 0 ? video.duration : 1
+  let raf = 0
+  const step = (): void => {
+    if (video.paused || video.ended) return
+    const next = launchRateAt(video.currentTime, total)
+    if (Math.abs(next - video.playbackRate) > 0.05) video.playbackRate = next
+    raf = requestAnimationFrame(step)
+  }
+  raf = requestAnimationFrame(step)
+  return (): void => {
+    if (raf) cancelAnimationFrame(raf)
+    raf = 0
+  }
+}
+
+/** 视频路径：播完出结果卡；加载 / 播放失败时回退到 SVG 动画 */
+function playVideoLaunch(overlay: HTMLElement, reveal: () => void): void {
+  const video = launchVideo
+  if (!video) {
+    playSvgLaunch(overlay, reveal)
+    return
+  }
+  video.classList.remove('is-preload')
+  overlay.insertBefore(video, overlay.firstChild)
+  video.currentTime = 0
+
+  let stopRamp: (() => void) | null = null
+  let settled = false
+  const finish = (): void => {
+    if (settled) return
+    settled = true
+    stopRamp?.()
+    reveal()
+  }
+  const fallback = (): void => {
+    if (settled) return
+    settled = true
+    stopRamp?.()
+    video.remove()
+    disposeLaunchVideo()
+    playSvgLaunch(overlay, reveal)
+  }
+
+  video.addEventListener('ended', finish, { once: true })
+  video.addEventListener('error', fallback, { once: true })
+  // 兜底：个别情况下播完不触发 ended，按曲线估算的实际时长留余量后收尾
+  const seconds = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 4
+  window.setTimeout(finish, (rampedSeconds(seconds) + 0.5) * 1000)
+
+  video.playbackRate = LAUNCH_RATE_HOLD
+  void video
+    .play()
+    .then(() => {
+      if (!settled) stopRamp = startRateRamp(video)
+    })
+    .catch(fallback)
+}
+
+/** 降级路径：火箭 logo 沿轨道升空（无视频 / 播放失败时使用） */
+function playSvgLaunch(overlay: HTMLElement, reveal: () => void): void {
   const arc = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   arc.setAttribute('class', 'm5__effect-arc')
   arc.setAttribute('viewBox', '0 0 1200 480')
   arc.setAttribute('preserveAspectRatio', 'xMidYMid slice')
   arc.innerHTML = `
     <path class="m5__orbit" id="m5Orbit" d="M 120 420 C 420 400 760 260 1080 60" />
+    <g class="m5__smoke" id="m5Smoke"></g>
+    <g class="m5__trail" id="m5Trail"></g>
+    <g class="m5__capsule" id="m5Capsule">
+      <svg class="m5__rocket" x="-28" y="-28" width="56" height="56" viewBox="0 0 1024 1024" overflow="visible">${ROCKET_PATHS}</svg>
+      <path class="m5__flame" d="M 0 46 Q -8 30 0 20 Q 8 30 0 46 Z" />
+    </g>
     <g class="m5__sparks" id="m5Sparks"></g>
-    <circle class="m5__capsule" id="m5Capsule" cx="120" cy="420" r="10" />
   `
   overlay.insertBefore(arc, overlay.firstChild)
-  overlayHost.appendChild(overlay)
-
-  const close = (): void => {
-    overlay.remove()
-  }
-  overlay.querySelector('[data-act="close"]')?.addEventListener('click', close)
 
   const path = arc.querySelector<SVGPathElement>('#m5Orbit')
-  const capsule = arc.querySelector<SVGCircleElement>('#m5Capsule')
+  const capsule = arc.querySelector<SVGGElement>('#m5Capsule')
   const sparks = arc.querySelector<SVGGElement>('#m5Sparks')
+  const smoke = arc.querySelector<SVGGElement>('#m5Smoke')
+  const trail = arc.querySelector<SVGGElement>('#m5Trail')
   if (!path || !capsule || !sparks) {
-    overlay.querySelector('.m5__result')?.classList.add('is-ready')
+    reveal()
     return
   }
 
@@ -504,6 +686,49 @@ function playLaunchEffect(): void {
   path.style.strokeDasharray = String(total)
   path.style.strokeDashoffset = String(total)
 
+  const NS = 'http://www.w3.org/2000/svg'
+  const startPoint = path.getPointAtLength(0)
+  capsule.setAttribute('transform', `translate(${startPoint.x} ${startPoint.y})`)
+
+  /** 沿轨道切线求朝向角，让火箭 nose 对准飞行方向（logo 天然朝上，补 +90°） */
+  function tangentAngle(p: number): number {
+    const a = path!.getPointAtLength(Math.max(0, p - 1))
+    const b = path!.getPointAtLength(Math.min(total, p + 1))
+    return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 90
+  }
+
+  /** 发射台烟雾：从起点喷出，向上飘散并扩散淡出 */
+  let smokeCount = 0
+  function puffSmoke(): void {
+    if (smokeCount >= 8) return
+    smokeCount += 1
+    const dot = document.createElementNS(NS, 'circle')
+    dot.setAttribute('class', 'm5__smoke-dot')
+    dot.setAttribute('cx', String(startPoint.x))
+    dot.setAttribute('cy', String(startPoint.y))
+    dot.setAttribute('r', '6')
+    smoke?.appendChild(dot)
+    animate(dot, {
+      attr: { cx: startPoint.x + (Math.random() - 0.5) * 90, cy: startPoint.y - 16 - Math.random() * 44, r: 42 },
+      opacity: 0,
+      duration: 0.9,
+      ease: ease('out')
+    })
+  }
+
+  /** 尾焰拖尾：火箭身后留下一小段逐渐缩小的亮点 */
+  function emitTrail(point: DOMPoint): void {
+    const dot = document.createElementNS(NS, 'circle')
+    dot.setAttribute('class', 'm5__trail-dot')
+    dot.setAttribute('cx', String(point.x))
+    dot.setAttribute('cy', String(point.y))
+    dot.setAttribute('r', '5')
+    trail?.appendChild(dot)
+    animate(dot, { attr: { r: 1 }, opacity: 0, duration: 0.5, ease: ease('out') })
+  }
+
+  let lastSmoke = 0
+  let lastTrail = 0
   const proxy = { p: 0 }
   animate(
     proxy,
@@ -514,17 +739,24 @@ function playLaunchEffect(): void {
       onUpdate: () => {
         path.style.strokeDashoffset = String(total * (1 - proxy.p))
         const point = path.getPointAtLength(total * proxy.p)
-        capsule.setAttribute('cx', String(point.x))
-        capsule.setAttribute('cy', String(point.y))
+        capsule.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${tangentAngle(total * proxy.p)})`)
+        if (proxy.p < 0.35 && proxy.p - lastSmoke >= 0.04) {
+          lastSmoke = proxy.p
+          puffSmoke()
+        }
+        if (proxy.p > 0.03 && proxy.p - lastTrail >= 0.05) {
+          lastTrail = proxy.p
+          emitTrail(point)
+        }
       }
     },
     () => {
       path.style.strokeDashoffset = '0'
-      // 尾焰粒子：一次性扩散后淡出
+      // 末段火星爆发：一次性扩散后淡出
       const point = path.getPointAtLength(total)
       for (let i = 0; i < 12; i += 1) {
         const angle = (-70 + (140 / 11) * i) * (Math.PI / 180)
-        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+        const dot = document.createElementNS(NS, 'circle')
         dot.setAttribute('class', 'm5__spark')
         dot.setAttribute('cx', String(point.x))
         dot.setAttribute('cy', String(point.y))
@@ -538,7 +770,8 @@ function playLaunchEffect(): void {
           ease: ease('out')
         })
       }
-      overlay.querySelector('.m5__result')?.classList.add('is-ready')
+      // 轻微屏震，强化"发射成功"的冲击感
+      reveal()
     }
   )
 }
@@ -582,6 +815,7 @@ function disposeCharts(): void {
 
 export function initBaseMatching(root: HTMLElement): void {
   disposeCharts()
+  disposeLaunchVideo()
   host = root
   mounted.clear()
   effectPlayed = false
@@ -666,6 +900,7 @@ export function initBaseMatching(root: HTMLElement): void {
     boxes.forEach((box) => observer?.observe(box))
   }
   relayout()
+  loadLaunchVideoWhenVisible(root)
 }
 
 export function resetBaseMatching(): void {

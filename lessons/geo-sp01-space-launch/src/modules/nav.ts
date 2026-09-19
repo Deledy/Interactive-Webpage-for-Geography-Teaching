@@ -4,6 +4,7 @@ import { on, must } from '../utils/dom'
 import { icon } from '../utils/icons'
 import { setActiveScreen, store, subscribe } from '../state'
 import { initTimer } from './timer'
+import { initRollcall } from './rollcall'
 import rocketLogo from '../../assets/icons/icon-rocket.svg?raw'
 
 interface TaskItem {
@@ -47,6 +48,7 @@ export function initNav(root: HTMLElement, onReset: () => void): void {
         <div class="nav__timer"></div>
         <button type="button" class="nav__btn nav__fullscreen btn btn--ghost" aria-pressed="false">${icon('icon-expand', 20)}<span>全屏</span></button>
         <button type="button" class="nav__btn nav__reset btn btn--ghost">重置本页</button>
+        <div class="nav__rollcall"></div>
       </div>
     </div>
     <div class="nav__progress" aria-hidden="true"></div>
@@ -58,6 +60,7 @@ export function initNav(root: HTMLElement, onReset: () => void): void {
   const fullscreenButton = must<HTMLButtonElement>('.nav__fullscreen', root)
 
   initTimer(must<HTMLElement>('.nav__timer', root))
+  initRollcall(must<HTMLElement>('.nav__rollcall', root))
 
   /** 高亮当前屏对应的任务点，并推进进度线 */
   function highlight(screenId: string): void {

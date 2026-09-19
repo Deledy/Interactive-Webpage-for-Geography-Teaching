@@ -1,0 +1,102 @@
+/* 课堂点名系统（导航栏）：点名按钮 + 下方弹出气泡（颜色/时长一律引用 tokens.css） */
+.nav__rollcall {
+  position: relative;
+}
+.nav__rollcall-btn.is-open,
+.nav__rollcall-btn.is-open:hover {
+  border-color: var(--c-primary);
+  color: var(--c-text);
+  background: rgba(53, 198, 244, 0.18);
+}
+
+.rollcall__bubble {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: 500px;
+  padding: 26px 28px 28px;
+  background: var(--c-panel);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-panel);
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--c-bg) 78%, transparent);
+  z-index: 45;
+}
+/* 气泡顶部小箭头（指向按钮） */
+.rollcall__bubble::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+  background: var(--c-panel);
+  border-left: 1px solid var(--c-line-strong);
+  border-top: 1px solid var(--c-line-strong);
+  transform: rotate(45deg);
+}
+
+.rollcall__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.rollcall__title {
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.rollcall__count {
+  font-size: var(--fs-body);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.rollcall__stage {
+  display: grid;
+  place-items: center;
+  height: 180px;
+  margin-bottom: 14px;
+  border: 1px solid var(--c-line);
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-primary) 10%, transparent),
+    color-mix(in srgb, var(--c-primary) 2%, transparent)
+  );
+}
+.rollcall__name {
+  font-size: var(--fs-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--c-text);
+  transition: color var(--t-fast) var(--e-out);
+}
+.rollcall__name.is-picked {
+  color: var(--c-primary);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--c-primary) 55%, transparent);
+}
+
+.rollcall__actions {
+  display: flex;
+  gap: 12px;
+}
+.rollcall__toggle,
+.rollcall__import {
+  flex: 1;
+  justify-content: center;
+  font-size: var(--fs-body);
+  padding: 12px 18px;
+}
+.rollcall__toggle .icon,
+.rollcall__import .icon {
+  width: 22px;
+  height: 22px;
+}
+.rollcall__toggle.is-running {
+  border-color: var(--c-accent-warm);
+  color: var(--c-accent-warm);
+  background: rgba(255, 176, 32, 0.16);
+}

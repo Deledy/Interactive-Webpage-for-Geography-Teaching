@@ -2,6 +2,7 @@
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/shell.css'
+import './styles/rollcall.css'
 import './styles/conditions.css'
 import './styles/m4.css'
 import './styles/m5.css'
@@ -12,6 +13,7 @@ import { injectIcons } from './utils/icons'
 import { clearToasts } from './utils/toast'
 import { initNav } from './modules/nav'
 import { resetTimer } from './modules/timer'
+import { resetRollcall } from './modules/rollcall'
 import { initIntro, resetIntro } from './modules/intro'
 import { initLaunchConditions, resetLaunchConditions } from './modules/launchConditions'
 import { initLandingConditions, resetLandingConditions } from './modules/landingConditions'
@@ -29,6 +31,7 @@ function section(id: string): HTMLElement {
 /** 重置本页：清空全部作答状态并回到首屏 */
 function resetAll(): void {
   resetTimer()
+  resetRollcall()
   resetIntro()
   resetLaunchConditions()
   resetLandingConditions()
