@@ -126,7 +126,7 @@ function listFiles(dir, ext) {
   return out
 }
 
-async function ensureSourceFonts() {
+async function ensureSourceFonts(needSerif) {
   mkdirSync(cacheDir, { recursive: true })
   const specs = [
     {
@@ -141,7 +141,7 @@ async function ensureSourceFonts() {
       fallback:
         'https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf'
     }
-  ]
+  ].filter((s) => needSerif || !s.name.includes('Serif'))
   for (const spec of specs) {
     const target = join(cacheDir, spec.name)
     if (existsSync(target)) continue
@@ -245,17 +245,24 @@ async function main() {
     htmlAttrText(html),
     tsStringLiterals(tsText)
   )
-  const serifChars = collectChars(serifElementText(html), '0123456789 ')
+  // 仅当本课样式确实声明了衬线字体（Noto Serif SC）时才生成/下载衬线子集
+  const cssText = listFiles(srcDir, '.css')
+    .map((f) => readFileSync(f, 'utf-8'))
+    .join('\n')
+  const needSerif = /Noto Serif SC/i.test(cssText + html)
+  const serifChars = needSerif ? collectChars(serifElementText(html), '0123456789 ') : ''
 
   mkdirSync(cacheDir, { recursive: true })
   const bodyCharsFile = join(cacheDir, `${lessonDir}-body-chars.txt`)
   const serifCharsFile = join(cacheDir, `${lessonDir}-serif-chars.txt`)
   writeFileSync(bodyCharsFile, bodyChars, 'utf-8')
-  writeFileSync(serifCharsFile, serifChars, 'utf-8')
-  console.log(`[字符] 正文 ${[...bodyChars].length} 个；衬线 ${[...serifChars].length} 个`)
+  if (needSerif) writeFileSync(serifCharsFile, serifChars, 'utf-8')
+  console.log(
+    `[字符] 正文 ${[...bodyChars].length} 个；衬线 ${needSerif ? `${[...serifChars].length} 个` : '不需要'}`
+  )
 
   // 2. 确保可变字体源文件
-  await ensureSourceFonts()
+  await ensureSourceFonts(needSerif)
 
   // 3. 静态化 + 子集化
   const fontsDir = join(lessonRoot, 'assets', 'fonts')
@@ -272,14 +279,16 @@ async function main() {
       weight: 700,
       charsFile: bodyCharsFile,
       out: join(fontsDir, 'noto-sans-sc-700-subset.woff2')
-    },
-    {
+    }
+  ]
+  if (needSerif) {
+    jobs.push({
       src: join(cacheDir, 'NotoSerifSC-VF.ttf'),
       weight: 900,
       charsFile: serifCharsFile,
       out: join(fontsDir, 'noto-serif-sc-900-subset.woff2')
-    }
-  ]
+    })
+  }
 
   const checks = []
   for (const job of jobs) {

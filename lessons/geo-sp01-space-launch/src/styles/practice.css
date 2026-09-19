@@ -1,0 +1,1058 @@
+/* M6 随堂练习：整屏背景 + 左题干卡 / 右结果卡（解析 + 知识点关联） */
+/* M7 综合题规范训练 */
+
+/* ================= M6 随堂练习 ================= */
+/* 覆盖 .screen 的默认留白与居中，让背景图平铺整个页面 */
+.screen.m6 {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  min-height: 100vh;
+}
+.m6__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.m6__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 上下压暗，保证标题与卡片压在实景背景上仍可读 */
+.m6__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-bg) 84%, transparent) 0%,
+    color-mix(in srgb, var(--c-bg) 40%, transparent) 34%,
+    color-mix(in srgb, var(--c-bg) 88%, transparent) 100%
+  );
+}
+.m6__body {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.6vh, 20px);
+  padding: calc(var(--nav-h) + 18px) 44px 26px;
+}
+
+/* 页眉：标题 + 英文水印 + 题号计数 */
+.m6__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.m6__head-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.m6__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.m6__title {
+  font-size: var(--fs-m6-title);
+}
+.m6__watermark {
+  font-size: var(--fs-m6-watermark);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--c-text) 15%, transparent);
+}
+.m6__subtitle {
+  padding-left: 18px;
+  font-size: var(--fs-m6-subtitle);
+  color: var(--c-text-dim);
+}
+.m6__counter {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line-strong);
+  background: color-mix(in srgb, var(--c-bg) 46%, transparent);
+  font-size: var(--fs-m6-counter);
+}
+.m6__counter .num {
+  font-size: var(--fs-m6-counter);
+}
+
+/* 主体：左题干卡 / 右结果卡，两栏各自内部滚动兜底 */
+/* 层级 1：两栏为「抬起面」——青色描边 + 顶部微光 + 外投影，与背景图拉开 */
+.m6__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  gap: 18px;
+}
+.m6__q,
+.m6__side {
+  min-height: 0;
+  padding: 20px 22px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 24%, var(--c-line));
+  border-radius: var(--r-panel);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--c-primary) 9%, transparent), transparent 130px),
+    linear-gradient(180deg, color-mix(in srgb, var(--c-panel) 96%, transparent), color-mix(in srgb, var(--c-panel) 78%, transparent));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 28px 62px color-mix(in srgb, #000 52%, transparent),
+    0 1px 0 color-mix(in srgb, #fff 9%, transparent) inset;
+}
+.m6__q {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+.m6__side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+/* --- 左栏：题源 + 材料 + 题干 + 选项 + 小提示 --- */
+.m6__source {
+  align-self: flex-start;
+  padding: 3px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line);
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+}
+.m6__material,
+.m6__stem {
+  font-size: var(--fs-m6-stem);
+  line-height: 1.8;
+}
+.m6__material {
+  color: var(--c-text-dim);
+}
+/* 层级 2：选项为浮在抬起面上的小凸块（更亮的渐变面 + 投影 + 凹陷圆形标号） */
+.m6__options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.m6__option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border: 1px solid var(--c-line);
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-panel-2) 98%, transparent),
+    color-mix(in srgb, var(--c-panel-2) 76%, transparent)
+  );
+  box-shadow: 0 5px 14px color-mix(in srgb, #000 34%, transparent);
+  color: var(--c-text);
+  font-size: var(--fs-m6-option);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--e-out), background var(--t-fast) var(--e-out),
+    color var(--t-fast) var(--e-out), box-shadow var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+.m6__option:hover:not(.is-disabled):not(.is-correct):not(.is-wrong) {
+  border-color: var(--c-line-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 9px 22px color-mix(in srgb, #000 44%, transparent);
+}
+.m6__key {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--sz-m6-key);
+  height: var(--sz-m6-key);
+  border-radius: 50%;
+  border: 1px solid var(--c-line-strong);
+  background: color-mix(in srgb, var(--c-bg) 58%, transparent);
+  font-weight: 700;
+}
+.m6__option-text {
+  min-width: 0;
+}
+.m6__option.is-correct {
+  border-color: var(--c-ok);
+  color: var(--c-ok);
+  background: color-mix(in srgb, var(--c-ok) 18%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--c-ok) 30%, transparent);
+  animation: m6-pop var(--t-base) var(--e-back) 1 both;
+}
+.m6__option.is-correct .m6__key {
+  border-color: var(--c-ok);
+  background: var(--c-ok);
+  color: var(--c-bg);
+}
+.m6__option.is-wrong {
+  border-color: var(--c-err);
+  color: var(--c-err);
+  background: color-mix(in srgb, var(--c-err) 16%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c-err) 24%, transparent);
+}
+.m6__option.is-wrong .m6__key {
+  border-color: var(--c-err);
+  background: color-mix(in srgb, var(--c-err) 20%, transparent);
+}
+.m6__option.is-disabled {
+  opacity: 0.36;
+  box-shadow: none;
+}
+@keyframes m6-pop {
+  from {
+    transform: scale(0.97);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.m6__hint {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+}
+.m6__hint .icon {
+  flex: 0 0 auto;
+  color: var(--c-primary);
+}
+
+/* --- 右栏：结果卡 + 解析 + 知识点关联 + 操作 --- */
+.m6__result {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.m6__result-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--sz-m6-result-icon);
+  height: var(--sz-m6-result-icon);
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  color: var(--c-text-dim);
+  background: color-mix(in srgb, var(--c-text-dim) 10%, transparent);
+}
+.m6__result-title {
+  font-size: var(--fs-m6-result-title);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.m6__result-sub {
+  font-size: var(--fs-m6-body);
+  color: var(--c-text-dim);
+}
+.m6__side[data-state='right'] .m6__result-icon {
+  color: var(--c-ok);
+  background: color-mix(in srgb, var(--c-ok) 18%, transparent);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--c-ok) 42%, transparent);
+}
+.m6__side[data-state='right'] .m6__result-title {
+  color: var(--c-ok);
+}
+.m6__side[data-state='wrong'] .m6__result-icon {
+  color: var(--c-err);
+  background: color-mix(in srgb, var(--c-err) 16%, transparent);
+}
+.m6__side[data-state='wrong'] .m6__result-title {
+  color: var(--c-err);
+}
+.m6__result-sub .num {
+  font-size: var(--fs-m6-body);
+}
+
+/* 层级 2：解析 / 知识点关联为「下沉面」——比两栏更暗 + 内阴影，形成凹凸对比 */
+.m6__block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px;
+  border: 1px solid color-mix(in srgb, var(--c-line) 78%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-bg) 62%, transparent);
+  box-shadow: inset 0 2px 12px color-mix(in srgb, #000 42%, transparent);
+  animation: m6-rise var(--t-base) var(--e-out) 1 both;
+}
+/* 解析＝青色（讲评思路），知识点关联＝暖金（本课必记要点），两块一眼可分辨 */
+.m6__block--analysis {
+  border-left: 3px solid var(--c-primary);
+}
+.m6__block--knowledge {
+  border-left: 3px solid var(--c-accent-warm);
+  background: color-mix(in srgb, var(--c-accent-warm) 7%, color-mix(in srgb, var(--c-bg) 62%, transparent));
+}
+.m6__block-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-m6-block-title);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.m6__block--analysis .m6__block-title {
+  color: var(--c-primary);
+}
+.m6__block--knowledge .m6__block-title {
+  color: var(--c-accent-warm);
+}
+.m6__analysis {
+  padding-left: 12px;
+  font-size: var(--fs-m6-body);
+  line-height: 1.7;
+}
+.m6__knowledge-title {
+  font-size: var(--fs-m6-body);
+  font-weight: 700;
+  color: var(--c-accent-warm);
+}
+.m6__knowledge-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 18px;
+}
+.m6__knowledge-item {
+  position: relative;
+  padding-left: 16px;
+  font-size: var(--fs-m6-body);
+  line-height: 1.55;
+}
+.m6__knowledge-item::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.68em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--c-accent-warm);
+}
+@keyframes m6-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.m6__locked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 90px;
+  border: 1px dashed var(--c-line);
+  border-radius: 10px;
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+}
+
+.m6__actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+.m6__actions .btn {
+  padding: 12px 26px;
+  font-size: var(--fs-m6-option);
+}
+.m6__actions .m6__next .icon {
+  transition: transform var(--t-fast) var(--e-out);
+}
+.m6__actions .m6__next:hover .icon {
+  transform: translateX(3px);
+}
+.m6__actions .m6__again:hover .icon {
+  transform: rotate(-180deg);
+}
+.m6__actions .m6__again .icon {
+  transition: transform var(--t-base) var(--e-out);
+}
+
+/* 竖直空间不足（如 1024×768）时收紧内边距，尽量一屏呈现 */
+@media (max-height: 820px) {
+  .m6__q,
+  .m6__side {
+    padding: 16px 18px;
+  }
+  .m6__stage,
+  .m6__options {
+    gap: 10px;
+  }
+  .m6__body {
+    gap: 10px;
+    padding-bottom: 18px;
+  }
+  .m6__block {
+    padding: 12px 16px;
+  }
+}
+
+/* ================= M7 综合题规范训练 ================= */
+/* 版式：材料卡（背景图 + 综合题徽标）+ 问题要求卡 + 底部操作。
+   高度用 flex 分配：材料卡吃掉剩余高度，其余按内容高度排布，1024×768 起一屏呈现 */
+.screen.m7 {
+  justify-content: flex-start;
+  /* 顶部留白比全局默认更宽，材料卡与导航栏拉开（对应设计图） */
+  padding-top: calc(var(--nav-h) + clamp(26px, 5.4vh, 52px));
+  gap: clamp(14px, 2.8vh, 30px);
+}
+
+/* --- 材料卡 --- */
+.m7__scene {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6vh, 20px);
+  padding: clamp(18px, 2.6vh, 30px) clamp(26px, 2.6vw, 46px);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 24%, transparent);
+  border-radius: 18px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--c-m7-deep) 52%, var(--c-bg)) 0%, var(--c-m7-deep) 100%);
+  box-shadow: 0 30px 70px color-mix(in srgb, #000 48%, transparent);
+}
+/* 背景图（1694×928）按卡片高度整幅放下、右对齐：纵向不裁切，火箭连同尾焰完整落在
+   文字右侧的空白区；左缘用遮罩渐隐，与卡底深空色无缝衔接 */
+.m7__scene-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.m7__scene-bg img {
+  flex: 0 0 auto;
+  height: 100%;
+  width: auto;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 14%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 14%);
+}
+/* 压暗遮罩：左强右弱。文字覆盖区压到最暗保证可读，火箭所在的最右侧几乎不压暗 */
+.m7__scene-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-bg) 86%, transparent) 0%,
+      color-mix(in srgb, var(--c-bg) 78%, transparent) 40%,
+      color-mix(in srgb, var(--c-bg) 58%, transparent) 62%,
+      color-mix(in srgb, var(--c-bg) 26%, transparent) 80%,
+      color-mix(in srgb, var(--c-bg) 8%, transparent) 92%,
+      color-mix(in srgb, var(--c-bg) 4%, transparent) 100%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--c-bg) 34%, transparent), transparent 44%);
+}
+.m7__scene-badge,
+.m7__scene-text {
+  position: relative;
+  z-index: 1;
+}
+/* 「综合题」徽标：圆角矩形 + 冷色描边，落在材料卡左上角 */
+.m7__scene-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: clamp(8px, 1.1vh, 12px) clamp(14px, 1.2vw, 20px);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 42%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-primary) 14%, color-mix(in srgb, var(--c-bg) 58%, transparent));
+  font-size: var(--fs-m7-badge);
+  line-height: 1;
+}
+.m7__scene-badge .icon {
+  flex: 0 0 auto;
+  color: var(--c-primary);
+}
+/* 材料正文：右侧留白让出背景图的火箭，避免文字压住主体 */
+.m7__scene-text {
+  max-width: 82%;
+  font-size: var(--fs-m7-material);
+  line-height: 1.62;
+  text-shadow: 0 2px 14px color-mix(in srgb, var(--c-bg) 74%, transparent);
+}
+
+/* --- 关键词高亮：点「关键词」后逐词扫出，底色 + 下划线自左向右展开 --- */
+/* 未点按时不改变正文观感（留白与圆角常驻，避免揭示瞬间文字位移） */
+.m7__kw {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  /* 长词换行被拆成多段时，每段各自绘一层底色与下划线 */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.m7__scene-text.is-kw .m7__kw {
+  /* 加粗随点按一次性生效（避免逐词加粗过程中反复回流、文字换行跳动） */
+  font-weight: 700;
+  /* 双层底：下层淡琥珀色块（高亮），上层 2px 实线（下划线） */
+  background-image: linear-gradient(
+      color-mix(in srgb, var(--c-accent-warm) 22%, transparent),
+      color-mix(in srgb, var(--c-accent-warm) 22%, transparent)
+    ),
+    linear-gradient(var(--c-accent-warm), var(--c-accent-warm));
+  background-repeat: no-repeat;
+  background-position: 0 100%, 0 100%;
+  /* 逐词错峰：--kw-i 为关键词在材料中出现的次序 */
+  animation: m7-kw-sweep var(--t-slow) var(--e-out) both;
+  animation-delay: calc(var(--kw-i, 0) * 70ms);
+}
+@keyframes m7-kw-sweep {
+  from {
+    background-size: 0% 100%, 0% 2px;
+    color: var(--c-text);
+  }
+  to {
+    background-size: 100% 100%, 100% 2px;
+    color: var(--c-accent-warm);
+  }
+}
+/* 减少动效：不做错峰、不退进度，直接呈现结果 */
+@media (prefers-reduced-motion: reduce) {
+  .m7__scene-text.is-kw .m7__kw {
+    animation-delay: 0ms;
+  }
+}
+
+/* --- 问题要求卡 --- */
+.m7__req {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.2vh, 14px);
+  padding: clamp(16px, 2.2vh, 26px) clamp(26px, 2.6vw, 46px);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 22%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--c-panel) 84%, transparent);
+}
+.m7__req-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1vw, 16px);
+}
+.m7__req-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: clamp(28px, 2.3vw, 40px);
+  height: clamp(28px, 2.3vw, 40px);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c-primary) 74%, #2a6ba6);
+  color: #f4faff;
+  font-size: clamp(17px, 1.35vw, 24px);
+  font-weight: 700;
+  line-height: 1;
+}
+.m7__req-label {
+  font-size: var(--fs-m7-label);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.m7__req-text {
+  font-size: var(--fs-m7-ask);
+  line-height: 1.6;
+}
+/* 括号内的作答要求降一档亮度，与题干正文区分 */
+.m7__req-note {
+  color: var(--c-text-dim);
+}
+
+/* --- 底部操作 --- */
+.m7__bar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: clamp(12px, 1vw, 18px);
+}
+.m7__act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--sz-m7-act-w);
+  height: var(--sz-m7-act-h);
+  padding: 0 clamp(20px, 1.6vw, 32px);
+  border-radius: 10px;
+  font-size: var(--fs-m7-act);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out),
+    transform var(--t-fast) var(--e-out);
+}
+.m7__act:active {
+  transform: translateY(1px);
+}
+.m7__act--ghost {
+  border: 1px solid var(--c-line-strong);
+  background: transparent;
+  color: var(--c-text);
+}
+.m7__act--ghost:hover {
+  border-color: var(--c-primary);
+  background: color-mix(in srgb, var(--c-primary) 14%, transparent);
+}
+/* 「关键词」已展开：按钮常亮，与材料上的高亮状态呼应 */
+.m7__act--ghost.is-on,
+.m7__act--ghost.is-on:hover {
+  border-color: var(--c-primary);
+  background: color-mix(in srgb, var(--c-primary) 16%, transparent);
+  color: var(--c-text);
+}
+/* 主按钮：以 --c-primary 压深到中蓝，白字对比度 ≥ 4.5:1（对应设计图的主按钮色） */
+.m7__act--key {
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--c-primary) 40%, #0e4a75);
+  color: #ffffff;
+  font-weight: 700;
+}
+.m7__act--key:hover {
+  background: color-mix(in srgb, var(--c-primary) 56%, #0e4a75);
+}
+
+/* --- 评分标准弹层（矩形框） --- */
+/* 遮罩：用全量 --c-mask 把背后页面压下去，突出不透明的弹窗面板 */
+.m7__criteria-overlay {
+  background: var(--c-mask);
+}
+/* 面板：不透明（背景全为实底，不含透明混合），沿用全站「抬起面」语言——
+   顶部主色微光 + 实底深色渐变 + 主色描边 + 外投影 / 内发光 */
+.m7__criteria {
+  width: min(92vw, 980px);
+  max-height: 86vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.2vh, 24px);
+  padding: clamp(22px, 3vh, 34px) clamp(26px, 2.6vw, 42px);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 38%, transparent);
+  border-radius: 18px;
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--c-primary) 10%, transparent), transparent 150px),
+    linear-gradient(168deg, var(--c-panel-2), var(--c-panel) 54%, var(--c-bg));
+  box-shadow: 0 30px 80px color-mix(in srgb, #000 66%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent),
+    inset 0 0 90px color-mix(in srgb, var(--c-primary) 7%, transparent);
+}
+/* 标题行：序号徽标 + 标题 + 关闭；底部细线把标题与条目分开 */
+.m7__criteria-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1vw, 16px);
+  padding-bottom: clamp(12px, 1.6vh, 18px);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent);
+}
+.m7__criteria-title {
+  font-size: var(--fs-m7-label);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--c-text);
+}
+.m7__criteria-close {
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--c-text) 30%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
+}
+.m7__criteria-close:hover {
+  border-color: var(--c-err);
+  color: var(--c-err);
+}
+.m7__criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.8vh, 20px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* 每条：左侧序号方牌 + 右侧条目文字；实底「浮起小方块」，与随堂练习选项同一语言 */
+.m7__criteria-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(12px, 1.2vw, 18px);
+  padding: clamp(12px, 1.6vh, 18px) clamp(16px, 1.4vw, 22px);
+  border: 1px solid var(--c-line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--c-panel-2), color-mix(in srgb, var(--c-panel-2) 78%, var(--c-bg)));
+  box-shadow: 0 5px 14px color-mix(in srgb, #000 34%, transparent);
+}
+.m7__criteria-no {
+  display: grid;
+  place-items: center;
+  width: clamp(28px, 2.3vw, 38px);
+  height: clamp(28px, 2.3vw, 38px);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-primary) 74%, #2a6ba6);
+  color: #f4faff;
+  font-size: clamp(17px, 1.35vw, 24px);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-primary) 30%, transparent);
+}
+.m7__criteria-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.1vh, 12px);
+}
+.m7__criteria-text {
+  font-size: var(--fs-m7-criteria);
+  line-height: 1.55;
+  color: var(--c-text);
+}
+/* 最后一条并列的若干要素，成组展示；实底胶囊，与主色同一族 */
+.m7__criteria-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 0.8vw, 12px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m7__criteria-sub li {
+  padding: clamp(6px, 0.8vh, 9px) clamp(12px, 1.1vw, 18px);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 14%, var(--c-panel-2));
+  color: var(--c-text);
+  font-size: var(--fs-m7-criteria);
+  line-height: 1.2;
+}
+
+/* ================= M7 答题屏（#m7a，点「进入答题」后下滑进入） ================= */
+/* 版式：上方作答区留空（暂不实现，仅占位）→ 吃掉剩余高度，把表格压到页面下方 */
+.screen.m7.is-answer {
+  height: 100vh;
+  overflow: hidden;
+  gap: clamp(12px, 2vh, 22px);
+}
+.m7__paper {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.4vh, 28px);
+  /* 竖直空间不足时兜底：先吃掉留白，仍放不下才出现内部滚动 */
+  overflow-y: auto;
+  animation: m7-paper-in var(--t-base) var(--e-out) 1 both;
+}
+@keyframes m7-paper-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* 表格上方的作答区：作答功能暂未实现，先放关键词词云作写作支架 */
+/* 不设 min-height:0：词云是内容，宁可让下方表格内部滚动，也不把词云压扁 */
+.m7__paper-blank {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  padding: clamp(6px, 1.6vh, 24px) 0;
+}
+
+/* --- 关键词词云：材料页高亮过的同一份词表，逐词一颗胶囊 --- */
+.m7__cloud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.2vh, 26px);
+  width: 100%;
+  /* 铺满答题区整幅宽度（词云「范围广」的关键）：上限对齐全站最宽内容线（封面 .intro__body）。
+     只留一点内边距，免得胶囊的微旋转贴边给 .m7__paper 挤出横向滚动条 */
+  max-width: min(100%, 1720px);
+  padding: 0 clamp(6px, 0.8vw, 16px);
+}
+.m7__cloud-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-m7-badge);
+  letter-spacing: 0.06em;
+  color: var(--c-text-dim);
+}
+.m7__cloud-label .icon {
+  flex: 0 0 auto;
+  color: var(--c-primary);
+}
+/* 词云主体：铺满整幅宽度——每行由 space-around 撑开到左右两端（单行只剩一个词时仍居中），
+   胶囊交替微旋转 + 微错位，破掉整齐的行列感 */
+.m7__cloud-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+  gap: clamp(12px, 2vh, 24px) clamp(18px, 1.8vw, 34px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m7__cloud-word {
+  --rot: 0deg;
+  --dy: 0px;
+  border-radius: 999px;
+  line-height: 1.2;
+  white-space: nowrap;
+  /* 未滑到答题屏前不显示（由 observeCloud 加 is-in 触发） */
+  opacity: 0;
+  transform: rotate(var(--rot)) translateY(var(--dy));
+}
+.m7__cloud-list > :nth-child(3n + 1) {
+  --rot: -1.4deg;
+  --dy: -5px;
+}
+.m7__cloud-list > :nth-child(3n + 2) {
+  --rot: 1deg;
+  --dy: 4px;
+}
+.m7__cloud-list > :nth-child(3n) {
+  --rot: -0.5deg;
+  --dy: 9px;
+}
+/* 三档层次：短词＝核心术语（青，最大最亮）> 中档（青，收敛）> 长句＝材料原句（中性，最弱） */
+.m7__cloud-word--l1 {
+  padding: var(--pad-m7-cloud-l1);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 52%, transparent);
+  background: color-mix(in srgb, var(--c-primary) 14%, color-mix(in srgb, var(--c-panel-2) 72%, transparent));
+  color: var(--c-text);
+  font-size: var(--fs-m7-cloud-l1);
+  font-weight: 700;
+  box-shadow: 0 6px 20px color-mix(in srgb, #000 40%, transparent),
+    0 0 24px color-mix(in srgb, var(--c-primary) 22%, transparent);
+}
+.m7__cloud-word--l2 {
+  padding: var(--pad-m7-cloud-l2);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 34%, transparent);
+  background: color-mix(in srgb, var(--c-primary) 8%, color-mix(in srgb, var(--c-panel-2) 62%, transparent));
+  color: var(--c-text);
+  font-size: var(--fs-m7-cloud-l2);
+}
+.m7__cloud-word--l3 {
+  padding: var(--pad-m7-cloud-l3);
+  border: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
+  background: color-mix(in srgb, var(--c-panel-2) 58%, transparent);
+  color: var(--c-text-dim);
+  font-size: var(--fs-m7-cloud-l3);
+}
+/* 逐词错峰上浮：--i 为关键词在词表中的次序；both 让延迟期间停在起始帧（不可见） */
+.m7__cloud.is-in .m7__cloud-word {
+  opacity: 1;
+  animation: m7-cloud-in var(--t-slow) var(--e-back) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes m7-cloud-in {
+  from {
+    opacity: 0;
+    transform: rotate(var(--rot)) translateY(calc(var(--dy) + 18px)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--rot)) translateY(var(--dy)) scale(1);
+  }
+}
+/* 减少动效：不做错峰，直接呈现结果 */
+@media (prefers-reduced-motion: reduce) {
+  .m7__cloud.is-in .m7__cloud-word {
+    animation-delay: 0ms;
+  }
+}
+
+/* --- 材料信息梳理表：五列（材料描述 / 描述角度 / 精简语句 / 有利·不利 / 可能形成的答案） --- */
+/* 外框放在滚动容器上，圆角裁边与内部滚动互不干扰 */
+.m7__sum-wrap {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 26%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--c-panel) 78%, transparent);
+  box-shadow: 0 26px 60px color-mix(in srgb, #000 46%, transparent);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--c-primary) 45%, transparent) transparent;
+}
+.m7__sum-wrap::-webkit-scrollbar {
+  width: 10px;
+}
+.m7__sum-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.m7__sum-wrap::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 45%, transparent);
+  background-clip: content-box;
+}
+.m7__sum {
+  width: 100%;
+  table-layout: fixed;
+  /* separate + 0 间距：内部只用单元格下边线，表头粘顶时不出现错位 */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.m7__sum-col--material {
+  width: 25%;
+}
+.m7__sum-col--angle {
+  width: 16%;
+}
+.m7__sum-col--brief {
+  width: 16%;
+}
+.m7__sum-col--polar {
+  width: 11%;
+}
+.m7__sum-col--answer {
+  width: 32%;
+}
+.m7__sum th,
+.m7__sum td {
+  padding: var(--pad-m7-sum-cell);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-line) 42%, transparent);
+  font-size: var(--fs-m7-sum-cell);
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  vertical-align: middle;
+}
+/* 表头：一层浅色底与数据行区分，字号略小；表格内部滚动时粘在顶部 */
+.m7__sum thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--c-primary) 11%, var(--c-panel-2));
+  font-size: var(--fs-m7-sum-head);
+  font-weight: 500;
+}
+/* 末行去掉下边线，避免与表格外框叠成双线 */
+.m7__sum tbody tr:last-child th,
+.m7__sum tbody tr:last-child td {
+  border-bottom: 0;
+}
+.m7__sum-material-in {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(8px, 0.7vw, 14px);
+}
+.m7__sum-icon {
+  flex: 0 0 auto;
+  color: var(--c-primary);
+}
+/* 有利 / 不利标签：与表格同一行高内的圆角牌 */
+.m7__sum-polar {
+  display: inline-block;
+  padding: clamp(3px, 0.5vh, 6px) clamp(12px, 1vw, 18px);
+  border-radius: 8px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.m7__sum-polar--fav {
+  border: 1px solid color-mix(in srgb, var(--c-ok) 46%, transparent);
+  background: color-mix(in srgb, var(--c-ok) 16%, transparent);
+  color: var(--c-ok);
+}
+.m7__sum-polar--unfav {
+  border: 1px solid color-mix(in srgb, var(--c-accent-warm) 46%, transparent);
+  background: color-mix(in srgb, var(--c-accent-warm) 16%, transparent);
+  color: var(--c-accent-warm);
+}
+
+/* --- 未展开的行：四列梳理结果整体隐藏，只在「材料描述」右侧的四列范围内留一枚居中「点击查看」 --- */
+/* 以 tr 为定位基准，按钮才能横跨「描述角度 → 可能形成的答案」并居中 */
+.m7__sum-row {
+  position: relative;
+}
+.m7__sum-v {
+  /* 供 GSAP 做上浮（transform 对行内元素不生效），同时保留行高 */
+  display: inline-block;
+}
+.m7__sum-row:not(.is-open) .m7__sum-v {
+  /* 用 visibility 而非 display：行高不变，点开后表格不跳 */
+  visibility: hidden;
+}
+.m7__sum-row.is-open {
+  background: color-mix(in srgb, var(--c-primary) 5%, transparent);
+}
+/* 「点击查看」与 M2/M3 条件表同款：同尺寸、同图标、同配色 */
+.m7__sum-peek {
+  position: absolute;
+  left: 25%; /* 材料描述列宽 25%，其右侧即四列梳理区 */
+  right: 0;
+  top: 50%;
+  margin-inline: auto;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: var(--sz-ct-peek-w);
+  height: var(--sz-ct-peek-h);
+  border: 1px solid var(--c-primary);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 10%, transparent);
+  color: var(--c-primary);
+  font-size: var(--fs-ct-btn);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out),
+    box-shadow var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+.m7__sum-peek:hover {
+  background: color-mix(in srgb, var(--c-primary) 24%, transparent);
+  color: var(--c-text);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c-primary) 35%, transparent);
+}
+.m7__sum-peek:active {
+  transform: translateY(calc(-50% + 1px));
+}
+.m7__sum-row.is-open .m7__sum-peek {
+  display: none;
+}
+
+/* 竖直空间不足（如 1024×768）时收紧单元格内边距，保证表格与表头完整可见 */
+@media (max-height: 820px) {
+  .m7__sum th,
+  .m7__sum td {
+    padding: 10px 14px;
+  }
+}

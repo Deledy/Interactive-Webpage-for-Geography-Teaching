@@ -1,0 +1,16 @@
+{
+  "book": "高三复习专题",
+  "chapter": "一轮复习专题",
+  "order": 1,
+  "lessonTitle": "航天发射相关问题：发射基地与着陆场选址条件及综合题规范训练",
+  "grade": "高三一轮复习",
+  "status": "done",
+  "engine": "vite",
+  "entry": "dist/index.html",
+  "resources": [
+    { "path": "assets/fonts/noto-sans-sc-400-subset.woff2", "type": "font" },
+    { "path": "assets/fonts/noto-sans-sc-700-subset.woff2", "type": "font" }
+  ],
+  "tags": ["航天发射", "着陆场", "区位条件", "综合题答题", "高三一轮复习", "公开课"],
+  "description": "以航天发射为情境的高三一轮复习专题课：梳理航天发射基地 6 个、航天器着陆场 4 个选址描述角度，完成我国四大航天发射基地与 7 条有利条件的配对，并通过一道综合题训练“分句—定角度—规范表达”的作答路径"
+}

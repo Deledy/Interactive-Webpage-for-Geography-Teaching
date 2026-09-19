@@ -1,0 +1,55 @@
+/* 打印样式（P1）：隐藏交互元素，仅保留要点 */
+@media print {
+  .nav,
+  .btn,
+  .toast-host,
+  .overlay-host {
+    display: none !important;
+  }
+  .screen {
+    min-height: auto;
+    page-break-after: always;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  body::before {
+    display: none;
+  }
+  /* 封面 / 随堂练习 / 综合题：去掉整屏背景与装饰层，只留文字 */
+  .intro__bg,
+  .intro::before,
+  .intro::after,
+  .intro__orbit,
+  .m6__bg,
+  .m6__veil,
+  .m7__scene-bg {
+    display: none;
+  }
+  .screen.m6,
+  .m6__body {
+    height: auto;
+  }
+  .screen.m7 .m7__scene-text,
+  .screen.m7 .m7__req-text,
+  .screen.m7 .m7__req-label {
+    color: #000;
+    text-shadow: none;
+  }
+  .screen.m7 .m7__req-note {
+    color: #444;
+  }
+  .screen.m7 .m7__bar {
+    display: none;
+  }
+  .intro__title,
+  .intro__goal-no {
+    background-image: none;
+    color: #000;
+  }
+  .intro__slogan,
+  .intro__goal-text {
+    color: #000;
+  }
+}

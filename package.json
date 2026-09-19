@@ -20,6 +20,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "echarts": "^6.1.0",
     "gsap": "^3.15.0",
     "three": "^0.180.0"
   },

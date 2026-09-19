@@ -1,0 +1,360 @@
+/* M5 四大发射基地选址条件（ECharts 中国地图 + 四角基地框 + 拖拽配对） */
+
+/* 舞台：横向铺满、纵向吃掉剩余高度；地图与四个基地框都在此定位 */
+.m5__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
+/* 地图区（舞台中部，四周留给基地框） */
+.m5__board {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  top: 0;
+  bottom: 0;
+}
+.m5__map {
+  position: absolute;
+  inset: 0;
+}
+
+/* 南海诸岛附图（规范表达：南海诸岛与南海断续线不落进主体图，单独附图呈现） */
+.m5__inset {
+  position: absolute;
+  left: 4%;
+  bottom: 6%;
+  width: 15%;
+  aspect-ratio: 16 / 19;
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c-panel) 72%, transparent);
+}
+.m5__inset-map {
+  position: absolute;
+  inset: 0;
+}
+.m5__inset-label {
+  position: absolute;
+  right: 5px;
+  bottom: 3px;
+  font-size: var(--fs-note);
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  color: var(--c-text-dim);
+}
+
+/* 折线引线：覆盖整个舞台，连到基地框最近的一条边上 */
+.m5__leaders {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.m5__leaders path {
+  fill: none;
+  stroke: var(--c-line-strong);
+  stroke-width: 1.4;
+  stroke-dasharray: 6 6;
+  vector-effect: non-scaling-stroke;
+}
+.m5__leaders path.is-done {
+  stroke: var(--c-primary);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+/* 基地框：四角固定落位，空态虚线提示"拖入" */
+.m5__box {
+  position: absolute;
+  z-index: 2;
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 14px;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--c-panel) 94%, transparent);
+  transition: border-color var(--t-base) var(--e-out), border-style var(--t-base) var(--e-out),
+    box-shadow var(--t-base) var(--e-out), background var(--t-base) var(--e-out);
+}
+.m5__box[data-slot='tl'] {
+  left: 0;
+  top: 0;
+}
+.m5__box[data-slot='tr'] {
+  right: 0;
+  top: 0;
+}
+.m5__box[data-slot='bl'] {
+  left: 0;
+  bottom: 0;
+}
+.m5__box[data-slot='br'] {
+  right: 0;
+  bottom: 0;
+}
+.m5__box.is-filled {
+  border-style: solid;
+  border-color: var(--c-line);
+  background: var(--c-panel);
+}
+.m5__box.is-target {
+  border-color: var(--c-primary);
+  border-style: dashed;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 18%, transparent);
+}
+.m5__box.is-reject {
+  animation: m5-reject var(--t-slow) var(--e-out) 1 both;
+}
+.m5__box.is-done {
+  border-color: var(--c-ok);
+  border-style: solid;
+}
+.m5__box.is-done .m5__box-state {
+  color: var(--c-ok);
+}
+.m5__box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.m5__box-name {
+  font-size: var(--fs-table);
+  font-weight: 700;
+}
+.m5__box-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-note);
+}
+.m5__box-loc {
+  color: var(--c-text-dim);
+}
+.m5__box-count {
+  font-size: var(--fs-note);
+}
+.m5__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 36px;
+}
+/* 预占高度用的测量探针：与真实胶囊同款结构，仅参与布局、不参与绘制 */
+.m5__slots--probe {
+  visibility: hidden;
+  pointer-events: none;
+}
+.m5__placeholder {
+  display: block;
+  width: 100%;
+  padding: 6px 0 4px;
+  font-size: var(--fs-note);
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: color-mix(in srgb, var(--c-text-dim) 72%, transparent);
+}
+.m5__box.is-filled .m5__placeholder {
+  display: none;
+}
+
+/* 已挂载的条件胶囊（点击可取回，故 hover 变红提示"移出"） */
+.m5__slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--c-primary);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 12%, transparent);
+  color: var(--c-text);
+  font-size: var(--fs-note);
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: background var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out);
+}
+.m5__slot:hover {
+  border-color: var(--c-err);
+  background: color-mix(in srgb, var(--c-err) 16%, transparent);
+}
+.m5__slot-index {
+  flex: 0 0 auto;
+  color: var(--c-accent-warm);
+}
+@keyframes m5-reject {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  30%,
+  70% {
+    border-color: var(--c-err);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-err) 22%, transparent);
+  }
+}
+
+/* 条件库（底部胶囊池） */
+.m5__pool {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 18px 14px;
+}
+.m5__pool-title {
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+  letter-spacing: 1px;
+}
+.m5__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.m5__card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: var(--c-panel-2);
+  color: var(--c-text);
+  font-size: var(--fs-note);
+  cursor: grab;
+  touch-action: none;
+  transition: border-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out),
+    transform var(--t-fast) var(--e-out);
+}
+.m5__card:hover {
+  border-color: var(--c-line-strong);
+  transform: translateY(-1px);
+}
+.m5__card.is-active {
+  border-color: var(--c-accent-warm);
+  color: var(--c-accent-warm);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent-warm) 20%, transparent);
+}
+.m5__card.is-dragging {
+  opacity: 0.35;
+}
+.m5__card.is-shake {
+  animation: m5-shake var(--t-slow) var(--e-out) 1 both;
+}
+.m5__card-index {
+  color: var(--c-accent-warm);
+}
+.m5__card-count {
+  display: none;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-ok) 22%, transparent);
+  color: var(--c-ok);
+  font-size: var(--fs-note);
+  text-align: center;
+}
+.m5__card.is-armed .m5__card-count {
+  display: inline-block;
+}
+@keyframes m5-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(7px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+.m5__ghost {
+  position: fixed;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0.95;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+}
+.m5__foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+.m5__foot-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.m5__note {
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+}
+
+/* 全部完成的"发射成功"特效 */
+.m5__effect-arc {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.m5__orbit {
+  fill: none;
+  stroke: var(--c-primary);
+  stroke-width: 2;
+  opacity: 0.9;
+}
+.m5__capsule {
+  fill: var(--c-accent-warm);
+}
+.m5__spark {
+  fill: var(--c-accent-warm);
+}
+.m5__result {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  max-width: 560px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity var(--t-base) var(--e-out), transform var(--t-base) var(--e-out);
+}
+.m5__result.is-ready {
+  opacity: 1;
+  transform: none;
+}
+.m5__result-title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--c-accent-warm);
+  letter-spacing: 2px;
+}
+.m5__result-text {
+  margin-top: 8px;
+  font-size: var(--fs-body);
+}
+.m5__result-actions {
+  margin-top: 18px;
+}

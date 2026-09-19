@@ -1,0 +1,618 @@
+/* M4 实景选址对照：整屏平铺实景底图 + 定位针 + 条件卡片弹窗 */
+
+/* 覆盖 .screen 的默认留白与居中，让底图平铺整个页面 */
+.screen.m4 {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  min-height: 100vh;
+}
+.m4__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 上下压暗，保证标题与提示压在明亮底图上仍可读 */
+.m4__veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-bg) 68%, transparent) 0%,
+    transparent 20%,
+    transparent 68%,
+    color-mix(in srgb, var(--c-bg) 74%, transparent) 100%
+  );
+}
+
+/* 页眉（左上 / 右上）、操作提示（左下）、底图注记（右下） */
+.m4__head {
+  position: absolute;
+  top: calc(var(--nav-h) + 30px);
+  left: 44px;
+  right: 44px;
+}
+.m4__head .sec-title,
+.m4__head .sec-sub {
+  text-shadow: 0 2px 14px color-mix(in srgb, #000 76%, transparent);
+}
+.m4__head .sec-sub {
+  font-size: var(--fs-m4-note);
+  color: var(--c-text);
+  opacity: 0.88;
+}
+.m4__hint {
+  position: absolute;
+  left: 44px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 72%;
+  font-size: var(--fs-m4-note);
+  color: var(--c-text);
+  text-shadow: 0 2px 14px color-mix(in srgb, #000 78%, transparent);
+}
+.m4__hint-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--c-primary);
+}
+.m4__map-note {
+  position: absolute;
+  right: 44px;
+  bottom: 24px;
+  padding: 6px 20px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c-text) 26%, transparent);
+  background: color-mix(in srgb, var(--c-bg) 48%, transparent);
+  font-size: var(--fs-m4-note);
+  color: var(--c-text);
+}
+
+/* 定位针按钮：热区 64×64，针尖对准实景锚点，2.4s 脉冲 */
+.m4__hotspot {
+  position: absolute;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  /* 12px 内边距补偿：让针尖落在锚点上 */
+  transform: translate(-50%, calc(-100% + 12px));
+}
+.m4__hotspot-pin {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--c-primary);
+  filter: drop-shadow(0 6px 16px color-mix(in srgb, var(--c-primary) 70%, transparent));
+  transition: transform var(--t-fast) var(--e-out);
+}
+.m4__hotspot:hover .m4__hotspot-pin {
+  transform: translateY(-4px);
+}
+.m4__hotspot-pin::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 2px solid var(--c-primary);
+  pointer-events: none;
+  animation: m4-pulse 2.4s var(--e-out) infinite;
+}
+@keyframes m4-pulse {
+  0% {
+    transform: scale(0.62);
+    opacity: 0.85;
+  }
+  80%,
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+.m4__hotspot-label {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-top: -12px;
+  transform: translateX(-50%);
+  padding: 6px 20px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c-text) 24%, transparent);
+  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
+  font-size: var(--fs-m4-note);
+  white-space: nowrap;
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 55%, transparent);
+  transition: border-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
+}
+.m4__hotspot:hover .m4__hotspot-label {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .m4__hotspot-pin::after {
+    animation: none;
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+}
+
+/* ---------------- 条件卡片弹窗（玻璃面板 + 发光矩形卡） ---------------- */
+.m4__overlay {
+  background: color-mix(in srgb, var(--c-mask) 58%, transparent);
+}
+.m4__modal {
+  width: min(94vw, 1320px);
+  max-height: 88vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 30px 34px 34px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 38%, transparent);
+  border-radius: 18px;
+  /* 半透明玻璃：能透出背后实景，又保证文字对比度 */
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--c-panel-2) 58%, transparent),
+    color-mix(in srgb, var(--c-bg) 70%, transparent)
+  );
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 30px 80px color-mix(in srgb, #000 66%, transparent),
+    inset 0 0 70px color-mix(in srgb, var(--c-primary) 8%, transparent);
+}
+.m4__modal-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.m4__modal-title {
+  font-size: var(--fs-m4-title);
+  font-weight: 700;
+}
+.m4__modal-sub {
+  font-size: var(--fs-m4-note);
+  color: var(--c-text-dim);
+}
+.m4__modal-close {
+  margin-left: auto;
+  align-self: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--c-text) 30%, transparent);
+  background: transparent;
+  color: var(--c-text);
+  font-size: var(--fs-m4-note);
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
+}
+.m4__modal-close:hover {
+  border-color: var(--c-err);
+  color: var(--c-err);
+}
+.m4__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* 矩形条件卡：左侧 logo 底座 + 右侧角度与条件描述 */
+.m4__card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 26%, transparent);
+  border-radius: 14px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--c-primary) 12%, transparent),
+    color-mix(in srgb, var(--c-bg) 66%, transparent)
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-primary) 20%, transparent);
+}
+.m4__card-logo {
+  display: grid;
+  place-items: center;
+  width: var(--sz-m4-card-logo);
+  height: var(--sz-m4-card-logo);
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 44%, transparent);
+  background: color-mix(in srgb, var(--c-primary) 10%, transparent);
+  color: var(--c-primary);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c-primary) 24%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--c-primary) 14%, transparent);
+}
+.m4__card-logo .icon {
+  width: var(--sz-m4-logo-svg);
+  height: var(--sz-m4-logo-svg);
+}
+.m4__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.m4__card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.m4__card-angle {
+  font-size: var(--fs-m4-card-title);
+  font-weight: 700;
+  color: color-mix(in srgb, var(--c-primary) 46%, var(--c-text));
+}
+.m4__card-more {
+  padding: 5px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c-text) 26%, transparent);
+  background: transparent;
+  font-size: var(--fs-m4-note);
+  color: var(--c-text-dim);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
+}
+.m4__card-more:hover {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+.m4__card-text {
+  font-size: var(--fs-m4-card-text);
+  line-height: 1.5;
+}
+@media (max-width: 900px) {
+  .m4__cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .m4__modal-title {
+    font-size: var(--fs-h2);
+  }
+  .m4__head {
+    left: 24px;
+    right: 24px;
+  }
+  .m4__hint {
+    left: 24px;
+    max-width: none;
+  }
+  .m4__map-note {
+    right: 24px;
+  }
+}
+
+/* ---------------- 纬度线速度演示浮层（左 3D 地球 + 右 纬度/线速度对照表） ---------------- */
+.lat__card {
+  /* 左右分栏比例：左地球 / 右对照表 */
+  --lat-split: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  width: min(94vw, 1240px);
+  max-width: 1240px;
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 36px 30px;
+  background: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--c-panel-2) 94%, transparent),
+    color-mix(in srgb, var(--c-bg) 96%, transparent)
+  );
+  box-shadow: 0 30px 80px color-mix(in srgb, #000 62%, transparent),
+    inset 0 0 90px color-mix(in srgb, var(--c-primary) 7%, transparent);
+}
+
+/* 标题行 */
+.lat__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.lat__title {
+  font-size: var(--fs-m4-title);
+  font-weight: 700;
+}
+.lat__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lat__actions .btn {
+  padding: 6px 20px;
+}
+.lat__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--c-text) 30%, transparent);
+  background: transparent;
+  color: var(--c-text);
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
+}
+.lat__close:hover {
+  border-color: var(--c-err);
+  color: var(--c-err);
+}
+
+/* 副标题：关键词着色（越低 → 主色青，越大 → 蓝紫） */
+.lat__sub {
+  font-size: var(--fs-lat-sub);
+  color: var(--c-text);
+  opacity: 0.92;
+}
+.lat__sub .kw {
+  color: var(--c-primary);
+}
+.lat__sub .kw:nth-of-type(2) {
+  color: var(--c-accent-2);
+}
+
+/* 主体两栏 */
+.lat__body {
+  display: grid;
+  grid-template-columns: var(--lat-split);
+  gap: 30px;
+  align-items: center;
+}
+.lat__left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+/* 3D 舞台：正方形容器，canvas 与纬度标签都以它为定位基准 */
+.lat__stage {
+  position: relative;
+  width: 100%;
+  max-width: var(--sz-lat-stage);
+  aspect-ratio: 1 / 1;
+}
+.lat__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* 3D 模型的纬度标签：位置由 JS 逐帧投影写入 inline transform */
+.lat__glabel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: var(--fs-m4-note);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--c-text);
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 2px 10px color-mix(in srgb, #000 82%, transparent);
+}
+.lat__glabel--pole {
+  color: var(--c-primary);
+}
+/* 弧长标注（837 / 1447 / 1670 km）：随扫掠淡入 */
+.lat__glabel--arc {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--c-text-dim);
+}
+
+/* 右侧对照表：表头与数据行共用三列模板（纬度 / 对比条 / 数值） */
+.lat__right {
+  --lat-cols: 132px minmax(0, 1fr) 164px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.lat__thead {
+  display: grid;
+  grid-template-columns: var(--lat-cols);
+  align-items: center;
+  gap: 14px;
+}
+.lat__thead > span {
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-text) 8%, transparent);
+  font-size: var(--fs-m4-note);
+  color: var(--c-text);
+}
+.lat__thead > span:nth-child(2) {
+  grid-column: 2 / -1;
+}
+.lat__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lat__row {
+  display: grid;
+  grid-template-columns: var(--lat-cols);
+  align-items: center;
+  gap: 14px;
+}
+/* 三档配色：高纬最淡、中纬次之、赤道最亮（与 3D 模型的纬线配色一致） */
+.lat__row[data-band='high'] {
+  --lat-c: var(--c-accent-2);
+  --lat-c-dim: color-mix(in srgb, var(--c-accent-2) 56%, transparent);
+}
+.lat__row[data-band='mid'] {
+  --lat-c: var(--c-accent-2);
+  --lat-c-dim: color-mix(in srgb, var(--c-accent-2) 86%, transparent);
+}
+.lat__row[data-band='equator'] {
+  --lat-c: var(--c-primary);
+  --lat-c-dim: color-mix(in srgb, var(--c-primary) 92%, transparent);
+}
+.lat__name {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--c-text);
+}
+.lat__track {
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--c-text) 10%, transparent);
+}
+.lat__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--lat-c-dim), var(--lat-c));
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+.lat__val {
+  font-size: var(--fs-lat-val);
+  font-weight: 700;
+  text-align: right;
+  color: var(--lat-c);
+  font-variant-numeric: tabular-nums;
+}
+.lat__unit {
+  margin-left: 6px;
+  font-size: var(--fs-m4-note);
+  font-style: normal;
+  font-weight: 400;
+  color: var(--c-text-dim);
+}
+
+/* 赤道结论卡 */
+.lat__callout {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 26%, transparent);
+  border-radius: 14px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--c-primary) 10%, transparent),
+    color-mix(in srgb, var(--c-bg) 62%, transparent)
+  );
+}
+.lat__callout-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--c-primary);
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--c-primary) 55%, transparent));
+}
+.lat__callout-body {
+  min-width: 0;
+}
+.lat__callout-text {
+  font-size: var(--fs-m4-note);
+  color: var(--c-text);
+}
+.lat__callout-value {
+  font-size: var(--fs-m4-note);
+  color: var(--c-text-dim);
+}
+.lat__callout-value b {
+  font-size: var(--fs-lat-val);
+  font-weight: 700;
+  color: var(--c-primary);
+  font-variant-numeric: tabular-nums;
+}
+.lat__callout-value em {
+  margin-left: 6px;
+  font-size: var(--fs-m4-note);
+  font-style: normal;
+  color: var(--c-text-dim);
+}
+
+/* WebGL 不可用时的静态降级示意 */
+.lat__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lat__f-globe {
+  fill: color-mix(in srgb, var(--c-primary) 8%, transparent);
+  stroke: var(--c-line-strong);
+  stroke-width: 1.5;
+}
+/* 扇形楔：顶点在纬线圆心，外缘弧长即该纬度 1 小时转过的距离 */
+.lat__f-wedge {
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.lat__f-wedge[data-band='high'] {
+  fill: color-mix(in srgb, var(--c-accent-2) 14%, transparent);
+  stroke: color-mix(in srgb, var(--c-accent-2) 60%, transparent);
+}
+.lat__f-wedge[data-band='mid'] {
+  fill: color-mix(in srgb, var(--c-accent-2) 26%, transparent);
+  stroke: var(--c-accent-2);
+}
+.lat__f-wedge[data-band='equator'] {
+  fill: color-mix(in srgb, var(--c-primary) 30%, transparent);
+  stroke: var(--c-primary);
+}
+.lat__f-axis {
+  stroke: var(--c-text-dim);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 5;
+  opacity: 0.6;
+}
+.lat__f-label {
+  fill: var(--c-text);
+  font-size: 17px;
+  font-weight: 700;
+}
+.lat__f-label--pole {
+  fill: var(--c-primary);
+}
+.lat__f-arc {
+  fill: var(--c-text-dim);
+  font-size: 15px;
+}
+
+@media (max-width: 1080px) {
+  .lat__card {
+    width: min(94vw, 720px);
+  }
+  .lat__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lat__right {
+    --lat-cols: 116px minmax(0, 1fr) 152px;
+  }
+}
+@media (max-height: 780px) {
+  .lat__card {
+    gap: 12px;
+    padding: 22px 28px 24px;
+  }
+  .lat__stage {
+    max-width: 460px;
+  }
+}

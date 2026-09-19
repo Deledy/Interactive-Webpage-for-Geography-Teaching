@@ -1,0 +1,145 @@
+/* 设计令牌（唯一真源）：色彩 / 字号 / 动效，模块样式一律引用这里，不得写魔法数字 */
+:root {
+  /* 色彩 */
+  --c-bg: #060a14;
+  --c-panel: #0d1524;
+  --c-panel-2: #111c31;
+  --c-line: rgba(53, 198, 244, 0.28);
+  --c-line-strong: rgba(53, 198, 244, 0.6);
+  --c-primary: #35c6f4;
+  --c-accent-2: #7b61ff;
+  --c-accent-warm: #ffb020;
+  --c-text: #e8eff8;
+  --c-text-dim: #93a4bc;
+  --c-ok: #2ed47a;
+  --c-err: #ff5c6c;
+  --c-info: #35c6f4;
+  --c-mask: rgba(3, 7, 15, 0.72);
+
+  /* 字号：投屏最小字号 20px，任何内容不得低于此值 */
+  --fs-hero: 52px;
+  --fs-h2: 32px;
+  --fs-body: 22px;
+  --fs-table: 21px;
+  --fs-note: 20px;
+  --fs-num: 30px;
+
+  /* 动效 */
+  --t-fast: 150ms;
+  --t-base: 300ms;
+  --t-slow: 600ms;
+  --t-hero: 1200ms;
+  --e-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --e-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* 其他 */
+  --r-panel: 12px;
+  --nav-h: 64px;
+
+  /* 封面（M1）专用：仅 intro / nav 引用；字号按视口缩放，保证教室后排可读 */
+  /* 标题实际字号见 shell.css（按标题区可用宽度自适应），此处为不支持容器查询单位时的回退 */
+  --fs-cover-title: clamp(60px, 6.6vw, 128px);
+  --fs-cover-slogan: clamp(22px, 2.6vw, 38px);
+  --fs-cover-goal: clamp(22px, 1.75vw, 29px);
+  --fs-cover-goal-no: clamp(26px, 2.4vw, 36px);
+  --fs-cover-goals-title: clamp(24px, 2.3vw, 34px);
+  --fs-cover-btn: clamp(22px, 1.9vw, 30px);
+  --sz-cover-goal-icon: clamp(56px, 4.6vw, 72px);
+  --sz-cover-goal-svg: clamp(28px, 2.2vw, 38px);
+  --sz-cover-logo: 34px;
+  --c-cover-veil: #050c18;
+  --c-cover-grid: rgba(140, 196, 255, 0.07);
+  --c-cover-line: rgba(158, 205, 255, 0.34);
+  --c-cover-text: #dbe8fb;
+  --c-cover-title-top: #ffffff;
+  --c-cover-title-bottom: #b9d6f7;
+  --c-cover-glow: rgba(96, 178, 255, 0.5);
+  --c-cover-glass: rgba(12, 26, 46, 0.66);
+  /* 面板描边渐变（沿整个矩形框一周循环：冷白 → 主色青 → 蓝紫 → 冷白） */
+  --c-cover-ring-a: rgba(216, 238, 255, 0.92);
+  --c-cover-ring-b: rgba(53, 198, 244, 0.62);
+  --c-cover-ring-c: rgba(150, 178, 255, 0.88);
+  /* 头部 logo */
+  --c-cover-logo: #bfe6ff;
+
+  /* 选址条件弹窗（M4）专用：教室后排可读，字号与卡面整体放大 */
+  --fs-m4-title: 38px;
+  --fs-m4-card-title: 28px;
+  --fs-m4-card-text: 25px;
+  --fs-m4-note: 22px;
+  --sz-m4-card-logo: 60px;
+  --sz-m4-logo-svg: 32px;
+
+  /* 线速度讲解浮层（M4 子）专用：关键数值需教室后排可读 */
+  --fs-lat-sub: 25px;
+  --fs-lat-val: 36px;
+  --sz-lat-stage: 500px;
+
+  /* 选址条件表（M2 发射基地 / M3 着陆场）专用：材料描述常显，字号按视口放大，保证教室后排可读 */
+  --fs-ct-intro: clamp(24px, 1.3vw, 30px);
+  --fs-ct-text: clamp(24px, 1.5vw, 31px);
+  --fs-ct-idx: clamp(28px, 1.7vw, 36px);
+  --fs-ct-head: clamp(21px, 1.1vw, 25px);
+  --fs-ct-btn: clamp(22px, 1.25vw, 27px);
+  --fs-ct-benefit: clamp(24px, 1.45vw, 30px);
+  --fs-ct-tip: clamp(21px, 1.15vw, 26px);
+  /* 「点击查看」按钮：尺寸固定，保证同行与两屏的按钮完全一致 */
+  --sz-ct-peek-w: 240px;
+  --sz-ct-peek-h: 58px;
+
+  /* 随堂练习（M6）专用：整屏背景上的题干与解析需教室后排可读 */
+  --fs-m6-title: 40px;
+  --fs-m6-watermark: 46px;
+  --fs-m6-subtitle: 22px;
+  --fs-m6-counter: 24px;
+  --fs-m6-stem: 25px;
+  --fs-m6-option: 24px;
+  --fs-m6-result-title: 34px;
+  --fs-m6-block-title: 26px;
+  --fs-m6-body: 22px;
+  --sz-m6-key: 44px;
+  --sz-m6-result-icon: 72px;
+
+  /* 综合题规范训练（M7）专用：材料与作答要求需教室后排可读，字号按视口放大 */
+  --fs-m7-badge: clamp(19px, 1.35vw, 26px);
+  --fs-m7-material: clamp(21px, 1.95vw, 36px);
+  --fs-m7-label: clamp(21px, 1.5vw, 29px);
+  --fs-m7-ask: clamp(23px, 1.7vw, 32px);
+  --fs-m7-act: clamp(21px, 1.6vw, 30px);
+  --fs-m7-criteria: clamp(19px, 1.5vw, 28px);
+  --sz-m7-act-w: clamp(148px, 11vw, 208px);
+  --sz-m7-act-h: clamp(48px, 6.9vh, 68px);
+  /* M7 答题页·「材料信息梳理」表：五列信息密集，仍需教室后排可读 */
+  --fs-m7-sum-head: clamp(20px, 1.25vw, 27px);
+  --fs-m7-sum-cell: clamp(20px, 1.35vw, 29px);
+  --pad-m7-sum-cell: clamp(12px, 1.9vh, 20px) clamp(14px, 1.3vw, 22px);
+  /* M7 答题页·材料关键词词云：按词长分三档，短词最大（核心术语），长句最小（材料原句）；
+     上限压住材料正文（--fs-m7-material）一档，保证词云是支架、不是主角；最小不低于 20px */
+  --fs-m7-cloud-l1: clamp(25px, 2vw, 34px);
+  --fs-m7-cloud-l2: clamp(22px, 1.7vw, 29px);
+  --fs-m7-cloud-l3: clamp(20px, 1.4vw, 25px);
+  --pad-m7-cloud-l1: clamp(11px, 1.2vh, 16px) clamp(22px, 1.8vw, 32px);
+  --pad-m7-cloud-l2: clamp(9px, 1vh, 14px) clamp(18px, 1.5vw, 27px);
+  --pad-m7-cloud-l3: clamp(8px, 0.9vh, 12px) clamp(16px, 1.3vw, 23px);
+  /* 材料卡底色：取自背景图左侧的深空底色，供图片未覆盖处无缝衔接 */
+  --c-m7-deep: #0b2a68;
+}
+
+/* 无障碍：减少动效时把全部时长压到最小，动画模块需同步跳过补间 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 1ms;
+    --t-base: 1ms;
+    --t-slow: 1ms;
+    --t-hero: 1ms;
+  }
+}
+
+/* 竖直空间不足（如 1024×768）：词云收紧内边距，把高度让给下方表格 */
+@media (max-height: 820px) {
+  :root {
+    --pad-m7-cloud-l1: 8px 19px;
+    --pad-m7-cloud-l2: 7px 16px;
+    --pad-m7-cloud-l3: 6px 14px;
+  }
+}

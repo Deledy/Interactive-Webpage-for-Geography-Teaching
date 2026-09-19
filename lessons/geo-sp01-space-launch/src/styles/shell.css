@@ -1,0 +1,496 @@
+/* M0 任务导航 + M1 情境导入（模块样式，仅在本文件补充；颜色/时长一律引用 tokens.css） */
+
+/* ================= M0 任务导航 ================= */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-h);
+  z-index: 40;
+  background: color-mix(in srgb, var(--c-panel) 90%, transparent);
+  border-bottom: 1px solid var(--c-line);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.nav__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+}
+.nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.nav__logo {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--sz-cover-logo);
+  height: var(--sz-cover-logo);
+  color: var(--c-cover-logo);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c-primary) 45%, transparent));
+}
+.nav__logo svg {
+  width: 100%;
+  height: 100%;
+}
+.nav__title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.nav__tasks {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.nav__task {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line);
+  background: transparent;
+  color: var(--c-text-dim);
+  font-size: var(--fs-note);
+  cursor: pointer;
+  transition: color var(--t-base) var(--e-out), border-color var(--t-base) var(--e-out),
+    background var(--t-base) var(--e-out);
+}
+.nav__task::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-line-strong);
+  transition: background var(--t-base) var(--e-out), box-shadow var(--t-base) var(--e-out);
+}
+.nav__task:hover {
+  color: var(--c-text);
+  border-color: var(--c-line-strong);
+}
+.nav__task.is-active {
+  color: var(--c-text);
+  border-color: var(--c-primary);
+  background: var(--c-panel-2);
+}
+.nav__task.is-active::before {
+  background: var(--c-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 25%, transparent);
+}
+.nav__task.is-done {
+  color: var(--c-ok);
+  border-color: var(--c-ok);
+}
+.nav__task.is-done::before {
+  background: var(--c-ok);
+}
+.nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.nav__btn {
+  padding: 7px 18px;
+}
+.nav__btn .icon {
+  flex: 0 0 auto;
+}
+/* 全屏按钮激活态：需压过 .btn--ghost 与其 hover 底色 */
+.nav__btn.nav__fullscreen.is-on,
+.nav__btn.nav__fullscreen.is-on:hover {
+  border-color: var(--c-primary);
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--c-primary) 18%, transparent);
+}
+.nav__progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--c-primary);
+  transition: width var(--t-base) var(--e-out);
+}
+/* 课堂计时：40 分钟倒计时（M1「开始本课」启动）。低对比读数，不抢注意力；
+   到点停在 00:00，不变色、不闪烁、不弹窗 */
+.nav__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, var(--c-line) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-panel-2) 55%, transparent);
+  color: var(--c-text-dim);
+  font-size: var(--fs-note);
+  line-height: 1;
+  /* 等宽数字：秒数跳动时数字不位移 */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+.nav__timer .icon {
+  flex: 0 0 auto;
+  opacity: 0.55;
+}
+.nav__timer-digits {
+  min-width: 4.6ch;
+  text-align: center;
+}
+
+/* ================= M1 封面（实景背景 + 标题区 + 教学目标面板） ================= */
+.intro {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--c-bg);
+}
+/* 实景背景层：图片左对齐（保留左侧火箭），上层叠加遮罩 */
+.intro__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.intro__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left center;
+}
+.intro__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--c-cover-veil) 78%, transparent),
+      color-mix(in srgb, var(--c-cover-veil) 26%, transparent) 42%,
+      color-mix(in srgb, var(--c-cover-veil) 88%, transparent)
+    ),
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--c-cover-veil) 22%, transparent) 42%,
+      color-mix(in srgb, var(--c-cover-veil) 78%, transparent)
+    );
+}
+/* 标题区冷光晕 */
+.intro::before {
+  content: '';
+  position: absolute;
+  left: 38%;
+  top: 46%;
+  width: 860px;
+  height: 560px;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--c-cover-glow) 38%, transparent),
+    transparent 74%
+  );
+}
+/* 顶部星座网格（沿用全局网格语言，随高度渐隐） */
+.intro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: linear-gradient(var(--c-cover-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-cover-grid) 1px, transparent 1px);
+  background-size: 88px 88px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 68%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 68%);
+}
+/* 卫星轨道装饰：落在标题上方、卡片上方的天空带内，避免被标题与面板遮挡 */
+.intro__orbit {
+  position: absolute;
+  left: 80%;
+  top: 39%;
+  width: min(58vw, 1080px, 110vh);
+  height: calc(min(58vw, 1080px, 110vh) / 2);
+  transform: translate(-50%, -50%) rotate(-13deg);
+  z-index: 1;
+  opacity: 0.6;
+  pointer-events: none;
+  color: var(--c-cover-line);
+}
+.intro__orbit-track,
+.intro__orbit-path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+.intro__orbit-track {
+  stroke-dasharray: 3 14;
+  opacity: 0.75;
+}
+.intro__orbit-path {
+  opacity: 0.5;
+}
+.intro__sat {
+  color: var(--c-cover-text);
+}
+.intro__sat-body {
+  fill: currentColor;
+  opacity: 0.9;
+}
+.intro__sat-panel {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.85;
+}
+.intro__sat-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  opacity: 0.7;
+}
+
+/* 封面主体：左标题区 + 右教学目标面板（面板宽度随内容自适应，整体贴右） */
+.intro__body {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1720px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+}
+.intro__lead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(16px, 1.7vw, 28px);
+  /* 标题区作为尺寸容器：标题字号按本区实际可用宽度取值，保证任何屏宽下都是 4 字/行 × 2 行 */
+  container-type: inline-size;
+  /* 让出背景左侧的发射塔架与火箭（实景图按视口高度缩放，故用 vw 比例留白） */
+  padding-left: clamp(120px, 21vw, 520px);
+}
+.intro__title {
+  max-width: 4.6em;
+  /* 回退：不支持容器查询单位时按视口宽度等比；下一行为标题区可用宽度的 23%（留 4% 余量防换行错位） */
+  font-size: var(--fs-cover-title);
+  font-size: clamp(60px, 23cqw, 180px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  background-image: linear-gradient(180deg, var(--c-cover-title-top), var(--c-cover-title-bottom));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 8px 22px color-mix(in srgb, var(--c-cover-veil) 82%, transparent));
+}
+.intro__slogan {
+  font-size: var(--fs-cover-slogan);
+  letter-spacing: 0.2em;
+  color: var(--c-cover-text);
+  text-shadow: 0 2px 16px color-mix(in srgb, var(--c-cover-veil) 88%, transparent);
+}
+.intro__start {
+  margin-top: 10px;
+  padding: clamp(14px, 1vw, 20px) clamp(40px, 3.4vw, 66px);
+  font-size: var(--fs-cover-btn);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  color: var(--c-cover-text);
+  border: 1px solid var(--c-cover-line);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-primary) 26%, transparent),
+    color-mix(in srgb, var(--c-primary) 8%, transparent)
+  );
+  box-shadow: 0 0 26px color-mix(in srgb, var(--c-cover-glow) 68%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--c-cover-glow) 34%, transparent);
+  transition: transform var(--t-fast) var(--e-out), border-color var(--t-fast) var(--e-out),
+    box-shadow var(--t-base) var(--e-out);
+}
+.intro__start:hover:not([disabled]) {
+  transform: translateY(-2px);
+  border-color: var(--c-primary);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-primary) 36%, transparent),
+    color-mix(in srgb, var(--c-primary) 14%, transparent)
+  );
+  box-shadow: 0 0 36px color-mix(in srgb, var(--c-cover-glow) 92%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--c-cover-glow) 48%, transparent);
+}
+
+/* 教学目标面板：玻璃底 + 整条矩形框的渐变描边 */
+.intro__goals {
+  padding: clamp(20px, 2vw, 28px) clamp(22px, 2.2vw, 30px) clamp(10px, 1.2vw, 16px);
+  border: 1px solid transparent;
+  border-radius: var(--r-panel);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--c-cover-veil) 86%, transparent),
+    color-mix(in srgb, var(--c-cover-glass) 78%, transparent)
+  );
+  /* 玻璃底只铺内容区，1px 边框区留给渐变描边 */
+  background-clip: padding-box;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--c-cover-veil) 62%, transparent);
+}
+/* 描边渐变：绕矩形框一周循环（conic 沿整条边框扫过，首尾同色无缝），用遮罩只保留 1px 线宽 */
+.intro__goals::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  width: auto;
+  height: auto;
+  padding: 1px;
+  border: 0;
+  border-radius: inherit;
+  background-image: conic-gradient(
+    from 200deg,
+    var(--c-cover-ring-a) 0%,
+    var(--c-cover-ring-b) 30%,
+    var(--c-cover-ring-c) 62%,
+    var(--c-cover-ring-a) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.intro__goals-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1vw, 16px);
+  padding-bottom: clamp(12px, 1.2vw, 18px);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-cover-line) 62%, transparent);
+  font-size: var(--fs-cover-goals-title);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.intro__goals-mark {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.intro__goals-mark::before {
+  content: '';
+  width: clamp(24px, 2.4vw, 36px);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--c-cover-line));
+}
+.intro__goals-mark::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--c-primary);
+  transform: rotate(45deg);
+  opacity: 0.85;
+}
+.intro__goals-mark--end {
+  flex-direction: row-reverse;
+}
+.intro__goals-mark--end::before {
+  background: linear-gradient(90deg, var(--c-cover-line), transparent);
+}
+.intro__goal-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.intro__goal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(12px, 1.2vw, 18px);
+  padding: clamp(12px, 1.4vw, 20px) 0;
+}
+.intro__goal + .intro__goal {
+  border-top: 1px solid color-mix(in srgb, var(--c-cover-line) 55%, transparent);
+}
+.intro__goal-icon {
+  display: grid;
+  place-items: center;
+  width: var(--sz-cover-goal-icon);
+  height: var(--sz-cover-goal-icon);
+  border-radius: 50%;
+  border: 1px solid var(--c-cover-line);
+  background: color-mix(in srgb, var(--c-primary) 9%, transparent);
+  color: var(--c-cover-text);
+  transition: transform var(--t-base) var(--e-back), border-color var(--t-base) var(--e-out),
+    background var(--t-base) var(--e-out), color var(--t-base) var(--e-out),
+    box-shadow var(--t-base) var(--e-out);
+}
+.intro__goal-icon svg {
+  height: var(--sz-cover-goal-svg);
+  width: auto;
+  max-width: calc(var(--sz-cover-goal-svg) * 1.5);
+  transition: transform var(--t-base) var(--e-back);
+}
+/* 鼠标指向某条教学目标：图标轻微抬起、点亮描边并加冷光 */
+.intro__goal:hover .intro__goal-icon {
+  transform: translateY(-3px) scale(1.06);
+  border-color: var(--c-primary);
+  background: color-mix(in srgb, var(--c-primary) 20%, transparent);
+  color: var(--c-cover-title-top);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c-cover-glow) 85%, transparent);
+}
+.intro__goal:hover .intro__goal-icon svg {
+  transform: scale(1.06);
+}
+.intro__goal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* 序号与文案统一左对齐，紧跟图标排列 */
+  text-align: left;
+}
+.intro__goal-no {
+  font-size: var(--fs-cover-goal-no);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  background-image: linear-gradient(180deg, var(--c-cover-title-top), var(--c-cover-title-bottom));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.intro__goal-text {
+  font-size: var(--fs-cover-goal);
+  line-height: 1.5;
+  color: var(--c-cover-text);
+  /* 教学目标单行完整呈现，卡片宽度随内容自适应 */
+  white-space: nowrap;
+}
+/* 窄屏（窗口宽度不足）降级：放开换行并给面板一个可收缩的固定列 */
+@media (max-width: 1180px) {
+  .intro__body {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  }
+  .intro__goal-text {
+    white-space: normal;
+  }
+}
+
+/* ================= M8 小结 ================= */
+/* 内容已清空，页面（index.html 的 section#m8）保留待后续填充 */

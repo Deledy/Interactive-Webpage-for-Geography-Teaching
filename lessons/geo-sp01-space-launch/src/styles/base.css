@@ -1,0 +1,282 @@
+/* 基础层：字体、reset、布局骨架、通用组件。模块样式只允许在此之上补充，不重复定义 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('../../assets/fonts/noto-sans-sc-400-subset.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('../../assets/fonts/noto-sans-sc-700-subset.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+/* 整屏吸附：停止后必落在某屏顶边（导航占位由 .screen 的 padding-top 承担） */
+html {
+  scroll-snap-type: y mandatory;
+}
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+/* 深空网格底纹（纯装饰层，不接收事件） */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(53, 198, 244, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(53, 198, 244, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+img,
+svg {
+  display: block;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--c-accent-warm);
+  outline-offset: 3px;
+}
+
+/* ---------------- 页面骨架 ---------------- */
+.deck {
+  position: relative;
+  z-index: 1;
+}
+.screen {
+  min-height: 100vh;
+  padding: calc(var(--nav-h) + 26px) 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  scroll-margin-top: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always; /* 一次滚轮/翻页/惯性只走一屏 */
+}
+
+/* ---------------- 标题 ---------------- */
+.sec-title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1.3;
+  padding-left: 14px;
+  border-left: 4px solid var(--c-primary);
+}
+.sec-sub {
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+}
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ---------------- HUD 面板 ---------------- */
+.panel {
+  position: relative;
+  background: var(--c-panel);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-panel);
+  padding: 20px 22px;
+}
+.panel--hud::before,
+.panel--hud::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--c-line-strong);
+  pointer-events: none;
+}
+.panel--hud::before {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: var(--r-panel);
+}
+.panel--hud::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: var(--r-panel);
+}
+
+/* ---------------- 按钮 ---------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line-strong);
+  background: transparent;
+  color: var(--c-text);
+  font-size: var(--fs-note);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+.btn:hover:not([disabled]) {
+  background: rgba(53, 198, 244, 0.14);
+}
+.btn:active:not([disabled]) {
+  transform: translateY(1px);
+}
+.btn--primary {
+  border-color: var(--c-primary);
+  background: rgba(53, 198, 244, 0.16);
+  font-weight: 700;
+}
+.btn--ghost {
+  border-color: var(--c-line);
+  color: var(--c-text-dim);
+}
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------------- 通用小组件 ---------------- */
+.angle-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line-strong);
+  color: var(--c-primary);
+  font-size: var(--fs-note);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out);
+}
+.angle-tag.is-active {
+  background: rgba(53, 198, 244, 0.18);
+  color: var(--c-text);
+}
+.kw {
+  background: transparent;
+  color: var(--c-accent-warm);
+  font-weight: 700;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.muted {
+  color: var(--c-text-dim);
+}
+.hint {
+  font-size: var(--fs-note);
+  color: var(--c-text-dim);
+  border-left: 3px solid var(--c-line-strong);
+  padding-left: 12px;
+}
+.hidden,
+.is-hidden {
+  display: none !important;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------------- Toast ---------------- */
+.toast-host {
+  position: fixed;
+  left: 50%;
+  bottom: 36px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 60;
+  pointer-events: none;
+}
+.toast {
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: var(--fs-note);
+  background: var(--c-panel-2);
+  border: 1px solid var(--c-line-strong);
+  animation: toast-in var(--t-base) var(--e-out);
+}
+.toast--ok {
+  border-color: var(--c-ok);
+  color: var(--c-ok);
+}
+.toast--err {
+  border-color: var(--c-err);
+  color: var(--c-err);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------- 浮层 ---------------- */
+.overlay-host {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--c-mask);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+.overlay__card {
+  background: var(--c-panel);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-panel);
+  padding: 24px 28px;
+  max-width: 1080px;
+  width: min(92vw, 1080px);
+}

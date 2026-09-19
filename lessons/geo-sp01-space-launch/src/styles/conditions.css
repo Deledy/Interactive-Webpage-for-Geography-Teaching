@@ -1,0 +1,247 @@
+/* 选址条件表（M2 发射基地 / M3 着陆场共用）：材料描述常显 + 点击查看展开整条 */
+
+/* ================= 条件表：材料描述常显 + 点击查看展开整行 ================= */
+.ct__head-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ct__badge {
+  flex: 0 0 auto;
+  padding: 8px calc(var(--fs-ct-head) * 0.9);
+  border: 1px solid var(--c-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-primary) 5%, transparent);
+  font-size: var(--fs-ct-head);
+  line-height: 1.3;
+  color: var(--c-text);
+}
+.ct__intro {
+  font-size: var(--fs-ct-intro);
+  line-height: 1.6;
+  color: var(--c-text);
+}
+
+.ct__table {
+  padding: 12px 20px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.ct__head,
+.ct__row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1.75fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+.ct__head {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--c-line-strong);
+  font-size: var(--fs-ct-head);
+  color: var(--c-text-dim);
+  letter-spacing: 1px;
+  text-align: center;
+}
+/* 表头右栏：描述角度 / 有利条件 两等分，与行内两栏一一对齐 */
+.ct__head-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ct__row {
+  position: relative;
+  overflow: hidden;
+  padding: 8px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--c-line) 60%, transparent);
+}
+.ct__row:last-child {
+  border-bottom: 0;
+}
+.ct__row.is-open {
+  background: color-mix(in srgb, var(--c-primary) 5%, transparent);
+}
+
+/* 行首序号牌 */
+.ct__idx {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 52px;
+  margin: 0 auto;
+  border: 1px solid var(--c-line-strong);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--c-primary) 8%, transparent);
+  color: var(--c-primary);
+  font-size: var(--fs-ct-idx);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--t-base) var(--e-out), background var(--t-base) var(--e-out),
+    box-shadow var(--t-base) var(--e-out);
+}
+.ct__row.is-open .ct__idx {
+  border-color: var(--c-primary);
+  background: color-mix(in srgb, var(--c-primary) 20%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 16%, transparent);
+}
+
+/* 材料描述：默认全部呈现，关键词由 <mark class="kw"> 高亮 */
+.ct__text {
+  font-size: var(--fs-ct-text);
+  line-height: 1.4;
+}
+
+/* 描述角度 + 有利条件：两栏之间只有一枚「点击查看」 */
+.ct__cell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+}
+.ct__cell--mat {
+  justify-content: flex-start;
+}
+.ct__cell--detail {
+  display: block;
+  min-height: var(--sz-ct-peek-h);
+}
+.ct__detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+.ct__peek {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: var(--sz-ct-peek-w);
+  height: var(--sz-ct-peek-h);
+  border: 1px solid var(--c-primary);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 10%, transparent);
+  color: var(--c-primary);
+  font-size: var(--fs-ct-btn);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--e-out), color var(--t-fast) var(--e-out),
+    box-shadow var(--t-fast) var(--e-out), transform var(--t-fast) var(--e-out);
+}
+.ct__peek:hover {
+  background: color-mix(in srgb, var(--c-primary) 24%, transparent);
+  color: var(--c-text);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c-primary) 35%, transparent);
+}
+.ct__peek:active {
+  transform: translate(-50%, calc(-50% + 1px));
+}
+.ct__row.is-open .ct__peek {
+  display: none;
+}
+.ct__value {
+  margin: 0;
+  opacity: 0;
+  text-align: center;
+}
+.ct__row.is-open .ct__value {
+  opacity: 1;
+}
+.ct__value--angle .angle-tag {
+  padding: 6px 18px;
+  font-size: var(--fs-ct-btn);
+  cursor: default;
+}
+.ct__benefit {
+  font-size: var(--fs-ct-benefit);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--c-primary);
+}
+
+/* 行首雷达扫描光带（一次性） */
+.ct__row.is-sweeping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-primary) 42%, transparent),
+    transparent
+  );
+  animation: ct-sweep var(--t-slow) var(--e-out) 1 both;
+}
+@keyframes ct-sweep {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.ct__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.ct__tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-ct-tip);
+  line-height: 1.5;
+  color: var(--c-text-dim);
+}
+.ct__tip .icon {
+  flex: 0 0 auto;
+  color: var(--c-line-strong);
+}
+.ct__foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 0 0 auto;
+}
+.ct__progress {
+  font-size: var(--fs-ct-tip);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.ct__progress b {
+  color: var(--c-primary);
+  font-weight: 700;
+}
+.ct__done {
+  padding: 10px calc(var(--fs-ct-btn) * 1.1);
+  font-size: var(--fs-ct-btn);
+}
+
+/* 矮屏（如 1280×720）收紧行距与间距，不缩小字号 */
+@media (max-height: 880px) {
+  .screen.ct {
+    padding-top: calc(var(--nav-h) + 14px);
+    padding-bottom: 22px;
+    gap: 14px;
+  }
+  .ct__head-block {
+    gap: 6px;
+  }
+  .ct__row {
+    padding: 5px 0;
+  }
+  .ct__idx {
+    height: 46px;
+  }
+}
+
