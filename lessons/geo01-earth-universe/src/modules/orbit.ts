@@ -17,6 +17,17 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { $, $$, prefersReducedMotion } from '../utils/dom'
 import { lessonData } from '../data/lessonData'
+import sunTex from '../assets/textures/sun.jpg'
+import mercuryTex from '../assets/textures/mercury.jpg'
+import venusTex from '../assets/textures/venus.jpg'
+import earthTex from '../assets/textures/earth.jpg'
+import marsTex from '../assets/textures/mars.jpg'
+import jupiterTex from '../assets/textures/jupiter.jpg'
+import saturnTex from '../assets/textures/saturn.jpg'
+import uranusTex from '../assets/textures/uranus.jpg'
+import neptuneTex from '../assets/textures/neptune.jpg'
+import saturnRingTex from '../assets/textures/saturn_ring.png'
+import uranusRingTex from '../assets/textures/uranus_ring.png'
 
 /* 轨道半径 / 行星半径（单位一致，非按比例，仅保证可读性） */
 const ORBIT_RADII = [4.5, 6.4, 8.2, 10, 13.8, 17, 20, 22];
@@ -124,15 +135,16 @@ function initOrbit3D(vp: HTMLElement, info: HTMLElement): void {
 
   /* 太阳 */
   const loader = new TextureLoader();
-  /* three r152+ 默认启用色彩管理：sRGB 贴图必须标记 colorSpace，否则渲染发灰、失真 */
-  const tex = (file: string): Texture => {
-    const t = loader.load('./textures/' + file);
+  /* 纹理由 Vite 静态导入并 base64 内联，避免运行时相对路径漂移与 file:// WebGL 安全拦截；
+     three r152+ 默认启用色彩管理：sRGB 贴图必须标记 colorSpace，否则渲染发灰、失真 */
+  const tex = (url: string): Texture => {
+    const t = loader.load(url);
     t.colorSpace = SRGBColorSpace;
     return t;
   };
   const sun = new Mesh(
     new SphereGeometry(SUN_R, 48, 48),
-    new MeshBasicMaterial({ map: tex('sun.jpg') })
+    new MeshBasicMaterial({ map: tex(sunTex) })
   );
   scene.add(sun);
 
@@ -154,9 +166,9 @@ function initOrbit3D(vp: HTMLElement, info: HTMLElement): void {
 
   /* 行星：置于绕 Y 轴旋转的轨道组内，同向公转（自西向东） */
   const TEX: Record<string, Texture> = {
-    mercury: tex('mercury.jpg'), venus: tex('venus.jpg'), earth: tex('earth.jpg'), mars: tex('mars.jpg'),
-    jupiter: tex('jupiter.jpg'), saturn: tex('saturn.jpg'), uranus: tex('uranus.jpg'), neptune: tex('neptune.jpg'),
-    saturn_ring: tex('saturn_ring.png'), uranus_ring: tex('uranus_ring.png')
+    mercury: tex(mercuryTex), venus: tex(venusTex), earth: tex(earthTex), mars: tex(marsTex),
+    jupiter: tex(jupiterTex), saturn: tex(saturnTex), uranus: tex(uranusTex), neptune: tex(neptuneTex),
+    saturn_ring: tex(saturnRingTex), uranus_ring: tex(uranusRingTex)
   };
   const planetMeshes: Mesh<SphereGeometry, MeshStandardMaterial>[] = [];
   const orbitGroups: Group[] = [];

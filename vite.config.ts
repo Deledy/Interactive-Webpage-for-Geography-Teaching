@@ -58,6 +58,8 @@ export default defineConfig({
     // （独立文件在 file:// 协议下通过 <img> 标签加载正常，不受 CORS 影响）
     assetsInlineLimit: (filePath, content) => {
       if (/\.(woff2?|ttf|otf)$/i.test(filePath)) return true
+      // 行星纹理（WebGL 贴图）必须 base64 内联：file:// 下 texImage2D 上传外部图片会被安全策略拦截
+      if (/[\\/]textures[\\/].*\.(jpe?g|png)$/i.test(filePath)) return true
       return content.byteLength < 4 * 1024
     },
     // 以下两项替代 viteSingleFile 的 useRecommendedBuildConfig，保证 JS/CSS 单文件输出

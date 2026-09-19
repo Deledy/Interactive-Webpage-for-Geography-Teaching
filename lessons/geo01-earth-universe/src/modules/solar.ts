@@ -18,6 +18,16 @@ import { $, $$, prefersReducedMotion } from '../utils/dom'
 import { App } from '../state'
 import { lessonData } from '../data/lessonData'
 import type { Planet } from '../types'
+import mercuryTex from '../assets/textures/mercury.jpg'
+import venusTex from '../assets/textures/venus.jpg'
+import earthTex from '../assets/textures/earth.jpg'
+import marsTex from '../assets/textures/mars.jpg'
+import jupiterTex from '../assets/textures/jupiter.jpg'
+import saturnTex from '../assets/textures/saturn.jpg'
+import uranusTex from '../assets/textures/uranus.jpg'
+import neptuneTex from '../assets/textures/neptune.jpg'
+import saturnRingTex from '../assets/textures/saturn_ring.png'
+import uranusRingTex from '../assets/textures/uranus_ring.png'
 
 function detectWebGL(): boolean {
   try {
@@ -237,26 +247,27 @@ function initSolar3D(vp: HTMLElement, info: HTMLElement): void {
   rimLight.position.set(-12, -6, -10);
   scene.add(rimLight);
 
-  /* 行星表面纹理（取自参考示例 solar-system-with-3js，public/textures/ 原样复制）。
+  /* 行星表面纹理：构建时由 Vite 静态导入并 base64 内联（见 vite.config.ts assetsInlineLimit），
+     避免运行时相对路径 `./textures/` 随页面地址漂移、以及 file:// 下 WebGL 上传外部图片被安全策略拦截。
      注意：three r152+ 默认启用色彩管理，sRGB 贴图必须显式标记 colorSpace，
      否则会被当作线性数据采样，导致贴图发灰、过亮、饱和度失真 */
   const loader = new TextureLoader();
-  const tex = (file: string): Texture => {
-    const t = loader.load('./textures/' + file);
+  const tex = (url: string): Texture => {
+    const t = loader.load(url);
     t.colorSpace = SRGBColorSpace;
     return t;
   };
   const TEX: Record<string, Texture> = {
-    mercury: tex('mercury.jpg'),
-    venus: tex('venus.jpg'),
-    earth: tex('earth.jpg'),
-    mars: tex('mars.jpg'),
-    jupiter: tex('jupiter.jpg'),
-    saturn: tex('saturn.jpg'),
-    uranus: tex('uranus.jpg'),
-    neptune: tex('neptune.jpg'),
-    saturn_ring: tex('saturn_ring.png'),
-    uranus_ring: tex('uranus_ring.png')
+    mercury: tex(mercuryTex),
+    venus: tex(venusTex),
+    earth: tex(earthTex),
+    mars: tex(marsTex),
+    jupiter: tex(jupiterTex),
+    saturn: tex(saturnTex),
+    uranus: tex(uranusTex),
+    neptune: tex(neptuneTex),
+    saturn_ring: tex(saturnRingTex),
+    uranus_ring: tex(uranusRingTex)
   };
 
   /* 行星球体：从左到右按序排列（水星 → 海王星）。
