@@ -147,6 +147,24 @@
   gap: 6px;
   min-height: 36px;
 }
+/* 框高被压到上限时（矮屏 / 投屏缩放，见 baseMatching.reserveBoxHeights 的 is-capped）：
+   条件区改为内部滚动，保证上下两排框永不重合；滚动条只在此时出现 */
+.m5__box.is-capped .m5__slots {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-line-strong) transparent;
+}
+.m5__box.is-capped .m5__slots::-webkit-scrollbar {
+  width: 8px;
+}
+.m5__box.is-capped .m5__slots::-webkit-scrollbar-thumb {
+  background: var(--c-line-strong);
+  border-radius: 999px;
+}
+.m5__box.is-capped .m5__slots::-webkit-scrollbar-track {
+  background: transparent;
+}
 /* 预占高度用的测量探针：与真实胶囊同款结构，仅参与布局、不参与绘制 */
 .m5__slots--probe {
   visibility: hidden;
@@ -301,14 +319,24 @@
   flex-wrap: wrap;
   gap: 12px 20px;
 }
+/* 右侧组（地图来源 + 重置按钮）：用 margin-left: auto 而非只依赖 space-between，
+   使它在同屏宽度不足、折到第二行时仍贴右，与左侧操作提示形成两端对齐 */
 .m5__foot-side {
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-left: auto;
 }
 .m5__note {
-  font-size: var(--fs-note);
   color: var(--c-text-dim);
+  /* 极窄屏下来源文案被压缩换行时，仍与右侧按钮对齐 */
+  text-align: right;
+}
+/* 页脚这两句（操作提示 / 地图来源标注）是本课唯一允许低于 24px 的文本，
+   目的是与「重置本模块」按钮在投屏下同排两端对齐；其余文本一律仍用 --fs-note */
+.m5__foot .hint,
+.m5__note {
+  font-size: var(--fs-foot-note);
 }
 
 /* 全部完成的"发射成功"特效 */

@@ -93,8 +93,8 @@ function closeBubble(): void {
 
 export function initRollcall(root: HTMLElement): void {
   root.innerHTML = `
-    <button type="button" class="nav__btn nav__rollcall-btn btn btn--ghost" aria-expanded="false" aria-haspopup="true">
-      ${icon('icon-users', 20)}<span>点名</span>
+    <button type="button" class="nav__btn nav__rollcall-btn btn" aria-expanded="false" aria-haspopup="true" aria-label="课堂点名">
+      ${icon('icon-users', 20)}<span>按钮</span>
     </button>
     <div class="rollcall__bubble is-hidden" role="dialog" aria-label="课堂点名">
       <div class="rollcall__head">

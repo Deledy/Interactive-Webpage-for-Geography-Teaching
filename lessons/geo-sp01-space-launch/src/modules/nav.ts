@@ -70,13 +70,6 @@ export function initNav(root: HTMLElement, onReset: () => void): void {
     progress.style.width = index < 0 ? '0%' : `${((index + 1) / TASKS.length) * 100}%`
   }
 
-  /** 已完成任务点加 is-done（变绿） */
-  function syncDone(done: Record<string, boolean>): void {
-    taskButtons.forEach((btn) => {
-      btn.classList.toggle('is-done', Boolean(done[btn.dataset.target ?? '']))
-    })
-  }
-
   taskButtons.forEach((btn) => {
     on(btn, 'click', () => {
       const target = btn.dataset.target
@@ -106,11 +99,7 @@ export function initNav(root: HTMLElement, onReset: () => void): void {
   }
 
   highlight(store.activeScreen)
-  syncDone(store.moduleDone)
-  subscribe((s) => {
-    syncDone(s.moduleDone)
-    highlight(s.activeScreen)
-  })
+  subscribe((s) => highlight(s.activeScreen))
 
   const ratios = new Map<string, number>()
   const observer = new IntersectionObserver(

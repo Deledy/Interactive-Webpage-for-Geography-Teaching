@@ -13,6 +13,9 @@ const GOALS_TITLE = '本节课教学目标'
 /** 教学目标图标：与 lessonData.goals 顺序一一对应 */
 const GOAL_ICONS = [iconLocation, iconMap, iconAnswer]
 
+/** 封面标语分句：按空白切分，每句独立成行，保证在分句处断行、不在句中割裂 */
+const SLOGAN_LINES = lessonData.subtitle.split(/\s+/).filter(Boolean)
+
 interface IntroCtx {
   /** 标题、标语、开始按钮、教学目标面板（按此顺序依次入场） */
   reveals: HTMLElement[]
@@ -61,6 +64,11 @@ function goalsMarkup(): string {
     .join('')
 }
 
+/** 标语：一句一行（两行对仗），行内由 CSS 禁止换行 */
+function sloganMarkup(): string {
+  return SLOGAN_LINES.map((line) => `<span class="intro__slogan-line">${line}</span>`).join('\n        ')
+}
+
 export function initIntro(root: HTMLElement): void {
   root.classList.add('intro')
   /* 背景层（.intro__bg）由入口 HTML 提供：追加而非覆盖，避免丢失 Vite 重写后的图片路径 */
@@ -82,7 +90,7 @@ export function initIntro(root: HTMLElement): void {
     <div class="intro__body">
       <div class="intro__lead">
         <h1 class="intro__title">${lessonData.title}</h1>
-        <p class="intro__slogan">${lessonData.subtitle}</p>
+        <p class="intro__slogan">${sloganMarkup()}</p>
         <button type="button" class="intro__start btn btn--primary">开始本课</button>
       </div>
       <aside class="intro__goals panel" aria-label="${GOALS_TITLE}">

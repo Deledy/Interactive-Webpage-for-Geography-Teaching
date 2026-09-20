@@ -17,11 +17,15 @@ import { icon } from '../utils/icons'
 import { animate, dur, ease, reduced } from '../utils/motion'
 import rocketLogo from '../../assets/icons/icon-rocket.svg?raw'
 import { toast } from '../utils/toast'
-import { markDone } from '../state'
 
 const BASES = lessonData.bases
 const POOL = lessonData.conditionPool
 const TEXT = lessonData.baseTask
+
+/** 上下两排基地框之间强制保留的间距（px） */
+const BOX_GAP = 12
+/** 框被压到高度上限时仍要保留的可用高度（px）：舞台天然高度不足时抬高舞台，避免矮屏把框压成窄条 */
+const BOX_MIN_USABLE = 220
 
 /** registerMap 注册名（模块内常量） */
 const MAP_MAIN = 'china-main'
@@ -229,11 +233,27 @@ function relayout(): void {
 }
 
 /**
- * 预占高度：按"该基地条件全部挂载后"的尺寸给框设 min-height，
- * 使四个框在投放前就与投放后一样大（不在投放过程中变大、位置不跳动）。
- * 探针用真实胶囊同款结构与样式，量完即拆；框宽变化（全屏 / 缩放）时需重算。
+ * 预占高度 + 高度上限：
+ * - 预占：按"该基地条件全部挂载后"的尺寸给框设高度，使四个框在投放前就与投放后一样大
+ *   （探针用真实胶囊同款结构与样式，量完即拆）。测量前必须先清掉上一轮写入的高度，
+ *   否则量到的是 max(旧值, 内容高)，框只会越量越高（窗口缩放 / 全屏后残留最大值 = 框莫名变高）。
+ * - 上限：上下两排框各占舞台一半高度（中间留 BOX_GAP），故每框不得高于 (舞台高 - BOX_GAP) / 2。
+ *   框是绝对定位、贴舞台上下边的，一旦两排之和超过舞台高就必然重合，故这里做硬性钳制：
+ *   被压到上限的框加 is-capped，条件区改为内部滚动（矮屏 / 投屏缩放下仍不重合）。
+ * - 舞台天然高度不足时（矮视口）抬高舞台，保证框仍有 BOX_MIN_USABLE 的可用高度，
+ *   此时整节高度超过一屏、需要页内滚动，但四个框本身始终不重合。
  */
 function reserveBoxHeights(): void {
+  const stage = host?.querySelector<HTMLElement>('.m5__stage')
+  if (!stage) return
+  // 先清掉上一轮可能抬高过的下限，量出不含抬高部分的天然高度
+  stage.style.minHeight = ''
+  const natural = stage.getBoundingClientRect().height
+  const need = 2 * BOX_MIN_USABLE + BOX_GAP
+  const raise = natural > 0 && natural < need
+  if (raise) stage.style.minHeight = `${need}px`
+  const cap = natural > 0 ? Math.floor(((raise ? need : natural) - BOX_GAP) / 2) : 0
+
   BASES.forEach((base) => {
     const box = boxes.find((item) => item.dataset.base === base.id)
     const slots = box?.querySelector<HTMLElement>('.m5__slots')
@@ -249,18 +269,23 @@ function reserveBoxHeights(): void {
       probe.appendChild(item)
     })
 
-    // 量高时临时隐藏真实胶囊与占位提示，避免已挂载部分叠加进测量结果
+    // 量高时临时清掉高度、隐藏真实胶囊与占位提示，避免旧值与已挂载部分叠加进测量结果
+    box.style.minHeight = ''
+    box.style.maxHeight = ''
     const prevDisplay = slots.style.display
     const wasFilled = box.classList.contains('is-filled')
     slots.style.display = 'none'
     box.classList.add('is-filled')
     box.appendChild(probe)
-    const full = box.getBoundingClientRect().height
+    const full = Math.ceil(box.getBoundingClientRect().height)
     probe.remove()
     slots.style.display = prevDisplay
     if (!wasFilled) box.classList.remove('is-filled')
 
-    box.style.minHeight = `${Math.ceil(full)}px`
+    const limit = cap > 0 ? Math.min(full, cap) : full
+    box.style.minHeight = `${limit}px`
+    box.style.maxHeight = `${limit}px`
+    box.classList.toggle('is-capped', limit < full)
   })
 }
 
@@ -312,7 +337,6 @@ function syncBox(baseId: string): void {
   const path = leaderSvg?.querySelector(`path[data-base="${baseId}"]`)
   path?.classList.toggle('is-done', done)
   const all = BASES.every((entry) => (mounted.get(entry.id) ?? new Set()).size === entry.conditionIds.length)
-  markDone('m5', all)
   if (all) playLaunchEffect()
 }
 
@@ -358,7 +382,10 @@ function mount(baseId: string, id: string): void {
   slot.dataset.id = id
   slot.title = '点击取回这条条件'
   slot.innerHTML = slotHtml(id)
-  box.querySelector('.m5__slots')?.appendChild(slot)
+  const slotsEl = box.querySelector<HTMLElement>('.m5__slots')
+  slotsEl?.appendChild(slot)
+  // 框被压到高度上限时条件区可滚动：把新挂载的胶囊滚进可视范围，避免拖进去看不见
+  if (slotsEl) slotsEl.scrollTop = slotsEl.scrollHeight
   on(slot, 'click', (ev) => {
     // 阻止冒泡：避免触发基地框的"点击投放"降级路径
     ev.stopPropagation()
@@ -569,20 +596,23 @@ function playLaunchEffect(): void {
 /**
  * 播放速率曲线（分两段）：
  *   点火段 —— 素材前 HOLD_SECONDS 秒按 HOLD 倍速播，让点火 / 离架看得清；
- *   冲刺段 —— 之后速率随进度指数上升至 MAX 倍速，营造"一飞冲天"。
- * 4.1s 素材在 HOLD_SECONDS=1.5 / HOLD=1 / MAX=4 下实测约 2.92s 播完（冲刺段峰值 4 倍速）。
+ *   冲刺段 —— 之后速率沿素材进度线性升到 MAX 倍速，越接近片尾越快。
+ * 4.04s 素材在 HOLD_SECONDS=1.5 / HOLD=1 / MAX=5.3 下实测 2.50s 播完（60/75/120Hz 均一致）。
+ * 曲线选线性而非指数：同样的总时长（2.5s）下，线性峰值只需 5.3 倍，指数需约 10.5 倍，
+ * 后者末段每显示帧要跳 4~5 个视频帧，会明显卡跳。
  * HOLD_SECONDS 调大 → 冲刺起点更靠后、总时长更长；MAX 调大 → 末段更猛、总时长更短。
  */
 const LAUNCH_RATE_HOLD_SECONDS = 1.5
 const LAUNCH_RATE_HOLD = 1
-const LAUNCH_RATE_MAX = 4
+const LAUNCH_RATE_MAX = 5.3
 
 /** 取某个素材时间点对应的播放速率 */
 function launchRateAt(mediaTime: number, total: number): number {
   if (mediaTime <= LAUNCH_RATE_HOLD_SECONDS) return LAUNCH_RATE_HOLD
   const span = total - LAUNCH_RATE_HOLD_SECONDS
-  const k = Math.log(LAUNCH_RATE_MAX / LAUNCH_RATE_HOLD) / span
-  return Math.min(LAUNCH_RATE_MAX, LAUNCH_RATE_HOLD * Math.exp(k * (mediaTime - LAUNCH_RATE_HOLD_SECONDS)))
+  if (span <= 0) return LAUNCH_RATE_MAX
+  const progress = Math.min(1, (mediaTime - LAUNCH_RATE_HOLD_SECONDS) / span)
+  return LAUNCH_RATE_HOLD + (LAUNCH_RATE_MAX - LAUNCH_RATE_HOLD) * progress
 }
 
 /** 按上述曲线估算实际播放时长（秒），用于收尾兜底计时 */
@@ -590,8 +620,10 @@ function rampedSeconds(mediaSeconds: number): number {
   const hold = Math.min(LAUNCH_RATE_HOLD_SECONDS, mediaSeconds) / LAUNCH_RATE_HOLD
   const span = mediaSeconds - LAUNCH_RATE_HOLD_SECONDS
   if (span <= 0) return hold
-  const k = Math.log(LAUNCH_RATE_MAX / LAUNCH_RATE_HOLD) / span
-  return hold + (1 - LAUNCH_RATE_HOLD / LAUNCH_RATE_MAX) / (LAUNCH_RATE_HOLD * k)
+  const delta = LAUNCH_RATE_MAX - LAUNCH_RATE_HOLD
+  // 速率线性上升时 1/rate 的积分有闭式解：span·ln(MAX/HOLD) / (MAX-HOLD)
+  if (Math.abs(delta) < 1e-6) return hold + span / LAUNCH_RATE_HOLD
+  return hold + (span * Math.log(LAUNCH_RATE_MAX / LAUNCH_RATE_HOLD)) / delta
 }
 
 /** 按曲线逐帧调整 playbackRate，返回停止函数（仅在变化明显时写入，避免频繁触发合成） */
@@ -884,14 +916,16 @@ export function initBaseMatching(root: HTMLElement): void {
   root.querySelector('[data-act="reset"]')?.addEventListener('click', () => initBaseMatching(root))
 
   // 舞台或基地框尺寸变化（窗口缩放 / 全屏 / 框内内容增减）→ 图表与引线同步重算；
-  // 舞台宽度变化时胶囊换行会不同，需重新按满挂载尺寸占高
+  // 舞台宽高任一变化都要按"满挂载"尺寸重算预占高度：宽度变化改变胶囊换行，高度变化改变框高上限
   const stage = root.querySelector<HTMLElement>('.m5__stage')
   if (stage && typeof ResizeObserver !== 'undefined') {
     let lastWidth = stage.getBoundingClientRect().width
+    let lastHeight = stage.getBoundingClientRect().height
     observer = new ResizeObserver(() => {
-      const width = stage.getBoundingClientRect().width
-      if (Math.abs(width - lastWidth) > 0.5) {
-        lastWidth = width
+      const rect = stage.getBoundingClientRect()
+      if (Math.abs(rect.width - lastWidth) > 0.5 || Math.abs(rect.height - lastHeight) > 0.5) {
+        lastWidth = rect.width
+        lastHeight = rect.height
         reserveBoxHeights()
       }
       relayout()

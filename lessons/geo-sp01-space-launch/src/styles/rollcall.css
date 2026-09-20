@@ -2,11 +2,35 @@
 .nav__rollcall {
   position: relative;
 }
-.nav__rollcall-btn.is-open,
-.nav__rollcall-btn.is-open:hover {
+/* 导航栏按钮：主色青描边 + 实底高亮，与「全屏 / 重置本页」的幽灵按钮拉开层级，
+   让课堂抽人入口在投屏上一眼可见（文字为「按钮」，弹窗标题仍标明课堂点名） */
+.nav__btn.nav__rollcall-btn {
   border-color: var(--c-primary);
   color: var(--c-text);
-  background: rgba(53, 198, 244, 0.18);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--c-primary) 26%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-primary) 26%, transparent);
+}
+.nav__btn.nav__rollcall-btn .icon {
+  color: var(--c-primary);
+}
+.nav__btn.nav__rollcall-btn:hover,
+.nav__btn.nav__rollcall-btn:hover:not([disabled]) {
+  border-color: var(--c-primary);
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--c-primary) 40%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c-primary) 42%, transparent);
+}
+/* 展开中：转为实底 + 深色文字/图标，与常态的透底拉开状态差 */
+.nav__btn.nav__rollcall-btn.is-open,
+.nav__btn.nav__rollcall-btn.is-open:hover {
+  border-color: var(--c-primary);
+  color: var(--c-bg);
+  background: var(--c-primary);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--c-primary) 50%, transparent);
+}
+.nav__btn.nav__rollcall-btn.is-open .icon {
+  color: var(--c-bg);
 }
 
 .rollcall__bubble {

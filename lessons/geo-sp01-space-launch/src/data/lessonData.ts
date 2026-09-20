@@ -202,8 +202,9 @@ export const lessonData: LessonData = {
       id: 'taiyuan',
       name: '太原卫星发射中心',
       location: '山西·华北',
-      lon: 112.6,
-      lat: 38.5,
+      // 发射区在忻州市岢岚县，不在太原市区
+      lon: 111.59,
+      lat: 38.86,
       slot: 'tr',
       conditionIds: ['c1', 'c4', 'c6']
     },
@@ -326,6 +327,20 @@ export const lessonData: LessonData = {
       '森林广布',
       '河流众多'
     ],
+    /** 词云每颗胶囊的图标与配色（键为关键词原文，顺序仍由 `keywords` 决定） */
+    keywordStyles: {
+      '北纬5°附近': { icon: 'icon-pin', tone: 'blue' },
+      '东临大西洋，发射方向可避开人口密集地区': { icon: 'icon-sea', tone: 'violet' },
+      '火箭飞行初期经过海域上空': { icon: 'icon-plane', tone: 'teal' },
+      '沿海低地，地面起伏较小': { icon: 'icon-sea', tone: 'azure' },
+      '人口和城镇分布较少': { icon: 'icon-city', tone: 'amber' },
+      '海运及河运运输部分物资': { icon: 'icon-ship', tone: 'indigo' },
+      '全年高温多雨': { icon: 'icon-rain', tone: 'green' },
+      '湿度较高，云量较多': { icon: 'icon-climate', tone: 'sky' },
+      '雷雨天气': { icon: 'icon-storm', tone: 'cyan' },
+      '森林广布': { icon: 'icon-forest', tone: 'magenta' },
+      '河流众多': { icon: 'icon-sea', tone: 'blue' }
+    },
     sentences: [
       {
         id: 'p1',
@@ -406,7 +421,8 @@ export const lessonData: LessonData = {
         angle: '纬度位置',
         brief: '纬度低',
         polarity: 'fav',
-        answer: '纬度低，地球自转线速度大，有利于节省燃料和发射成本'
+        answer: '纬度低，地球自转线速度大，有利于节省燃料和发射成本',
+        answerKey: '纬度低，地球自转线速度大'
       },
       {
         id: 'fav-sea',
@@ -415,7 +431,8 @@ export const lessonData: LessonData = {
         angle: '海陆位置/安全因素',
         brief: '面向海洋，落区安全',
         polarity: 'fav',
-        answer: '发射方向面向海洋，可减少对人口密集区的影响，安全性较高'
+        answer: '面向海洋，落区安全，可减少对人口密集区的影响，安全性较高',
+        answerKey: '面向海洋，落区安全'
       },
       {
         id: 'fav-terrain',
@@ -424,7 +441,8 @@ export const lessonData: LessonData = {
         angle: '地形条件',
         brief: '地形平坦',
         polarity: 'fav',
-        answer: '地形较平坦，有利于发射场建设'
+        answer: '地形平坦，有利于发射场建设',
+        answerKey: '地形平坦'
       },
       {
         id: 'fav-population',
@@ -433,7 +451,8 @@ export const lessonData: LessonData = {
         angle: '人口条件/安全因素',
         brief: '人烟稀少',
         polarity: 'fav',
-        answer: '人口和城镇少，便于疏散人群，保障发射安全'
+        answer: '人烟稀少，便于疏散人群，保障发射安全',
+        answerKey: '人烟稀少'
       },
       {
         id: 'fav-transport',
@@ -442,7 +461,8 @@ export const lessonData: LessonData = {
         angle: '交通条件',
         brief: '水运便利',
         polarity: 'fav',
-        answer: '海运、河运便利，有利于大型设备和物资运输'
+        answer: '水运便利，有利于大型设备和物资运输',
+        answerKey: '水运便利'
       },
       {
         id: 'unfav-climate',
@@ -451,7 +471,8 @@ export const lessonData: LessonData = {
         angle: '气象条件',
         brief: '气象条件较差',
         polarity: 'unfav',
-        answer: '降水多、湿度大、云量多、雷雨频繁，不利于发射和跟踪观测'
+        answer: '气象条件较差，不利于发射和跟踪观测',
+        answerKey: '气象条件较差'
       },
       {
         id: 'unfav-surface',
@@ -460,7 +481,8 @@ export const lessonData: LessonData = {
         angle: '地表状况/建设条件',
         brief: '地表复杂',
         polarity: 'unfav',
-        answer: '森林广布、河流众多，可能增加基地建设和交通建设难度'
+        answer: '地表复杂，可能增加基地建设和交通建设难度',
+        answerKey: '地表复杂'
       },
       {
         id: 'unfav-lowland',
@@ -469,7 +491,8 @@ export const lessonData: LessonData = {
         angle: '地势/自然灾害',
         brief: '地势低平',
         polarity: 'unfav',
-        answer: '地势低平，排水不畅，可能受洪涝等影响'
+        answer: '地势低平，排水不畅，可能受洪涝等影响',
+        answerKey: '地势低平'
       }
     ],
     // ⚠️ 采分点表述待教师确认（见 docs/01_教学设计交接包.md §12）
@@ -493,7 +516,7 @@ export const lessonData: LessonData = {
   latitudePoints: [
     { id: 'n60', name: '60°N', lat: 60, speed: 233, meter: 'm/s', arcKm: 837 },
     { id: 'n30', name: '30°N', lat: 30, speed: 401, meter: 'm/s', arcKm: 1447 },
-    { id: 'eq', name: '0°（赤道）', lat: 0, speed: 465, meter: 'm/s', arcKm: 1670 },
+    { id: 'eq', name: '赤道', lat: 0, speed: 465, meter: 'm/s', arcKm: 1670 },
     { id: 's30', name: '30°S', lat: -30, speed: 401, meter: 'm/s', arcKm: 1447 },
     { id: 's60', name: '60°S', lat: -60, speed: 233, meter: 'm/s', arcKm: 837 }
   ],

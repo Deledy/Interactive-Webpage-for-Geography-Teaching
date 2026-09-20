@@ -220,6 +220,8 @@ function main() {
       lessons: lessonsMeta,
       _note: '由 lessons/ 各课 lesson.json 经 scripts/assemble.mjs 自动汇总生成，请勿手改。'
     }
+    // 新书首次汇总时 books/<书>/ 可能尚不存在，先补齐目录再写入
+    mkdirSync(join(booksRoot, book), { recursive: true })
     writeFileSync(join(booksRoot, book, 'book.json'), JSON.stringify(nextBook, null, 2) + '\n')
     writeFileSync(join(bookDir, 'index.html'), renderBookPage(book, chapters, lessonsMeta))
     console.log(`[汇总] ${book}：${chapters.length} 章 / ${lessonsMeta.length} 课${isDeploy ? '（部署模式）' : ''}`)

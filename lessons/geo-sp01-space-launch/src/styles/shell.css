@@ -91,13 +91,6 @@
   background: var(--c-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 25%, transparent);
 }
-.nav__task.is-done {
-  color: var(--c-ok);
-  border-color: var(--c-ok);
-}
-.nav__task.is-done::before {
-  background: var(--c-ok);
-}
 .nav__actions {
   display: flex;
   align-items: center;
@@ -274,7 +267,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 32px;
+  gap: clamp(18px, 1.6vw, 28px);
 }
 .intro__lead {
   display: flex;
@@ -288,7 +281,9 @@
 }
 .intro__title {
   max-width: 4.6em;
-  /* 回退：不支持容器查询单位时按视口宽度等比；下一行为标题区可用宽度的 23%（留 4% 余量防换行错位） */
+  /* 回退：不支持容器查询单位时按视口宽度等比；下一行为标题区可用宽度的 23%
+     （4 字/行 × 2 行，留余量防换行错位）。标题区宽度由右侧面板宽度决定，
+     面板已整体收一档（见 tokens.css --fs-cover-*），标题随之放大 */
   font-size: var(--fs-cover-title);
   font-size: clamp(60px, 23cqw, 180px);
   font-weight: 700;
@@ -301,11 +296,21 @@
   color: transparent;
   filter: drop-shadow(0 8px 22px color-mix(in srgb, var(--c-cover-veil) 82%, transparent));
 }
+/* 标语：按语义断成两行对仗（每行一个完整分句）。行内禁止换行，杜绝句中被拆开；
+   字号保持封面令牌，并用 cqw 兜底，窄屏下不溢出 */
 .intro__slogan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.4;
   font-size: var(--fs-cover-slogan);
+  font-size: min(var(--fs-cover-slogan), 13cqw);
   letter-spacing: 0.2em;
   color: var(--c-cover-text);
   text-shadow: 0 2px 16px color-mix(in srgb, var(--c-cover-veil) 88%, transparent);
+}
+.intro__slogan-line {
+  white-space: nowrap;
 }
 .intro__start {
   margin-top: 10px;
@@ -340,7 +345,7 @@
 
 /* 教学目标面板：玻璃底 + 整条矩形框的渐变描边 */
 .intro__goals {
-  padding: clamp(20px, 2vw, 28px) clamp(22px, 2.2vw, 30px) clamp(10px, 1.2vw, 16px);
+  padding: clamp(18px, 1.7vw, 24px) clamp(18px, 1.8vw, 24px) clamp(10px, 1.2vw, 16px);
   border: 1px solid transparent;
   border-radius: var(--r-panel);
   background: linear-gradient(
@@ -493,4 +498,5 @@
 }
 
 /* ================= M8 小结 ================= */
-/* 内容已清空，页面（index.html 的 section#m8）保留待后续填充 */
+/* 已整体删除（原 P1 可选项）：空屏在末尾会白屏一页、打印时也会多出一张空白页，
+   故连同 section#m8 一起移除，末屏为 M7 答题屏（#m7a） */

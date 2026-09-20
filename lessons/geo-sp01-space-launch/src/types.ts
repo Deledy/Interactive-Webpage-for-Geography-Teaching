@@ -142,12 +142,25 @@ export interface PracticeMaterialRow {
   polarity: 'fav' | 'unfav'
   /** 可能形成的答案 */
   answer: string
+  /** 答案中需特殊显示的表述（本条的关键结论/材料依据），须为 `answer` 的子串；
+   *  渲染时包一层 `.m7__sum-hl` 与其余文字拉开对比，未登记或未命中则整句同色 */
+  answerKey?: string
+}
+
+/** 词云单颗胶囊的呈现样式（图标 + 配色） */
+export interface PracticeKeywordStyle {
+  /** 内联 SVG symbol id（胶囊左侧图标） */
+  icon: string
+  /** 配色令牌名（对应 practice.css `.m7__cloud-word--t-{tone}`） */
+  tone: string
 }
 
 export interface PracticeData {
   material: string
   /** 材料页「关键词」按钮的高亮词表（点按后在 `material` 中扫出并高亮 + 下划线） */
   keywords: string[]
+  /** 词云呈现样式表：以关键词原文为键；词表（`keywords`）仍是内容与顺序的唯一来源 */
+  keywordStyles: Record<string, PracticeKeywordStyle>
   sentences: PracticeSentence[]
   requirement: string
   angleOptions: string[]

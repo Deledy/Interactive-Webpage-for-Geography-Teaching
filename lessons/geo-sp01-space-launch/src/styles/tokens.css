@@ -15,6 +15,12 @@
   --c-err: #ff5c6c;
   --c-info: #35c6f4;
   --c-mask: rgba(3, 7, 15, 0.72);
+  /* 3D 地球镜面高光色：深蓝。近白镜面色会在低 shininess 下糊成一片白斑、洗掉影像贴图 */
+  --c-globe-spec: #24466b;
+  /* M4 子模块：观测点划过的轨迹弧色（暖金）。
+     与青（纬线 / 赤道）、紫（30°N / 60°N）色相拉开，单独标识"轨迹"这一类别，
+     学生一眼能看出"哪一段已经被走过"（教师 2026-09-20 反馈：轨迹与所在纬线同色时投屏读不出） */
+  --c-trail: #ffb020;
 
   /* 字号：投屏最小字号 24px，任何内容不得低于此值；正文基准 32px（对应 PPT 24 号） */
   --fs-hero: 72px;
@@ -23,6 +29,10 @@
   --fs-body: 32px;
   --fs-table: 28px;
   --fs-note: 24px;
+  /* 页脚辅助文案（M5 操作提示 + 地图来源标注）：本课唯一允许低于 24px 的文本。
+     这两句加「重置本模块」按钮要在投屏分辨率下同排两端对齐，24px 放不下，
+     故按视口宽度收缩（1920 宽约 22px，1600 宽约 18px），16px 为可读下限 */
+  --fs-foot-note: clamp(16px, 1.15vw, 22px);
   --fs-num: 40px;
   --fs-display: 80px;
 
@@ -37,17 +47,24 @@
   /* 其他 */
   --r-panel: 12px;
   --nav-h: 64px;
+  /* 圆标内字形（大写字母 / 数字）的光学居中补偿，全课共用：
+     行盒按字体「升部 1.16em / 降部 0.288em」居中，而字母与数字的墨迹只占 0 ~ 0.741em，
+     墨迹中心比行盒中心低约 0.066em；用等量的不对称下内边距（2 × 0.066em）把字形整体上移，
+     使其落在圆标正中间（M6 选项字母圆标、M7 评分标准序号方块） */
+  --pad-badge-lift: 0.13em;
 
   /* 封面（M1）专用：仅 intro / nav 引用；字号按视口缩放，保证教室后排可读 */
   /* 标题实际字号见 shell.css（按标题区可用宽度自适应），此处为不支持容器查询单位时的回退 */
-  --fs-cover-title: clamp(72px, 8vw, 156px);
+  --fs-cover-title: clamp(64px, 7vw, 150px);
   --fs-cover-slogan: clamp(28px, 3.3vw, 48px);
-  --fs-cover-goal: clamp(28px, 2.2vw, 37px);
-  --fs-cover-goal-no: clamp(32px, 3vw, 44px);
-  --fs-cover-goals-title: clamp(30px, 2.9vw, 43px);
+  /* 教学目标面板整体略小于标题：面板越宽，主标题可用宽度越小，
+     故刻意收一档（仍远高于投屏最小字号 20px），把横向空间让给封面主标题 */
+  --fs-cover-goal: clamp(26px, 1.9vw, 32px);
+  --fs-cover-goal-no: clamp(28px, 2.6vw, 38px);
+  --fs-cover-goals-title: clamp(26px, 2.4vw, 36px);
   --fs-cover-btn: clamp(28px, 2.4vw, 38px);
-  --sz-cover-goal-icon: clamp(56px, 4.6vw, 72px);
-  --sz-cover-goal-svg: clamp(28px, 2.2vw, 38px);
+  --sz-cover-goal-icon: clamp(48px, 4vw, 62px);
+  --sz-cover-goal-svg: clamp(24px, 1.9vw, 32px);
   --sz-cover-logo: 34px;
   --c-cover-veil: #050c18;
   --c-cover-grid: rgba(140, 196, 255, 0.07);
@@ -112,6 +129,10 @@
   --fs-m7-ask: clamp(29px, 2.1vw, 40px);
   --fs-m7-act: clamp(26px, 2vw, 38px);
   --fs-m7-criteria: clamp(25px, 1.9vw, 35px);
+  /* 评分标准条目：正文行高与序号方块边长必须成对引用——
+     序号方块要与右侧正文「首行」对齐，对齐量由 字号 × 行高 与 方块边长 相减得到 */
+  --lh-m7-criteria: 1.55;
+  --sz-m7-criteria-no: clamp(28px, 2.3vw, 38px);
   --sz-m7-act-w: clamp(148px, 11vw, 208px);
   --sz-m7-act-h: clamp(48px, 6.9vh, 68px);
   /* M7 答题页·「材料信息梳理」表：五列信息密集，仍需教室后排可读 */
@@ -119,13 +140,15 @@
   --fs-m7-sum-cell: clamp(25px, 1.7vw, 36px);
   --pad-m7-sum-cell: clamp(12px, 1.9vh, 20px) clamp(14px, 1.3vw, 22px);
   /* M7 答题页·材料关键词词云：按词长分三档，短词最大（核心术语），长句最小（材料原句）；
-     上限压住材料正文（--fs-m7-material）一档，保证词云是支架、不是主角；最小不低于 25px */
-  --fs-m7-cloud-l1: clamp(30px, 2.5vw, 42px);
-  --fs-m7-cloud-l2: clamp(27px, 2.1vw, 36px);
-  --fs-m7-cloud-l3: clamp(25px, 1.75vw, 31px);
-  --pad-m7-cloud-l1: clamp(11px, 1.2vh, 16px) clamp(22px, 1.8vw, 32px);
-  --pad-m7-cloud-l2: clamp(9px, 1vh, 14px) clamp(18px, 1.5vw, 27px);
-  --pad-m7-cloud-l3: clamp(8px, 0.9vh, 12px) clamp(16px, 1.3vw, 23px);
+     上限压住材料正文（--fs-m7-material）一档，保证词云是支架、不是主角。
+     取值整体收紧一档（较原稿小约 15%），让 11 颗胶囊在常规投屏宽度下只占三行，
+     把省下的高度让给下方「材料信息梳理」表 */
+  --fs-m7-cloud-l1: clamp(26px, 2.1vw, 36px);
+  --fs-m7-cloud-l2: clamp(23px, 1.7vw, 30px);
+  --fs-m7-cloud-l3: clamp(21px, 1.45vw, 28px);
+  --pad-m7-cloud-l1: clamp(9px, 1vh, 14px) clamp(18px, 1.5vw, 27px);
+  --pad-m7-cloud-l2: clamp(8px, 0.9vh, 12px) clamp(15px, 1.25vw, 22px);
+  --pad-m7-cloud-l3: clamp(7px, 0.8vh, 11px) clamp(13px, 1.05vw, 19px);
   /* 材料卡底色：取自背景图左侧的深空底色，供图片未覆盖处无缝衔接 */
   --c-m7-deep: #0b2a68;
 }
@@ -140,12 +163,15 @@
   }
 }
 
-/* 竖直空间不足（如 1024×768）：词云收紧内边距，把高度让给下方表格 */
+/* 竖直空间不足（如 1024×768）：词云整体再收紧一档，把高度让给下方表格 */
 @media (max-height: 820px) {
   :root {
-    --pad-m7-cloud-l1: 8px 19px;
-    --pad-m7-cloud-l2: 7px 16px;
-    --pad-m7-cloud-l3: 6px 14px;
+    --fs-m7-cloud-l1: 26px;
+    --fs-m7-cloud-l2: 23px;
+    --fs-m7-cloud-l3: 21px;
+    --pad-m7-cloud-l1: 7px 17px;
+    --pad-m7-cloud-l2: 6px 14px;
+    --pad-m7-cloud-l3: 5px 12px;
     /* 随堂练习右栏同理：讲评结论与知识条目整体缩一档，尽量一屏放下 */
     --fs-m6-verdict: 35px;
     --fs-m6-answer: 32px;

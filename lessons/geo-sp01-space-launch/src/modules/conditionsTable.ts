@@ -4,10 +4,10 @@ import { on, highlight } from '../utils/dom'
 import { icon } from '../utils/icons'
 import { animate, dur, ease } from '../utils/motion'
 import { toast } from '../utils/toast'
-import { markDone, store } from '../state'
+import { store } from '../state'
 
 export interface ConditionsTableConfig {
-  /** 所属屏幕 id：用于键盘监听与完成标记 */
+  /** 所属屏幕 id：用于键盘监听 */
   screen: string
   /** 模块标题 */
   title: string
@@ -95,12 +95,9 @@ export function createConditionsTable(config: ConditionsTableConfig): {
     if (progressNode) progressNode.textContent = `${count} / ${ROWS.length}`
     const all = count === ROWS.length
     if (doneBtn) doneBtn.disabled = !all
-    if (all) {
-      markDone(screen)
-      if (!announced) {
-        announced = true
-        toast(`${ROWS.length} 条选址条件已全部查看`, 'ok')
-      }
+    if (all && !announced) {
+      announced = true
+      toast(`${ROWS.length} 条选址条件已全部查看`, 'ok')
     }
   }
 

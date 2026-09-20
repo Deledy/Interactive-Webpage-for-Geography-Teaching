@@ -179,6 +179,12 @@
   flex: 0 0 auto;
   width: var(--sz-m6-key);
   height: var(--sz-m6-key);
+  /* 行高必须压到 1：继承的 1.7 会让行盒（30×1.7＝51px）高于圆标内框（42px），
+     此时行轨被撑到 51px 且无剩余空间，grid 居中失效、字母整体沉到底部 */
+  line-height: 1;
+  /* 居中生效后仍有约 2px 的字体度量偏差（行盒按升部/降部居中，大写字母墨迹偏下），
+     用下内边距把文字上移半个内边距抵消（见 --pad-badge-lift） */
+  padding-bottom: var(--pad-badge-lift);
   border-radius: 50%;
   border: 1px solid var(--c-line-strong);
   background: color-mix(in srgb, var(--c-bg) 58%, transparent);
@@ -758,14 +764,26 @@
 .m7__criteria-no {
   display: grid;
   place-items: center;
-  width: clamp(28px, 2.3vw, 38px);
-  height: clamp(28px, 2.3vw, 38px);
+  width: var(--sz-m7-criteria-no);
+  height: var(--sz-m7-criteria-no);
+  /* 与右侧正文「首行」同一水平线对齐（原来只做顶对齐，方块中心比首行行盒中心高约 8px）：
+     1) 正文行盒高 = 字号 × 行高，方块矮于行盒，下移半个差值使两者中心重合；
+     2) 再补 0.056 × 正文字号——汉字墨迹中心比行盒中心低（字体升部/降部不对称）。
+     数字墨迹已由 padding-bottom 补偿到方块中心，故两条相加后数字与同行汉字墨迹同线 */
+  margin-top: calc(
+    (var(--fs-m7-criteria) * var(--lh-m7-criteria) - var(--sz-m7-criteria-no)) / 2 + 0.056 *
+      var(--fs-m7-criteria)
+  );
   border-radius: 10px;
   background: color-mix(in srgb, var(--c-primary) 74%, #2a6ba6);
   color: #f4faff;
   font-size: var(--fs-m7-badge);
   font-weight: 700;
+  /* 行盒必须压到 1，否则继承的 1.7 行盒高于方块内框，grid 居中失效 */
   line-height: 1;
+  /* 数字墨迹比行盒中心低约 0.066em（字体升部/降部不对称），用下内边距把数字上移，
+     使其落在方块正中间（同 M6 选项字母圆标，见 --pad-badge-lift） */
+  padding-bottom: var(--pad-badge-lift);
   box-shadow: 0 0 16px color-mix(in srgb, var(--c-primary) 30%, transparent);
 }
 .m7__criteria-body {
@@ -775,7 +793,8 @@
 }
 .m7__criteria-text {
   font-size: var(--fs-m7-criteria);
-  line-height: 1.55;
+  /* 行高走令牌：序号方块的首行对齐量按同一值计算，两处必须同源 */
+  line-height: var(--lh-m7-criteria);
   color: var(--c-text);
 }
 /* 最后一条并列的若干要素，成组展示；实底胶囊，与主色同一族 */
@@ -798,11 +817,13 @@
 }
 
 /* ================= M7 答题屏（#m7a，点「进入答题」后下滑进入） ================= */
-/* 版式：上方作答区留空（暂不实现，仅占位）→ 吃掉剩余高度，把表格压到页面下方 */
+/* 版式：上方作答区留给词云 → 吃掉剩余高度，把表格压到页面下方。
+   两侧与顶部留白比全局更窄：词云因此更宽（更容易排成三行），表格也随之加宽变矮 */
 .screen.m7.is-answer {
   height: 100vh;
   overflow: hidden;
   gap: clamp(12px, 2vh, 22px);
+  padding: calc(var(--nav-h) + 8px) clamp(16px, 2vw, 36px) clamp(16px, 2vh, 28px);
 }
 .m7__paper {
   flex: 1 1 auto;
@@ -830,7 +851,7 @@
   flex: 1 1 auto;
   display: grid;
   place-items: center;
-  padding: clamp(6px, 1.6vh, 24px) 0;
+  padding: clamp(4px, 1vh, 14px) 0;
 }
 
 /* --- 关键词词云：材料页高亮过的同一份词表，逐词一颗胶囊 --- */
@@ -838,10 +859,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(12px, 2.2vh, 26px);
+  gap: clamp(8px, 1.4vh, 18px);
   width: 100%;
   /* 铺满答题区整幅宽度（词云「范围广」的关键）：上限对齐全站最宽内容线（封面 .intro__body）。
-     只留一点内边距，免得胶囊的微旋转贴边给 .m7__paper 挤出横向滚动条 */
+     只留一点内边距，免得胶囊贴边给 .m7__paper 挤出横向滚动条 */
   max-width: min(100%, 1720px);
   padding: 0 clamp(6px, 0.8vw, 16px);
 }
@@ -855,66 +876,119 @@
 }
 .m7__cloud-label .icon {
   flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
   color: var(--c-primary);
 }
-/* 词云主体：铺满整幅宽度——每行由 space-around 撑开到左右两端（单行只剩一个词时仍居中），
-   胶囊交替微旋转 + 微错位，破掉整齐的行列感 */
+/* 词云主体：铺满整幅宽度——每行由 space-around 撑开到左右两端（单行只剩一个词时仍居中）。
+   行内/行间留白一并收紧，让 11 颗胶囊尽量只占三行，把高度让给下方表格 */
 .m7__cloud-list {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
   align-items: center;
-  gap: clamp(12px, 2vh, 24px) clamp(18px, 1.8vw, 34px);
+  gap: clamp(8px, 1.1vh, 16px) clamp(10px, 0.9vw, 16px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+/* 胶囊：图标 + 文字，逐词一色渐变（--c-a 深 → --c-b 亮），白字 + 彩色外发光 */
 .m7__cloud-word {
-  --rot: 0deg;
-  --dy: 0px;
+  --c-a: #3c4657;
+  --c-b: #5b6678;
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(6px, 0.55vw, 9px);
   border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 24%, transparent);
+  background: linear-gradient(
+    104deg,
+    var(--c-a) 0%,
+    var(--c-b) 52%,
+    color-mix(in srgb, var(--c-a) 82%, #000) 100%
+  );
+  color: #fff;
+  font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
+  text-shadow: 0 1px 6px color-mix(in srgb, #000 55%, transparent);
+  box-shadow: 0 10px 26px color-mix(in srgb, #000 46%, transparent),
+    0 0 26px color-mix(in srgb, var(--c-b) 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent);
   /* 未滑到答题屏前不显示（由 observeCloud 加 is-in 触发） */
   opacity: 0;
-  transform: rotate(var(--rot)) translateY(var(--dy));
+  transform: translateY(0);
 }
-.m7__cloud-list > :nth-child(3n + 1) {
-  --rot: -1.4deg;
-  --dy: -5px;
+.m7__cloud-word .icon {
+  flex: 0 0 auto;
+  color: #fff;
+  filter: drop-shadow(0 1px 3px color-mix(in srgb, #000 40%, transparent));
 }
-.m7__cloud-list > :nth-child(3n + 2) {
-  --rot: 1deg;
-  --dy: 4px;
+/* 逐词配色：token 名与 lessonData.practice.keywordStyles[].tone 一一对应 */
+.m7__cloud-word--t-blue {
+  --c-a: #1d5fd1;
+  --c-b: #4a9df6;
 }
-.m7__cloud-list > :nth-child(3n) {
-  --rot: -0.5deg;
-  --dy: 9px;
+.m7__cloud-word--t-azure {
+  --c-a: #1e56b8;
+  --c-b: #3f8ada;
 }
-/* 三档层次：短词＝核心术语（青，最大最亮）> 中档（青，收敛）> 长句＝材料原句（中性，最弱） */
+.m7__cloud-word--t-sky {
+  --c-a: #1b78c5;
+  --c-b: #44a6f0;
+}
+.m7__cloud-word--t-violet {
+  --c-a: #6c3fd6;
+  --c-b: #9e6cf6;
+}
+.m7__cloud-word--t-indigo {
+  --c-a: #3a3fb4;
+  --c-b: #5c64ea;
+}
+.m7__cloud-word--t-teal {
+  --c-a: #0e9a83;
+  --c-b: #2ccfa6;
+}
+.m7__cloud-word--t-green {
+  --c-a: #16914c;
+  --c-b: #32c46b;
+}
+.m7__cloud-word--t-cyan {
+  --c-a: #0f92b4;
+  --c-b: #33bce0;
+}
+.m7__cloud-word--t-amber {
+  --c-a: #c2760f;
+  --c-b: #f0a93c;
+}
+.m7__cloud-word--t-magenta {
+  --c-a: #b92a78;
+  --c-b: #e45ba6;
+}
+/* 三档层次：短词＝核心术语（最大）> 中档 > 长句（最小）；配色不受档位影响 */
 .m7__cloud-word--l1 {
   padding: var(--pad-m7-cloud-l1);
-  border: 1px solid color-mix(in srgb, var(--c-primary) 52%, transparent);
-  background: color-mix(in srgb, var(--c-primary) 14%, color-mix(in srgb, var(--c-panel-2) 72%, transparent));
-  color: var(--c-text);
   font-size: var(--fs-m7-cloud-l1);
-  font-weight: 700;
-  box-shadow: 0 6px 20px color-mix(in srgb, #000 40%, transparent),
-    0 0 24px color-mix(in srgb, var(--c-primary) 22%, transparent);
+}
+.m7__cloud-word--l1 .icon {
+  width: 34px;
+  height: 34px;
 }
 .m7__cloud-word--l2 {
   padding: var(--pad-m7-cloud-l2);
-  border: 1px solid color-mix(in srgb, var(--c-primary) 34%, transparent);
-  background: color-mix(in srgb, var(--c-primary) 8%, color-mix(in srgb, var(--c-panel-2) 62%, transparent));
-  color: var(--c-text);
   font-size: var(--fs-m7-cloud-l2);
+}
+.m7__cloud-word--l2 .icon {
+  width: 32px;
+  height: 32px;
 }
 .m7__cloud-word--l3 {
   padding: var(--pad-m7-cloud-l3);
-  border: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
-  background: color-mix(in srgb, var(--c-panel-2) 58%, transparent);
-  color: var(--c-text-dim);
   font-size: var(--fs-m7-cloud-l3);
+}
+.m7__cloud-word--l3 .icon {
+  width: 28px;
+  height: 28px;
 }
 /* 逐词错峰上浮：--i 为关键词在词表中的次序；both 让延迟期间停在起始帧（不可见） */
 .m7__cloud.is-in .m7__cloud-word {
@@ -925,11 +999,11 @@
 @keyframes m7-cloud-in {
   from {
     opacity: 0;
-    transform: rotate(var(--rot)) translateY(calc(var(--dy) + 18px)) scale(0.9);
+    transform: translateY(18px) scale(0.9);
   }
   to {
     opacity: 1;
-    transform: rotate(var(--rot)) translateY(var(--dy)) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 /* 减少动效：不做错峰，直接呈现结果 */
@@ -1019,6 +1093,11 @@
   flex: 0 0 auto;
   color: var(--c-primary);
 }
+/* 「材料描述」列的小图标放大到与单元格字号同级（36px），与词云胶囊图标一致 */
+.m7__sum-icon .icon {
+  width: clamp(28px, 2vw, 36px);
+  height: clamp(28px, 2vw, 36px);
+}
 /* 有利 / 不利标签：与表格同一行高内的圆角牌 */
 .m7__sum-polar {
   display: inline-block;
@@ -1053,6 +1132,19 @@
 }
 .m7__sum-row.is-open {
   background: color-mix(in srgb, var(--c-primary) 5%, transparent);
+}
+/* 「可能形成的答案」里的关键表述：柔和暖色字 + 淡琥珀底，与同句其余文字拉开对比而不刺眼。
+   沿用材料页「关键词」高亮的色系（--c-accent-warm），但底色更淡、不加下划线：
+   答案里的这半句正是材料里高亮过的那批词，色系一致学生才能把两者对上。
+   长句换行被拆成多段时，靠 box-decoration-break: clone 让每段各自绘一层底色。 */
+.m7__sum-hl {
+  padding: 0 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c-accent-warm) 12%, transparent);
+  color: color-mix(in srgb, var(--c-accent-warm) 72%, var(--c-text));
+  font-weight: 600;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 /* 「点击查看」与 M2/M3 条件表同款：同尺寸、同图标、同配色 */
 .m7__sum-peek {

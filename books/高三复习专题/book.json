@@ -1,0 +1,25 @@
+{
+  "book": "高三复习专题",
+  "grade": "高三一轮复习",
+  "version": "1.0.0",
+  "status": "draft",
+  "updatedAt": "2026-09-20T03:47:36.963Z",
+  "chapters": [
+    {
+      "title": "一轮复习专题",
+      "lessons": [
+        "geo-sp01-space-launch"
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "geo-sp01-space-launch",
+      "path": "lessons/geo-sp01-space-launch",
+      "lessonTitle": "航天发射相关问题：发射基地与着陆场选址条件及综合题规范训练",
+      "order": 1,
+      "chapterTitle": "一轮复习专题"
+    }
+  ],
+  "_note": "由 lessons/ 各课 lesson.json 经 scripts/assemble.mjs 自动汇总生成，请勿手改。"
+}

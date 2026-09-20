@@ -191,19 +191,22 @@ function cloudLevel(word: string): 1 | 2 | 3 {
 
 /**
  * 关键词词云：内容即材料页「关键词」按钮扫出并高亮的同一份词表（`practice.keywords`），
- * 逐词包成胶囊；`--i` 为词序，供进入视口后逐词错峰上浮。
+ * 逐词包成「图标 + 文字」的彩色胶囊；图标与配色取自 `practice.keywordStyles`（按词原文索引，
+ * 词表增删后自动跟随，未登记的词回退为中性配色）；`--i` 为词序，供进入视口后逐词错峰上浮。
  */
 function cloudHtml(): string {
   const words = PRACTICE.keywords
-    .map(
-      (word, i) =>
-        `<li class="m7__cloud-word m7__cloud-word--l${cloudLevel(word)}" style="--i:${i}">${word}</li>`
-    )
+    .map((word, i) => {
+      const style = PRACTICE.keywordStyles[word]
+      const iconName = style?.icon ?? 'icon-spark'
+      const tone = style?.tone ?? 'slate'
+      return `<li class="m7__cloud-word m7__cloud-word--l${cloudLevel(word)} m7__cloud-word--t-${tone}" style="--i:${i}">${icon(iconName, 26)}<span>${word}</span></li>`
+    })
     .join('')
 
   return `
     <div class="m7__cloud">
-      <p class="m7__cloud-label">${icon('icon-spark', 22)}<span>材料关键词</span></p>
+      <p class="m7__cloud-label">${icon('icon-spark', 22)}<span>材料关键词</span>${icon('icon-spark', 22)}</p>
       <ul class="m7__cloud-list">${words}</ul>
     </div>
   `
@@ -246,6 +249,18 @@ function materialRowsHtml(): string {
     .join('')
 }
 
+/**
+ * 答案里的关键表述单独包一层 `.m7__sum-hl`，与同句其余文字拉开对比：
+ * 高亮的这批字就是材料页「关键词」扫出过的那批词，学生一眼能看出「哪半句是材料依据」。
+ * 用 indexOf 精确切分（关键词可能含正则元字符，不走 replace）；未登记或未命中则整句同色。
+ */
+function answerHtml(row: PracticeMaterialRow): string {
+  const key = row.answerKey
+  const at = key ? row.answer.indexOf(key) : -1
+  if (!key || at < 0) return row.answer
+  return `${row.answer.slice(0, at)}<span class="m7__sum-hl">${key}</span>${row.answer.slice(at + key.length)}`
+}
+
 /** 一行：材料描述常显；未展开时四列梳理结果隐藏，只留一枚居中的「点击查看」 */
 function materialRowHtml(row: PracticeMaterialRow, position: number): string {
   const isUnfav = row.polarity === 'unfav'
@@ -261,7 +276,7 @@ function materialRowHtml(row: PracticeMaterialRow, position: number): string {
       <td><span class="m7__sum-v">${row.brief}</span></td>
       <td><span class="m7__sum-v m7__sum-polar m7__sum-polar--${row.polarity}">${isUnfav ? '不利' : '有利'}</span></td>
       <td class="m7__sum-answer">
-        <span class="m7__sum-v">${row.answer}</span>
+        <span class="m7__sum-v">${answerHtml(row)}</span>
         <button class="m7__sum-peek" type="button" data-index="${position}"
           aria-label="第 ${position + 1} 条：点击查看描述角度与梳理结果">
           ${icon('icon-eye', 30)}<span>点击查看</span>

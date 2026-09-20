@@ -149,11 +149,11 @@ export function initSiteCompare(root: HTMLElement): void {
     <img class="m4__bg" src="${siteBg}" alt="发射场与着陆场实景图" decoding="async" />
     <span class="m4__veil" aria-hidden="true"></span>
     <button class="m4__hotspot" type="button" data-site="launch">
-      <span class="m4__hotspot-pin" aria-hidden="true">${icon('icon-pin', 40)}</span>
+      <span class="m4__hotspot-pin" aria-hidden="true">${icon('icon-location', 40)}</span>
       <span class="m4__hotspot-label">${SITE_META.launch.label}</span>
     </button>
     <button class="m4__hotspot" type="button" data-site="landing">
-      <span class="m4__hotspot-pin" aria-hidden="true">${icon('icon-pin', 40)}</span>
+      <span class="m4__hotspot-pin" aria-hidden="true">${icon('icon-location', 40)}</span>
       <span class="m4__hotspot-label">${SITE_META.landing.label}</span>
     </button>
     <div class="sec-head m4__head">
