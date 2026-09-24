@@ -90,7 +90,7 @@ function tsStringLiterals(src) {
 function serifElementText(html) {
   const out = []
   const serifClasses =
-    'topnav__brand-title|cover__chapter|cover__title|goal-card__title|goal-card__num|start-btn'
+    'topnav__brand-title|cover__chapter|cover__title|goal-card__title|goal-card__num|start-btn|universe-card__quote'
   const re = new RegExp(
     `<([a-z0-9]+)[^>]*class="[^"]*(?:${serifClasses})[^"]*"[^>]*>([\\s\\S]*?)<\\/\\1>`,
     'gi'

@@ -23,3 +23,6 @@ dist-book/
 .env
 .env.local
 .env.*.local
+
+# 服务器密钥与凭证（严禁提交）
+*.pem

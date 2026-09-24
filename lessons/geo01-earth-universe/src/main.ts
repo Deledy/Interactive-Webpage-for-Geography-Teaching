@@ -14,6 +14,7 @@ import { initOrbitDemo } from './modules/orbit'
 import { initLifeChain } from './modules/life'
 import { initReviewTree } from './modules/review'
 import { initNebulaTilt } from './modules/nebulaTilt'
+import { initBodyDeckTabs } from './modules/bodyDeckTabs'
 import { initLightbox } from './modules/lightbox'
 
 export function init(): void {
@@ -30,6 +31,7 @@ export function init(): void {
   initLifeChain();
   initReviewTree();
   initNebulaTilt();
+  initBodyDeckTabs();
   initLightbox();
 }
 
