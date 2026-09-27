@@ -735,7 +735,7 @@
             <span class="section__tag-num">03</span>
           </span>
           <h2 class="section__title">天体判别 · 流星案例</h2>
-          <p class="section__desc">判断一个物体是不是天体，看三条标准：是物质不是现象、位于地球大气层之外、是独立个体。跟随流星案例动画，一步一步验证这三条标准。</p>
+          <p class="section__desc">判断一个物体是不是天体，看三条标准。</p>
         </div>
         <div class="section__head-actions">
           <button type="button" class="extend-btn" data-section="M3" aria-haspopup="dialog">
@@ -754,17 +754,83 @@
           <div id="meteor-stage" class="panel panel--hint" data-widget="meteor-stage">
             <p class="panel__placeholder">流星现象动画演示 · 流星体在太空中漂浮 → 进入大气层摩擦燃烧成流星 → 未燃尽落至地面成陨石<br>（启用 JavaScript 后可观看循环动画演示）</p>
           </div>
-          <!-- 三条件条目区 + 判别结论：二者同处右侧栏，结论位于三条件下方 -->
+          <!-- 右侧栏：判别三条件 + 综合判断（综合判断为自测：逐条答案默认隐藏，点各行按钮揭晓） -->
           <div class="meteor-side">
-            <div id="meteor-conditions" class="panel" data-widget="meteor-conditions">
-              <h3 class="conditions-title">判别三条件</h3>
+            <div id="meteor-conditions" class="cosmic-panel" data-widget="meteor-conditions">
+              <header class="cosmic-head">
+                <h3 class="cosmic-title"><span class="cosmic-title__text">判别三条件</span><svg class="cosmic-title__spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c1 7 4.6 10.6 12 12-7.4 1.4-11 5-12 12-1-7-4.6-10.6-12-12C7.4 10.6 11 7 12 0z"/></svg></h3>
+                <p class="cosmic-sub">同时满足以下三条，才是天体</p>
+              </header>
+              <!-- 每条条件 = logo（多层科技光环）+ 标题 + 内容（logo 暂用现有图标占位，待正式图标下载后替换） -->
               <ul class="condition-list">
-                <li class="condition-item is-lit"><span class="condition-item__key">是物质</span><span class="condition-item__desc">是物质，不是现象</span></li>
-                <li class="condition-item is-lit"><span class="condition-item__key">大气层之外</span><span class="condition-item__desc">位于地球大气层之外</span></li>
-                <li class="condition-item is-lit"><span class="condition-item__key">独立个体</span><span class="condition-item__desc">独立运行，不是某一天体的一部分</span></li>
+                <li class="condition-item is-lit">
+                  <span class="condition-item__logo" aria-hidden="true">
+                    <span class="condition-item__halo"></span>
+                    <span class="condition-item__sparks"></span>
+                    <svg class="condition-item__icon"><use href="#ico-space"/></svg>
+                  </span>
+                  <div class="condition-item__body">
+                    <span class="condition-item__key">是物质，不是现象</span>
+                    <span class="condition-item__desc">有质量、占空间的物质实体才可能是天体。</span>
+                  </div>
+                </li>
+                <li class="condition-item is-lit">
+                  <span class="condition-item__logo" aria-hidden="true">
+                    <span class="condition-item__halo"></span>
+                    <span class="condition-item__sparks"></span>
+                    <svg class="condition-item__icon"><use href="#ico-planet"/></svg>
+                  </span>
+                  <div class="condition-item__body">
+                    <span class="condition-item__key">位于地球大气层之外</span>
+                    <span class="condition-item__desc">天体在太空（大气层之外）运行。</span>
+                  </div>
+                </li>
+                <li class="condition-item is-lit">
+                  <span class="condition-item__logo" aria-hidden="true">
+                    <span class="condition-item__halo"></span>
+                    <span class="condition-item__sparks"></span>
+                    <svg class="condition-item__icon"><use href="#ico-moon"/></svg>
+                  </span>
+                  <div class="condition-item__body">
+                    <span class="condition-item__key">是独立个体</span>
+                    <span class="condition-item__desc">独立运行、有自身的运动轨道，不是某一天体的附属部分。</span>
+                  </div>
+                </li>
               </ul>
             </div>
-            <p id="meteor-conclusion" class="hint" data-widget="meteor-conclusion">流星现象发生在大气层内，是现象不是天体；落到地面的陨石，也不是天体。</p>
+            <!-- 综合判断：逐条自测，判断结果默认隐藏，点该行「查看答案」按钮揭晓 -->
+            <section id="meteor-judgment" class="cosmic-panel" data-widget="meteor-judgment" aria-labelledby="meteor-judge-title">
+              <header class="cosmic-head">
+                <h3 id="meteor-judge-title" class="cosmic-title"><span class="cosmic-title__text">综合判断</span><svg class="cosmic-title__spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c1 7 4.6 10.6 12 12-7.4 1.4-11 5-12 12-1-7-4.6-10.6-12-12C7.4 10.6 11 7 12 0z"/></svg></h3>
+                <p class="cosmic-sub">下列哪些是天体，哪些不是天体？</p>
+              </header>
+              <ul id="meteor-judge-list" class="judge-list">
+                <li class="judge-item">
+                  <span class="judge-item__name">流星体</span>
+                  <span id="judge-verdict-1" class="judge-item__verdict judge-item__verdict--yes">是天体</span>
+                  <button type="button" class="judge-btn" data-judge-toggle aria-expanded="false" aria-controls="judge-verdict-1">
+                    <svg class="judge-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.2 12S6 5.8 12 5.8 21.8 12 21.8 12 18 18.2 12 18.2 2.2 12 2.2 12z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                    <span class="judge-btn__label" data-judge-label>查看答案</span>
+                  </button>
+                </li>
+                <li class="judge-item">
+                  <span class="judge-item__name">流星现象</span>
+                  <span id="judge-verdict-2" class="judge-item__verdict judge-item__verdict--no">不是天体</span>
+                  <button type="button" class="judge-btn" data-judge-toggle aria-expanded="false" aria-controls="judge-verdict-2">
+                    <svg class="judge-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.2 12S6 5.8 12 5.8 21.8 12 21.8 12 18 18.2 12 18.2 2.2 12 2.2 12z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                    <span class="judge-btn__label" data-judge-label>查看答案</span>
+                  </button>
+                </li>
+                <li class="judge-item">
+                  <span class="judge-item__name">陨石</span>
+                  <span id="judge-verdict-3" class="judge-item__verdict judge-item__verdict--no">不是天体</span>
+                  <button type="button" class="judge-btn" data-judge-toggle aria-expanded="false" aria-controls="judge-verdict-3">
+                    <svg class="judge-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.2 12S6 5.8 12 5.8 21.8 12 21.8 12 18 18.2 12 18.2 2.2 12 2.2 12z"/><circle cx="12" cy="12" r="2.7"/></svg>
+                    <span class="judge-btn__label" data-judge-label>查看答案</span>
+                  </button>
+                </li>
+              </ul>
+            </section>
           </div>
         </div>
       </div>

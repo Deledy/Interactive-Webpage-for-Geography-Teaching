@@ -61,31 +61,85 @@ describe('M3 流星案例（循环动画 + 静态判别条件）', () => {
     // 动画界面最下方的①流星体/②流星/③陨石文字提示已删除
     expect(document.querySelectorAll('.meteor-stage-tab')).toHaveLength(0)
     expect(document.querySelector('.meteor-demo__stages')).toBeNull()
-    expect(document.querySelectorAll('[data-meteor-action]')).toHaveLength(3)
-    // 判别三条件静态展示（全亮），不随动画步骤点亮
+    // 控制条：主控（开始/暂停/继续）+ 重播两个按钮；演示状态为纯状态指示，不是按钮
+    expect(document.querySelectorAll('[data-meteor-action]')).toHaveLength(2)
+    expect(document.querySelector('[data-meteor-status]')).toBeTruthy()
+    expect(document.querySelector('button[data-meteor-status]')).toBeNull()
+    expect(document.querySelector('[data-meteor-status]')!.getAttribute('data-state')).toBe('idle')
+    // 判别三条件静态展示（全亮），不随动画步骤点亮；每条 = logo + 标题 + 内容
     expect(document.querySelectorAll('.condition-item')).toHaveLength(3)
     expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(3)
+    expect(document.querySelectorAll('.condition-item .condition-item__logo svg use')).toHaveLength(3)
+    // 每个 logo 均带「环形光带 + 星芒光点」多层光环层
+    expect(document.querySelectorAll('.condition-item .condition-item__halo')).toHaveLength(3)
+    expect(document.querySelectorAll('.condition-item .condition-item__sparks')).toHaveLength(3)
+    expect(document.querySelector('.condition-item .condition-item__key')!.textContent).toBeTruthy()
+    expect(document.querySelector('.condition-item .condition-item__desc')!.textContent).toBeTruthy()
+    // 两卡标题：主标题 + 副标题（判别三条件的判据前提 / 综合判断的设问）
+    expect(document.querySelector('#meteor-conditions .cosmic-title')!.textContent).toBe('判别三条件')
+    expect(document.querySelector('#meteor-conditions .cosmic-sub')!.textContent)
+      .toBe('同时满足以下三条，才是天体')
+    expect(document.getElementById('meteor-judge-title')!.textContent).toBe('综合判断')
+    expect(document.querySelector('#meteor-judgment .cosmic-sub')!.textContent)
+      .toBe('下列哪些是天体，哪些不是天体？')
+    // 综合判断：流星体 / 流星现象 / 陨石，答案默认隐藏，逐行由按钮揭晓
+    expect(document.querySelectorAll('.judge-item')).toHaveLength(3)
+    expect(Array.from(document.querySelectorAll('.judge-item__verdict')).map(v => v.textContent))
+      .toEqual(['是天体', '不是天体', '不是天体'])
+    // 已移除：条目说明文字与底部结论卡片
+    expect(document.querySelectorAll('.judge-item__desc')).toHaveLength(0)
+    expect(document.getElementById('meteor-conclusion')).toBeNull()
+    const judgeBtns = Array.from(document.querySelectorAll('[data-judge-toggle]')) as HTMLButtonElement[]
+    expect(judgeBtns).toHaveLength(3)
+    judgeBtns.forEach(btn => {
+      expect(btn.tagName).toBe('BUTTON')
+      expect(btn.getAttribute('aria-expanded')).toBe('false')
+      expect(btn.querySelector('.judge-btn__icon')).toBeTruthy()   // 眼睛图标
+      expect(btn.textContent).toContain('查看答案')
+    })
   })
 
-  it('开始演示 → playing：控制条联动，判别条件与结论保持静态不变', () => {
+  it('「查看答案」：逐行默认隐藏判断结果，点击揭晓后可再次收起', () => {
+    initMeteorCase()
+    const rows = Array.from(document.querySelectorAll('.judge-item'))
+    const btn = rows[1].querySelector('[data-judge-toggle]') as HTMLButtonElement
+    expect(rows.some(r => r.classList.contains('is-open'))).toBe(false)
+    btn.click()
+    expect(rows[1].classList.contains('is-open')).toBe(true)
+    expect(btn.getAttribute('aria-expanded')).toBe('true')
+    expect(btn.textContent).toContain('隐藏答案')
+    // 逐行独立：其余行仍保持隐藏
+    expect(rows.filter(r => r.classList.contains('is-open'))).toHaveLength(1)
+    btn.click()
+    expect(rows[1].classList.contains('is-open')).toBe(false)
+    expect(btn.getAttribute('aria-expanded')).toBe('false')
+    expect(btn.textContent).toContain('查看答案')
+  })
+
+  it('开始演示 → playing：控制条联动，判别条件与综合判断保持静态不变', () => {
     const ctl = initMeteorCase()!
     expect(ctl.playState).toBe('idle')
-    ;(document.querySelector('[data-meteor-action="start"]') as HTMLElement).click()
+    ;(document.querySelector('[data-meteor-action="toggle"]') as HTMLElement).click()
     expect(ctl.playState).toBe('playing')
-    expect((document.querySelector('[data-meteor-action="pause"]') as HTMLButtonElement).disabled).toBe(false)
-    // 条件动画与动画播放解耦：不再随步骤点亮/熄灭
+    const status = document.querySelector('[data-meteor-status]')!
+    expect(status.getAttribute('data-state')).toBe('playing')
+    expect(status.textContent!.trim()).toBe('演示中')   // 已移除阶段文字（① 流星体 · 太空 等）
+    expect((document.querySelector('[data-meteor-action="replay"]') as HTMLButtonElement).disabled).toBe(false)
+    // 条件动画与动画播放解耦：不再随步骤点亮/熄灭；综合判断仍为默认隐藏（未点击查看答案）
     expect(document.querySelectorAll('.condition-item.is-lit')).toHaveLength(3)
-    expect(document.getElementById('meteor-conclusion')!.textContent).toContain('不是天体')
+    expect(document.querySelectorAll('.judge-item.is-open')).toHaveLength(0)
   })
 
-  it('暂停/继续切换控制条', () => {
+  it('暂停/继续切换主控按钮，并同步演示状态指示', () => {
     const ctl = initMeteorCase()!
     ctl.start()
-    const pauseBtn = document.querySelector('[data-meteor-action="pause"]') as HTMLButtonElement
-    pauseBtn.click()
+    const toggleBtn = document.querySelector('[data-meteor-action="toggle"]') as HTMLButtonElement
+    expect(toggleBtn.textContent).toContain('暂停')
+    toggleBtn.click()
     expect(ctl.playState).toBe('paused')
-    expect(pauseBtn.textContent).toContain('继续')
-    pauseBtn.click()
+    expect(toggleBtn.textContent).toContain('继续')
+    expect(document.querySelector('[data-meteor-status]')!.textContent).toContain('已暂停')
+    toggleBtn.click()
     expect(ctl.playState).toBe('playing')
   })
 

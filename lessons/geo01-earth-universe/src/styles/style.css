@@ -2569,18 +2569,29 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .body-classify__meta { font-size: 14px; color: rgba(196, 214, 240, .74); }
 
 /* ---------- M3 流星案例 ---------- */
-/* 演示区域：Canvas 三层纵向布局，进一步增高以提升视觉展示效果（4:5 竖版）
-   宽 = min(100%, 70vh × 4/5)，使高可达 70vh；窄屏退化为按列宽等比缩放 */
+/* 演示图：中间是 Canvas 三层纵向布局（4:5 竖版，宽随 70vh 约束），
+   左右各一条标注栏，标注栏在画布之外，不再压在动画上。
+   三栏同处一行，因此标注栏高度恒等于画布高度——标注的纵向百分比
+   可直接对应场景划分的层界中心（太空 15%、大气层 60%、地面 95%）。
+   整体宽度上限 = 画布上限 + 两条标注栏，保证画布仍能长到 70vh×4/5。 */
 .meteor-demo {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  --rail-w: 56px;    /* 标注栏宽度 */
+  --rail-gap: 14px;  /* 标注栏与画布的间距 */
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--rail-w);
+  column-gap: var(--rail-gap);
+  row-gap: 20px;     /* 留出足够余量：地面层标注会略微探出画布下沿 */
+  width: 100%;
+  max-width: calc(70vh * 0.8 + 2 * (var(--rail-w) + var(--rail-gap)));
+  margin-inline: auto;
+  /* 作为尺寸容器，供标注用 cqw 跟随演示图宽度缩放 */
+  container-type: inline-size;
 }
 .meteor-stage__canvas {
+  grid-area: 1 / 2;
   position: relative;
-  width: min(100%, calc(70vh * 0.8));
+  width: 100%;
   aspect-ratio: 4 / 5;
-  margin-inline: auto;
   overflow: hidden;
   border-radius: var(--radius-card);
   background: #05081a;
@@ -2593,53 +2604,475 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   height: 100%;
 }
 
-/* 演示控制条：开始/暂停/重播 */
-.meteor-demo__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+/* 标注栏：本身不占高，靠 grid 拉伸到与画布等高；
+   内部标注绝对定位，纵向百分比即画布内的层界比例。 */
+.meteor-rail {
+  position: relative;
+  align-self: stretch;
 }
-.meteor-ctl {
-  min-height: 40px;
-  padding: 8px 18px;
+.meteor-rail--terms { grid-area: 1 / 1; }
+.meteor-rail--zones { grid-area: 1 / 3; }
+
+/* 三类形态名：竖向胶囊，水平居中于左栏、纵向居中于所属层。
+   内边距与字间距都给得较足，避免拥挤；999px 圆角收成完整胶囊，
+   底色、描边与内外发光沿用页面的“青色科技感胶囊”令牌（与 .section__tag 同一语言）。 */
+.meteor-term {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: max-content;
+  margin-inline: auto;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 15px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(9, 38, 66, 0.74), rgba(6, 22, 42, 0.74));
+  border: 1px solid var(--cyan-line);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--cyan-line) 33%, transparent),
+    0 0 16px var(--cyan-glow),
+    inset 0 0 12px color-mix(in srgb, var(--cyan-glow) 45%, transparent);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: clamp(13px, 3.4cqw, 22px);
+  line-height: 1;
+  color: var(--cyan-text);
+  text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+}
+.meteor-term > span { display: block; }
+.meteor-term--space { top: 15%; }
+.meteor-term--air { top: 60%; }
+.meteor-term--ground { top: 95%; }
+
+/* 层名：同样竖向排列、居中于所属层，放在右栏；不加底板，靠文字投影在深空底色上保持可读，
+   与左侧胶囊形成“名称级（宋体）/ 界面级（黑体）”的层级区分。 */
+.meteor-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: max-content;
+  margin-inline: auto;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: clamp(15px, 3.6cqw, 23px);
+  line-height: 1;
+  color: rgba(226, 238, 255, 0.8);
+  text-shadow:
+    0 1px 6px rgba(2, 8, 20, 0.9),
+    0 0 16px rgba(79, 195, 247, 0.2);
+}
+.meteor-zone > span { display: block; }
+.meteor-zone--space { top: 15%; }
+.meteor-zone--air { top: 60%; }
+.meteor-zone--ground { top: 95%; }
+
+/* 窄屏：画布按列宽等比缩小，标注栏同步收窄并收紧内边距，避免画布被挤得过小 */
+@media (max-width: 620px) {
+  .meteor-demo { --rail-w: 40px; --rail-gap: 8px; }
+  .meteor-term { padding: 10px 7px; gap: 3px; }
 }
 
-/* 判别三条件 + 结论：右侧栏内纵向排列，结论位于三条件下方 */
+/* 演示控制区：左侧为演示状态指示（纯状态，不是按钮），右侧为暂停/继续与重播按钮。
+   与画布同处第 2 行、同一列（中间列），宽度自动等于画布宽度，左右边缘与画布对齐。 */
+.meteor-demo__toolbar {
+  grid-area: 2 / 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  width: 100%;
+}
+.meteor-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: var(--fs-note);
+  color: var(--text-dim);
+  transition: color var(--dur) var(--ease);
+}
+.meteor-status__dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* 状态色：演示中＝恒星金（呼吸闪烁）· 已暂停＝星云青 · 已结束＝绿色；未开始保持灰白 */
+.meteor-status[data-state="playing"] { color: var(--gold); }
+.meteor-status[data-state="playing"] .meteor-status__dot {
+  box-shadow: 0 0 0 4px rgba(255, 213, 79, 0.18);
+  animation: meteor-status-pulse 1.4s var(--ease) infinite;
+}
+.meteor-status[data-state="paused"] { color: var(--cyan); }
+.meteor-status[data-state="paused"] .meteor-status__dot { box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.16); }
+.meteor-status[data-state="done"] { color: var(--success); }
+@keyframes meteor-status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meteor-status__dot { animation: none; }
+}
+
+/* 控制按钮：沿用页面蓝色按钮系统（次级＝深蓝玻璃描边，主操作＝亮蓝发光底） */
+.meteor-demo__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;   /* 换行时仍保持右对齐 */
+}
+.meteor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 8px 20px;
+  font-size: var(--fs-note);
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform 0.15s var(--ease);
+}
+.meteor-btn__icon { width: 16px; height: 16px; flex-shrink: 0; }
+/* 图标随文案切换：播放态显示暂停图标，其余显示播放图标 */
+.meteor-btn[data-icon="pause"] .meteor-btn__icon--play,
+.meteor-btn[data-icon="play"] .meteor-btn__icon--pause { display: none; }
+
+.meteor-btn--primary {
+  background: linear-gradient(180deg, rgba(15, 40, 88, 0.92), rgba(9, 22, 52, 0.92));
+  border: 1px solid rgba(100, 181, 246, 0.8);
+  color: var(--blue);
+  box-shadow: 0 0 16px rgba(100, 181, 246, 0.28), inset 0 0 12px rgba(100, 181, 246, 0.12);
+}
+.meteor-btn--primary:hover:not(:disabled) {
+  color: #fff;
+  border-color: #8FC9FF;
+  background: linear-gradient(180deg, rgba(24, 56, 116, 0.96), rgba(13, 32, 72, 0.96));
+  box-shadow: 0 0 26px rgba(100, 181, 246, 0.55), inset 0 0 14px rgba(100, 181, 246, 0.2);
+  transform: translateY(-1px);
+}
+.meteor-btn--ghost {
+  background: var(--navy-glass);
+  border: 1px solid var(--slate-border);
+  color: var(--text-soft);
+  font-weight: 500;
+}
+.meteor-btn--ghost:hover:not(:disabled) {
+  color: var(--blue);
+  border-color: rgba(100, 181, 246, 0.7);
+  background: var(--blue-soft);
+  box-shadow: 0 0 14px rgba(100, 181, 246, 0.28);
+}
+.meteor-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.meteor-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.meteor-btn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
+
+/* ---------- M3 左右等高对齐（宽屏）----------
+   左卡（动画演示）与右栏（判别三条件 + 综合判断）拉伸到同一高度，上下边缘严格对齐：
+   - 演示区（画布 + 控制条）撑满左卡可用高度、画布宽度吃满左栏，卡片内不再留白；
+     左栏同时放宽为 9fr : 5fr（原 3fr : 2fr），让动画区域更大。
+   - 画布不再锁定 4:5，而是按卡片剩余高度铺满（宽高皆随栏宽与卡高变化）；
+     底图按 cover 等比填充，因此画布变形不会让底图拉伸失真（只会小幅裁边）。
+   - 右栏两张卡片按剩余空间等比撑高（卡片间距不变），随左卡一起长高。
+   仅在内容宽度达到上限（视口 ≥ 1248px）时启用：更窄的视口下右栏文字换行明显增多、
+   自然高度远高于左卡，强制等高与放大画布都会让两侧比例失调，故窄屏保持原样
+   （画布仍为 4:5 竖版 + 70vh 上限，见上方 .meteor-demo / .meteor-stage__canvas）。 */
+@media (min-width: 1248px) {
+  [data-module="meteor"] .split {
+    grid-template-columns: 9fr 5fr;
+    align-items: stretch;
+  }
+  #meteor-stage { display: flex; flex-direction: column; }
+  .meteor-demo {
+    flex: 1 1 auto;
+    max-width: none;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .meteor-stage__canvas { aspect-ratio: auto; min-height: 0; }
+  .meteor-side > .cosmic-panel { flex: 1 1 auto; }
+}
+
+/* ---------- M3 右侧卡片：判别三条件 + 综合判断 ---------- */
+/* 右侧栏：两张卡片纵向排列 */
 .meteor-side {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
-.meteor-side .hint { margin: 0; }
 
-.conditions-title { margin: 0 0 14px; font-size: 20px; color: var(--text-main); }
+/* 卡片外壳：深空蓝渐变 + 亮蓝描边 + 内外发光，营造“星空玻璃舱”质感 */
+.cosmic-panel {
+  position: relative;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(100, 181, 246, 0.42);
+  background:
+    radial-gradient(120% 80% at 12% 0%, rgba(46, 104, 196, 0.18), transparent 62%),
+    linear-gradient(158deg, rgba(13, 30, 66, 0.88), rgba(7, 13, 32, 0.92));
+  box-shadow:
+    0 0 22px rgba(79, 195, 247, 0.10),
+    inset 0 0 34px rgba(38, 96, 190, 0.10);
+}
+
+/* 卡片标题：白→浅蓝渐变字 + 蓝色辉光，星芒点缀；副标题承接标题 */
+.cosmic-head { margin-bottom: 16px; }
+.cosmic-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  filter: drop-shadow(0 0 8px rgba(79, 195, 247, 0.32));
+}
+.cosmic-title__text {
+  background: linear-gradient(100deg, #FFFFFF 22%, #9BDBFF 88%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cosmic-title__spark {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #BFE9FF;
+  transform: translateY(-7px);   /* 星芒抬至标题右上方，如题花 */
+  filter: drop-shadow(0 0 5px rgba(140, 210, 255, 0.6));
+}
+.cosmic-sub { margin: 8px 0 0; font-size: var(--fs-note); color: rgba(190, 222, 255, 0.78); }
+
+/* 条件行：深蓝黑玻璃底 + 电光蓝渐变描边（左上亮 → 右下淡）+ 左上方向性霓虹光晕；
+   logo 在行内垂直居中 */
 .condition-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 .condition-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
-  background: var(--glass-bg);
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background:
+    linear-gradient(150deg, rgba(8, 18, 42, 0.78), rgba(5, 11, 26, 0.86)) padding-box,
+    linear-gradient(150deg, rgba(190, 235, 255, 0.62) 0%, rgba(79, 175, 255, 0.26) 45%, rgba(30, 80, 160, 0.14) 100%) border-box;
+  box-shadow:
+    -5px -5px 16px rgba(70, 160, 255, 0.12),
+    0 0 18px rgba(50, 130, 255, 0.08),
+    inset 2px 2px 7px -2px rgba(170, 225, 255, 0.22),
+    inset 0 0 26px rgba(35, 95, 190, 0.08);
   opacity: 0.4;
 }
-.condition-item__key { flex-shrink: 0; font-weight: 700; font-size: 18px; }
-.condition-item__desc { color: var(--text-dim); font-size: 18px; }
 .condition-item.is-lit {
   opacity: 1;
-  border-color: rgba(255, 213, 79, 0.6);
-  box-shadow: 0 0 14px rgba(255, 213, 79, 0.18);
+  box-shadow:
+    -5px -5px 18px rgba(70, 160, 255, 0.16),
+    0 0 22px rgba(50, 130, 255, 0.10),
+    inset 2px 2px 8px -2px rgba(180, 230, 255, 0.26),
+    inset 0 0 30px rgba(35, 95, 190, 0.10);
 }
-.condition-item.is-lit .condition-item__key { color: var(--gold); }
+
+/* 圆形 logo：中心深蓝 → 边缘电光蓝的径向底盘 + 细薄高亮描边 + 外侧 Bloom */
+.condition-item__logo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side at 50% 46%, #08183C 0%, #123A78 52%, #1E5FA8 100%);
+  border: 1px solid rgba(175, 228, 255, 0.6);
+  box-shadow:
+    0 0 8px rgba(120, 205, 255, 0.35),
+    0 0 16px rgba(60, 150, 255, 0.2),
+    inset 0 0 12px rgba(120, 210, 255, 0.22);
+}
+/* 内层细环：断弧，亮部偏左下与右侧 */
+.condition-item__logo::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(120, 200, 255, 0.18);
+  border-top-color: transparent;
+  border-left-color: rgba(160, 225, 255, 0.45);
+  border-bottom-color: rgba(210, 242, 255, 0.6);
+  transform: rotate(-14deg);
+  box-shadow: 0 0 8px rgba(79, 195, 247, 0.22);
+  pointer-events: none;
+}
+/* 外层光环：更淡的断弧 + 左下方 / 右侧方向性 Bloom */
+.condition-item__logo::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  border-radius: 50%;
+  border: 1px solid rgba(79, 195, 247, 0.10);
+  border-right-color: rgba(180, 232, 255, 0.32);
+  transform: rotate(28deg);
+  box-shadow:
+    -4px 6px 12px rgba(70, 165, 255, 0.18),
+    5px -2px 10px rgba(90, 190, 255, 0.12);
+  pointer-events: none;
+}
+/* 环形光带与能量轨迹：径向蒙版把 conic 高光限制在环带上，并留下断口 */
+.condition-item__halo {
+  position: absolute;
+  inset: -13px;
+  border-radius: 50%;
+  background: conic-gradient(from 150deg,
+    rgba(150, 225, 255, 0.30) 0deg,
+    rgba(120, 210, 255, 0) 30deg,
+    rgba(90, 180, 255, 0) 168deg,
+    rgba(120, 205, 255, 0.22) 196deg,
+    rgba(90, 180, 255, 0) 226deg,
+    rgba(160, 230, 255, 0) 300deg,
+    rgba(190, 238, 255, 0.18) 322deg,
+    rgba(160, 230, 255, 0) 348deg);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 68%, #000 73%, #000 87%, transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent 0 68%, #000 73%, #000 87%, transparent 100%);
+  pointer-events: none;
+}
+/* 细小星芒与高亮光点：位置与强弱不均，避免整圈均匀发光。
+   本体透明，仅用 box-shadow 在环带附近点出光点 */
+.condition-item__sparks {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    -33px -9px 3px 0 rgba(255, 255, 255, 0.6),
+    30px 7px 2px 0 rgba(200, 240, 255, 0.5);
+  pointer-events: none;
+}
+.condition-item__icon {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  color: #EAF7FF;
+  fill: currentColor;
+  filter: drop-shadow(0 0 4px rgba(160, 220, 255, 0.5));
+}
+.condition-item__body { display: flex; flex-direction: column; gap: 6px; }
+.condition-item__key {
+  align-self: flex-start;      /* 仅占文字宽度，使下方装饰线贴合标题 */
+  padding-bottom: 4px;
+  border-bottom: 2px solid rgba(120, 200, 255, 0.45);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.35;
+}
+.condition-item__desc { color: rgba(200, 226, 255, 0.78); font-size: var(--fs-note); line-height: 1.55; }
+
+/* 综合判断：逐条自测（名称 + 答案 + 查看答案按钮）。
+   答案徽标默认不显示，由该行的 .is-open 控制（JS 切换），揭晓时轻微上浮淡入 */
+.judge-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.judge-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(100, 181, 246, 0.28);
+  background: linear-gradient(120deg, rgba(12, 28, 62, 0.92), rgba(8, 16, 38, 0.8));
+  box-shadow: inset 0 0 22px rgba(40, 110, 220, 0.1);
+}
+.judge-item__name { font-weight: 700; font-size: 20px; }
+.judge-item__verdict {
+  display: none;              /* 默认隐藏答案 */
+  flex-shrink: 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.judge-item.is-open .judge-item__verdict {
+  display: inline-flex;
+  animation: judge-reveal 0.26s var(--ease) both;
+}
+@keyframes judge-reveal {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .judge-item.is-open .judge-item__verdict { animation: none; }
+}
+.judge-item__verdict--yes {
+  color: var(--gold);
+  background: rgba(255, 213, 79, 0.12);
+  border: 1px solid rgba(255, 213, 79, 0.5);
+}
+.judge-item__verdict--no {
+  color: var(--text-soft);
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--slate-border);
+}
+/* 逐条的「查看答案」按钮：横向胶囊，深蓝半透明底 + 冰蓝渐变描边 + 内侧径向高光 + 柔和霓虹光晕 */
+.judge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  margin-left: auto;           /* 靠右固定，揭晓答案时不发生位移 */
+  padding: 7px 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background:
+    radial-gradient(120% 140% at 18% -20%, rgba(130, 205, 255, 0.18), transparent 62%) padding-box,
+    linear-gradient(180deg, rgba(14, 38, 84, 0.62), rgba(8, 22, 52, 0.70)) padding-box,
+    linear-gradient(120deg, rgba(190, 235, 255, 0.6), rgba(70, 150, 255, 0.2)) border-box;
+  color: rgba(238, 249, 255, 0.94);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.14);
+  transition: transform 0.15s var(--ease), box-shadow var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.judge-btn__icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: #FFFFFF;
+  filter: drop-shadow(0 0 4px rgba(140, 210, 255, 0.45));
+}
+.judge-btn:hover:not(:disabled) {
+  color: #FFFFFF;
+  transform: translateY(-1px);              /* 轻微悬浮感 */
+  box-shadow: 0 0 16px rgba(79, 195, 247, 0.26);
+}
+.judge-btn:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+.judge-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 /* ---------- M7 行星的运动特征（同向性 / 近圆性 / 共面性） ---------- */
 .motion-feature { padding: 18px 20px; transition: border-color 0.3s, box-shadow 0.3s; }
@@ -2804,7 +3237,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .life-panel__chains { flex-direction: column; align-items: center; }
   .chain { flex: none; width: 100%; max-width: 340px; }
   .chain-node { font-size: 16px; }
-  .condition-item { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .condition-item__desc { font-size: 15px; }
 }
 
 /* ============================================================

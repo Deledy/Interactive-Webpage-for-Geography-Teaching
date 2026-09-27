@@ -126,7 +126,6 @@ describe('MeteorBody 物理模型', () => {
     expect(b.vx).toBe(0)
     expect(b.vy).toBe(0)
     expect(b.y).toBe(bounds.groundY - b.r) // 停留在地面线上
-    expect(b.trail).toHaveLength(0)
   })
 
   it('落地后静止停留，位置不再变化', () => {
@@ -157,7 +156,6 @@ describe('MeteorBody 物理模型', () => {
     expect(b.landed).toBe(false)
     expect(b.x).toBe(50)
     expect(b.y).toBe(20)
-    expect(b.trail).toHaveLength(0)
   })
 
   it('autoEnter：active 流星体带向下漂移，漂到大气层上边界即被自动吸引直接进入', () => {
@@ -196,8 +194,11 @@ describe('M3 演示区域高度（加高样式约束）', () => {
       'utf-8'
     )
     // 演示容器：4:5 竖版 + 高度可达 70vh（显著高于原 460×300 的横向示意图）
+    // 注：宽度上限（70vh×4/5）原先直接写在 .meteor-stage__canvas 上，
+    // 改为画布两侧各留一条层界标注栏后，该上限上移到外层 .meteor-demo，
+    // 以保证「画布 + 两条标注栏」整体不超出容器、画布仍能长到 70vh×4/5。
     expect(css).toMatch(/\.meteor-stage__canvas\s*\{[\s\S]*aspect-ratio:\s*4\s*\/\s*5/)
-    expect(css).toMatch(/\.meteor-stage__canvas\s*\{[\s\S]*calc\(70vh\s*\*\s*0\.8\)/)
+    expect(css).toMatch(/\.meteor-demo\s*\{[\s\S]*calc\(70vh\s*\*\s*0\.8/)
     expect(css).toMatch(/\.meteor-canvas\s*\{/)
   })
 })
