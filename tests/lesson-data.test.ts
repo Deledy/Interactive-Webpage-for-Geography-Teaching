@@ -58,6 +58,9 @@ describe('lessonData 数据完整性', () => {
       expect(p.orbit).toBeGreaterThan(0)
       expect(p.period).toBeGreaterThan(0)
       expect(p.type && p.desc).toBeTruthy()
+      expect(p.number).toMatch(/^0[1-8]$/)
+      expect(['terrestrial', 'giant', 'outer']).toContain(p.typeKey)
+      expect(p.distance && p.surfaceTemp && p.revolution && p.rotation).toBeTruthy()
     })
   })
 

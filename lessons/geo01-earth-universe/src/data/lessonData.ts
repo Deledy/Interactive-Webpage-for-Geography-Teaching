@@ -78,14 +78,14 @@ export const lessonData: LessonData = {
   /* ---------------- M6 太阳系八大行星 ---------------- */
   /* size：3D 视窗中球体相对半径（示意图，非按真实比例） */
   planets: [
-    { id: "mercury", name: "水星", type: "类地行星", color: "#b0b7c6", size: 0.6,  orbit: 8,   period: 10,   desc: "距太阳最近，固体表面，昼夜温差极大。" },
-    { id: "venus",   name: "金星", type: "类地行星", color: "#e6c87a", size: 0.95, orbit: 12,  period: 16,   desc: "最亮的行星，有浓厚大气，温室效应强烈。" },
-    { id: "earth",   name: "地球", type: "类地行星", color: "#4f9df7", size: 1.0,  orbit: 16,  period: 25,   desc: "人类的家园，目前已知唯一存在生命的行星。" },
-    { id: "mars",    name: "火星", type: "类地行星", color: "#d96c4f", size: 0.75, orbit: 20,  period: 30,   desc: "红色星球，表面覆盖氧化铁（\"铁锈\"）。" },
-    { id: "jupiter", name: "木星", type: "巨行星",   color: "#d9a05b", size: 2.6,  orbit: 27,  period: 60,   desc: "体积和质量最大的行星，气态巨行星。" },
-    { id: "saturn",  name: "土星", type: "巨行星",   color: "#e3c98a", size: 2.1,  orbit: 33,  period: 75,   desc: "拥有美丽的光环，气态巨行星。" },
-    { id: "uranus",  name: "天王星", type: "远日行星", color: "#7fd4d4", size: 1.4, orbit: 38, period: 105, desc: "冰巨星，\"躺着\"自转公转。" },
-    { id: "neptune", name: "海王星", type: "远日行星", color: "#5a7fe0", size: 1.3, orbit: 43, period: 165, desc: "距太阳最远，风速极快，风暴猛烈。" }
+    { id: "mercury", name: "水星", number: "01", type: "类地行星", typeKey: "terrestrial", color: "#b0b7c6", size: 0.6,  orbit: 8,   period: 10,   distance: "0.39 AU", surfaceTemp: "约 167 ℃",  revolution: "88 天",     rotation: "58.6 天",    desc: "距太阳最近，固体表面，昼夜温差极大。" },
+    { id: "venus",   name: "金星", number: "02", type: "类地行星", typeKey: "terrestrial", color: "#e6c87a", size: 0.95, orbit: 12,  period: 16,   distance: "0.72 AU", surfaceTemp: "约 464 ℃",  revolution: "224.7 天",  rotation: "243 天",     desc: "最亮的行星，有浓厚大气，温室效应强烈。" },
+    { id: "earth",   name: "地球", number: "03", type: "类地行星", typeKey: "terrestrial", color: "#4f9df7", size: 1.0,  orbit: 16,  period: 25,   distance: "1.00 AU", surfaceTemp: "约 15 ℃",   revolution: "365.25 天", rotation: "23.9 小时",  desc: "人类的家园，目前已知唯一存在生命的行星。" },
+    { id: "mars",    name: "火星", number: "04", type: "类地行星", typeKey: "terrestrial", color: "#d96c4f", size: 0.75, orbit: 20,  period: 30,   distance: "1.52 AU", surfaceTemp: "约 −63 ℃",  revolution: "687 天",    rotation: "24.6 小时",  desc: "红色星球，表面覆盖氧化铁（\"铁锈\"）。" },
+    { id: "jupiter", name: "木星", number: "05", type: "巨行星", typeKey: "giant",     color: "#d9a05b", size: 2.6,  orbit: 27,  period: 60,   distance: "5.20 AU", surfaceTemp: "约 −108 ℃", revolution: "11.86 年",  rotation: "约 9.9 小时", desc: "体积和质量最大的行星，由氢氦气体组成。" },
+    { id: "saturn",  name: "土星", number: "06", type: "巨行星", typeKey: "giant",     color: "#e3c98a", size: 2.1,  orbit: 33,  period: 75,   distance: "9.58 AU", surfaceTemp: "约 −139 ℃", revolution: "29.5 年",   rotation: "约 10.7 小时", desc: "拥有美丽的光环，主要由氢氦气体组成。" },
+    { id: "uranus",  name: "天王星", number: "07", type: "远日行星", typeKey: "outer",  color: "#7fd4d4", size: 1.4,  orbit: 38,  period: 105,  distance: "19.20 AU", surfaceTemp: "约 −195 ℃", revolution: "84 年",  rotation: "约 17.2 小时", desc: "距太阳遥远，自转轴几乎\"躺着\"，表面温度极低。" },
+    { id: "neptune", name: "海王星", number: "08", type: "远日行星", typeKey: "outer",  color: "#5a7fe0", size: 1.3,  orbit: 43,  period: 165,  distance: "30.05 AU", surfaceTemp: "约 −201 ℃", revolution: "164.8 年", rotation: "约 16.1 小时", desc: "距太阳最远的行星，表面温度极低，风速极快、风暴猛烈。" }
   ],
 
   /* ---------------- M7 行星的运动特征 ---------------- */
@@ -285,7 +285,7 @@ export const lessonData: LessonData = {
           q: "太阳系中体积和质量最大的行星是？",
           options: ["地球", "土星", "天王星", "木星"],
           answer: 3,
-          explain: "木星是太阳系中体积和质量最大的行星，属气态巨行星。"
+          explain: "木星是太阳系中体积和质量最大的行星，属巨行星。"
         }
       ]
     },

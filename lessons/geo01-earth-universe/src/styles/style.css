@@ -3075,25 +3075,341 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .judge-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 /* ---------- M7 行星的运动特征（同向性 / 近圆性 / 共面性） ---------- */
-.motion-feature { padding: 18px 20px; transition: border-color 0.3s, box-shadow 0.3s; }
-.motion-feature:hover,
-.motion-feature:focus-visible { border-color: var(--cyan); box-shadow: 0 0 14px rgba(79, 195, 247, 0.22); }
-.motion-feature__name { margin: 0 0 6px; font-size: 22px; color: var(--cyan); }
-.motion-feature__desc { margin: 0; color: var(--text-dim); }
-
-/* ---------- M7 八大行星绕日公转演示（3D 模型 / 2D 圆形轨道降级） ---------- */
+/* 布局：左侧「模型矩形」内部上方为三个不透明特征按钮、下方为公转模型；右侧为不透明的运动特征详解 */
 .orbit-demo { margin-top: 30px; }
+.orbit-demo__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.95fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
 
-/* 正方形视窗：宽取容器宽度的 100%（最大 960px）并居中，长宽比恒为 1:1 */
+/* 模型矩形：透明底 + 描边，内部上方放特征按钮 */
+.orbit-stage {
+  grid-column: 1;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid rgba(79, 195, 247, 0.16);
+  border-radius: var(--radius-card);
+}
+
+/* 特征按钮：不透明按钮，图标 + 名称（无箭头）；选中态青色描边发光 */
+.orbit-feature-tabs { display: flex; gap: 12px; }
+.orbit-feature-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 0 16px;
+  font-family: inherit;
+  color: var(--text-main);
+  background: #16203f;
+  border: 1px solid rgba(79, 195, 247, 0.24);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease), transform 0.18s var(--ease);
+}
+.orbit-feature-btn:hover { border-color: rgba(79, 195, 247, 0.62); transform: translateY(-1px); }
+.orbit-feature-btn:active { transform: translateY(0) scale(0.99); }
+.orbit-feature-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+/* 运动特征图标（模块 07）：直接使用课内 assets/icons/ 下的图标文件（同向性 / 近圆性 / 共面性），
+   以 CSS 遮罩方式上色 —— 不套外层圆形 / 圆角矩形底盘，也不加描边与发光，只呈现图标字形本身。
+   图标 URL 由 --icon 注入（见下方 data-feature 映射），颜色跟随 currentColor。 */
+.orbit-feature-btn__icon,
+.motion-feature__icon {
+  flex-shrink: 0;
+  display: block;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+  transition: color var(--dur) var(--ease);
+}
+/* 三个特征各自的图标文件映射（顶部按钮与右侧详解卡共用同一套图标） */
+.orbit-feature-btn[data-feature="同向性"] .orbit-feature-btn__icon,
+.motion-feature[data-feature="同向性"] .motion-feature__icon { --icon: url('../../assets/icons/同向性.svg'); }
+.orbit-feature-btn[data-feature="近圆性"] .orbit-feature-btn__icon,
+.motion-feature[data-feature="近圆性"] .motion-feature__icon { --icon: url('../../assets/icons/近圆性.svg'); }
+.orbit-feature-btn[data-feature="共面性"] .orbit-feature-btn__icon,
+.motion-feature[data-feature="共面性"] .motion-feature__icon { --icon: url('../../assets/icons/共面性.svg'); }
+.orbit-feature-btn__icon {
+  width: 29px;
+  height: 29px;
+  color: var(--cyan);
+}
+.orbit-feature-btn__label {
+  position: relative;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.orbit-feature-btn__label::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.28;
+}
+.orbit-feature-btn.is-active {
+  border-color: var(--cyan);
+  background: linear-gradient(180deg, #1d3f63, #16324f);
+  box-shadow: 0 0 22px rgba(79, 195, 247, 0.4), inset 0 0 20px rgba(79, 195, 247, 0.12);
+  transform: translateY(-1px);
+}
+.orbit-feature-btn.is-active .orbit-feature-btn__icon {
+  color: #FFFFFF;
+}
+
+/* 公转模型：正方形视窗（保持干净，无图例与内部标注） */
 .orbit-viewport {
   position: relative;
-  width: min(100%, 960px);
-  margin-inline: auto;
+  width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
-  background: radial-gradient(70% 70% at 50% 50%, rgba(72, 60, 155, 0.13), transparent 74%);
+  border-radius: 10px;
+  background: radial-gradient(70% 70% at 50% 50%, rgba(72, 60, 155, 0.16), transparent 74%);
+}
+
+/* 右侧「运动特征详解」：克制的深空面板，随模型矩形等高。
+   渐变沿用 M2/M3 卡片的「左上低透明度径向晕 + 158deg 深蓝纵向渐变」语言 */
+.feature-detail {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 18px;
+  border: 1px solid rgba(100, 145, 195, 0.18);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 80% at 12% 0%, rgba(46, 104, 196, 0.14), transparent 62%),
+    linear-gradient(158deg, rgba(13, 30, 66, 0.86), rgba(7, 13, 32, 0.92));
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+.feature-detail__title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding-bottom: 14px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+/* 标题分隔线：蓝白渐变，向右衰减至透明 */
+.feature-detail__title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(130, 190, 255, 0.45) 0%,
+    rgba(120, 170, 255, 0.14) 55%,
+    rgba(120, 170, 255, 0) 100%);
+}
+/* 标题图标：低透明度蓝底 + 细边框（收敛发光，避免形成第二光源） */
+.feature-detail__title-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: #E4F2FF;
+  background: linear-gradient(158deg, #2F74D6 0%, #1B4689 100%);
+  border: 1px solid rgba(126, 186, 255, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.feature-detail__title-icon svg { width: 22px; height: 22px; }
+.feature-detail__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* ---------- 详解子卡片：三张「克制的深空科技信息卡片」 ----------
+   渐变沿用项目卡片语言：左上低透明度概念色径向晕 + 150deg 深蓝纵向渐变（与 M2/M3/M5 卡一致），
+   概念色只用于图标、标题短线与示意图重点；强度收敛，保证正文可读。
+   结构统一：图标+标题 → 细短分隔线 → 一句解释 → 示意图区 → 简短图注，
+   三卡等高、说明区等高，示意图区域上下对齐。 */
+/* 三卡概念色（仅小面积使用） */
+.motion-feature[data-feature="同向性"] { --feat: #42C9FF; }
+.motion-feature[data-feature="近圆性"] { --feat: #F5C84C; }
+.motion-feature[data-feature="共面性"] { --feat: #B18CFF; }
+.motion-feature {
+  --feat: #42C9FF;
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(100, 145, 195, 0.32);
+  border-radius: 16px;
+  cursor: pointer;   /* 卡片可点击：与顶部特征按钮双向联动 */
+  background-color: #0E1830;   /* 兼容回退：不支持 color-mix / 多背景渐变时的纯深蓝底 */
+  background:
+    radial-gradient(120% 95% at 12% 0%, color-mix(in srgb, var(--feat) 10%, transparent), transparent 60%),
+    linear-gradient(150deg, rgba(16, 24, 54, 0.92), rgba(10, 16, 38, 0.95));
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition: transform 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.motion-feature__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+/* 信息型图标：尺寸与概念色（遮罩上色的基础样式见上方「运动特征图标」区，二者共用） */
+.motion-feature__icon {
+  width: 31px;
+  height: 31px;
+  color: var(--feat);
+}
+.motion-feature__name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #F2F6FF;
+}
+/* 选中状态胶囊（右上角）：放大字号 + 概念色胶囊包裹，替代原先的绿色「已选中」标签 */
+.motion-feature__state {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--feat) 82%, #FFFFFF);
+  background-color: rgba(66, 201, 255, 0.16);   /* 兼容回退 */
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--feat) 22%, transparent),
+    color-mix(in srgb, var(--feat) 8%, transparent));
+  border: 1px solid color-mix(in srgb, var(--feat) 46%, transparent);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+/* 细短分隔线：概念色渐变短线（左亮右淡），选中时变长变亮 */
+.motion-feature__rule {
+  flex-shrink: 0;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--feat) 70%, transparent),
+    color-mix(in srgb, var(--feat) 8%, transparent));
+  transition: width 0.25s var(--ease), background 0.25s var(--ease);
+}
+.motion-feature__desc {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #AEBBD0;
+}
+/* 近圆性 / 共面性：图示说明文字适当放大，便于课堂讲解 */
+.motion-feature[data-feature="近圆性"] .motion-feature__desc,
+.motion-feature[data-feature="共面性"] .motion-feature__desc { font-size: 17px; }
+.motion-feature__figure {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.motion-feature__figure svg { display: block; width: 100%; height: auto; max-height: 100%; }
+.motion-feature__caption {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: #7F91AB;
+  text-align: center;
+}
+.motion-feature[data-feature="近圆性"] .motion-feature__caption,
+.motion-feature[data-feature="共面性"] .motion-feature__caption { font-size: 12px; }
+/* 悬停：仅指针精确设备生效；位移收敛为 1px，只提亮边框与图标，不做发光 / 缩放 */
+@media (hover: hover) and (pointer: fine) {
+  .motion-feature:hover { transform: translateY(-1px); }
+}
+.motion-feature:hover,
+.motion-feature:focus-visible {
+  border-color: rgba(100, 145, 195, 0.5);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.motion-feature:hover .motion-feature__icon,
+.motion-feature:focus-visible .motion-feature__icon {
+  color: color-mix(in srgb, var(--feat) 72%, #FFFFFF);
+}
+.motion-feature:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+/* 选中态：边框提亮 + 概念色柔和光晕 + 极轻内描边，强度适中不刺眼 */
+.motion-feature.is-active {
+  border-color: color-mix(in srgb, var(--feat) 62%, transparent);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    0 0 18px -6px color-mix(in srgb, var(--feat) 34%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--feat) 8%, transparent);
+}
+.motion-feature.is-active .motion-feature__icon {
+  color: color-mix(in srgb, var(--feat) 72%, #FFFFFF);
+}
+.motion-feature.is-active .motion-feature__rule {
+  width: 56px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--feat) 95%, transparent),
+    color-mix(in srgb, var(--feat) 12%, transparent));
+}
+.motion-feature.is-active .motion-feature__state { opacity: 1; }
+/* 减少动效：保留颜色 / 边框反馈，去掉位移 */
+@media (prefers-reduced-motion: reduce) {
+  .motion-feature { transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease); }
+  .motion-feature:hover,
+  .motion-feature:focus-visible { transform: none; }
+}
+
+/* 窄屏：改为单列纵向堆叠（模型矩形 → 详解卡） */
+@media (max-width: 1024px) {
+  .orbit-demo__grid { grid-template-columns: 1fr; }
+  .orbit-feature-tabs { flex-wrap: wrap; }
+  .orbit-feature-btn { flex: 1 1 200px; }
+  .orbit-stage { grid-column: 1; width: min(100%, 660px); margin-inline: auto; }
+  .feature-detail { grid-column: 1; }
+}
+/* 小屏：收紧内边距与字号，避免标题行（图标 + 名称 + 状态文字）换行错位 */
+@media (max-width: 520px) {
+  .feature-detail { padding: 14px; border-radius: 16px; }
+  .feature-detail__title { font-size: 21px; gap: 10px; padding-bottom: 12px; }
+  .feature-detail__title-icon { width: 36px; height: 36px; border-radius: 10px; }
+  .feature-detail__title-icon svg { width: 19px; height: 19px; }
+  .motion-feature { padding: 14px; gap: 10px; border-radius: 14px; }
+  .motion-feature__head { gap: 10px; }
+  .motion-feature__icon { width: 26px; height: 26px; }
+  .motion-feature__name { font-size: 20px; }
+  .motion-feature__state { padding: 3px 9px; font-size: 13px; }
+  .motion-feature__desc { font-size: 14px; }
 }
 .orbit-viewport__fallback {
   position: absolute;
@@ -3109,11 +3425,11 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .orbit3d__canvas:active { cursor: grabbing; }
 .orbit3d__note {
   position: absolute;
-  top: 12px; left: 14px;
+  right: 14px; bottom: 12px;
   padding: 4px 12px;
   font-size: 16px;
   color: var(--text-dim);
-  background: rgba(11, 16, 38, 0.55);
+  background: rgba(11, 16, 38, 0.72);
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   pointer-events: none;
@@ -3298,30 +3614,59 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .hierarchy-controls { display: flex; gap: 14px; justify-content: center; }
 .hint__example { display: block; margin-top: 8px; color: var(--cyan); font-size: 16px; }
 
+/* ---------- M6 行星分类主题色（仅用于分类标题、名称标签等少量元素） ---------- */
+:root {
+  --type-terrestrial: #E5A56F;   /* 类地行星：岩石暖橙 */
+  --type-giant: #9B8CFF;         /* 巨行星：气态靛紫 */
+  --type-outer: #5CB8E6;         /* 远日行星：冰质蓝 */
+}
+
 /* ---------- M6 太阳系 2D 示意图（降级） ---------- */
 .solar-svg { width: 100%; max-width: 1100px; height: auto; display: block; margin: 0 auto; }
 .solar-note { fill: var(--text-dim); font-size: 13px; }
 .solar-planet { cursor: pointer; }
-.solar-planet-dot { transition: filter 0.2s, stroke 0.2s; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; }
+.solar-planet-dot { transition: filter 0.24s ease, stroke 0.24s ease; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; }
 .solar-planet:hover .solar-planet-dot,
 .solar-planet:focus-visible .solar-planet-dot { filter: drop-shadow(0 0 9px var(--cyan)); }
+/* 选中：只轻微提亮 + 一圈金色细描边，不做大范围外发光、不放大 */
 .solar-planet.is-active .solar-planet-dot {
   stroke: var(--gold);
-  stroke-width: 3;
-  filter: drop-shadow(0 0 12px var(--gold));
+  stroke-width: 2;
+  filter: brightness(1.06) saturate(1.08) drop-shadow(0 0 8px rgba(245, 197, 66, 0.22));
 }
-.solar-planet-name { fill: var(--text-dim); font-size: 13px; text-anchor: middle; pointer-events: none; }
-.solar-planet.is-active .solar-planet-name { fill: var(--gold); font-weight: 700; }
+/* 行星名称标签（名称胶囊） */
+.solar-planet-tag__bg { fill: rgba(8, 14, 32, 0.85); stroke: rgba(120, 160, 220, 0.35); stroke-width: 1; transition: fill 0.24s ease, stroke 0.24s ease; }
+.solar-planet-tag__name { fill: #EAF2FF; font-size: 12.5px; font-weight: 600; text-anchor: middle; pointer-events: none; }
+.solar-planet.is-active .solar-planet-tag__bg { fill: rgba(69, 50, 10, 0.75); stroke: #F5C542; }
+.solar-planet.is-active .solar-planet-tag__name { fill: #FFE58A; }
+/* 选中指示线（2D 降级）：名称标签正下方的一小段金线，选中时由中点向两侧展开 */
+.solar-planet-tag__rule {
+  fill: #F5C542;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+.solar-planet.is-active .solar-planet-tag__rule { opacity: 0.9; transform: scaleX(1); }
 .solar-ring { fill: none; stroke-width: 3; opacity: 0.55; }
 .solar-belt__dot { fill: #b8ae9e; }
-.solar-belt { cursor: pointer; }
-.solar-belt-label { fill: var(--text-dim); font-size: 12px; text-anchor: middle; pointer-events: none; }
-.solar-belt.is-active .solar-belt-label { fill: var(--gold); font-weight: 700; }
-/* 分组虚线圆角框（2D SVG） */
-.solar-group__box { fill: none; stroke: rgba(122, 160, 255, 0.5); stroke-width: 1.6; stroke-dasharray: 10 7; pointer-events: none; }
-.solar-group__label { fill: rgba(170, 200, 255, 0.85); font-size: 15px; letter-spacing: 3px; text-anchor: middle; pointer-events: none; }
+/* 小行星带名称标签沿用 .solar-planet-tag 样式（见 SVG 内联标记），仅作标注、不可交互 */
+/* 状态条（M6 已改用卡片，此处供 M7 公转演示复用） */
 .solar-status { margin: 14px 0 0; text-align: center; font-size: 18px; color: var(--text-dim); }
 .solar-status.is-active { color: var(--gold); }
+/* 分组矩形卡片（2D SVG 降级）：与 3D 同款的全透明面板 + 蓝色胶囊头 + 说明标签 */
+.solar-group__card { fill: none; stroke: rgba(84, 148, 236, 0.38); stroke-width: 1; transition: stroke 0.35s ease; }
+/* 选中行星所属分类：只把卡片描边提亮一点（顶沿金线由 .solar-group__accent 承担） */
+.solar-group.is-active .solar-group__card { stroke: rgba(77, 190, 255, 0.72); }
+.solar-group__badge { fill: #2A6FE0; stroke: rgba(140, 190, 255, 0.45); stroke-width: 1; }
+.solar-group__tag { fill: rgba(8, 18, 40, 0.72); stroke: rgba(110, 170, 240, 0.35); stroke-width: 1; }
+.solar-group__accent { fill: rgba(245, 197, 66, 0.92); opacity: 0; transition: opacity 0.35s ease; }
+.solar-group.is-active .solar-group__accent { opacity: 1; }
+.solar-group__title { font-size: 17px; font-weight: 700; letter-spacing: 1px; fill: #FFFFFF; }
+.solar-group__sub { font-size: 11px; fill: rgba(160, 200, 250, 0.9); }
+/* 2D 图标：深色 SVG 素材反相为白色 */
+.solar-group__icon { filter: brightness(0) invert(1); }
 
 /* 无 JS 时各模块的静态降级内容 */
 .no-js-fallback {
@@ -3343,106 +3688,464 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .no-js-fallback strong { color: var(--gold); }
 
 /* ---------- M6 太阳系 3D 视窗（Three.js） ---------- */
-.solar-viewport.is-3d { display: block; }
+.solar-viewport.is-3d { display: block; min-height: 0; }
 .solar3d {
   position: relative;
   width: 100%;
-  height: clamp(420px, 60vh, 660px);
+  /* 高度贴着内容走：三张等高卡片（含头部与标签留白）的高度约为 8.2px × 每场景单位
+     + 112px 固定留白，而"每场景单位"= 视口宽 / 53 → 高度 ≈ 15.5vw + 112px。
+     这里再各留约 30px 上下呼吸位（+172px），使卡片上下留白相等，
+     与下方信息卡片之间不再出现一大段空白。取值只会偏大，不会裁切卡片。 */
+  height: clamp(300px, calc(15.5vw + 172px), 900px);
   overflow: hidden;
   /* 无卡片：仅一层极淡的星云辉光衬托行星，其余透出页面深空背景 */
   background: radial-gradient(65% 65% at 50% 50%, rgba(72, 60, 155, 0.14), transparent 72%);
 }
 .solar3d__canvas {
+  position: relative;
+  z-index: 1;               /* 行星绘制在分组卡片之上 */
   display: block;
   width: 100%;
   height: 100%;
   touch-action: manipulation;
 }
-.solar3d__note {
+/* ---------- M6 行星选中态 ----------
+   已取消原有的"大气层光晕 + 青色外缘环 + 金色轨道环 + 扩散星尘"四层光环：
+   那套装饰会盖过分类卡片、突破圆角边界。改为克制、局部、卡片内部的高亮 ——
+   名称标签变金色、标签下方一条短金线、行星球体只轻微提亮并加一圈金边。 */
+/* 行星名称标签（覆盖层，位置由 JS 投影更新）。
+   外层 .solar3d__label 只负责定位与交互，内层 .solar3d__pill 承担视觉 */
+.solar3d__groups {
   position: absolute;
-  top: 12px; left: 14px;
-  padding: 4px 12px;
-  font-size: 16px;
-  color: var(--text-dim);
-  background: rgba(11, 16, 38, 0.55);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
+  inset: 0;
+  z-index: 0;               /* 分组卡片位于 canvas 之下 */
   pointer-events: none;
 }
-/* 行星名称标签（覆盖层，位置由 JS 投影更新） */
 .solar3d__labels {
   position: absolute;
+  z-index: 2;
   inset: 0;
   pointer-events: none;
 }
 .solar3d__label {
   position: absolute;
   left: 0; top: 0;
-  padding: 3px 10px;
-  font-size: 15px;
-  line-height: 1.1;
-  color: var(--text-dim);
-  background: rgba(11, 16, 38, 0.62);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-  white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
-.solar3d__label:hover,
-.solar3d__label:focus-visible {
-  color: var(--gold);
-  border-color: rgba(255, 213, 79, 0.6);
+.solar3d__tag {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
 }
-.solar3d__label.is-active {
-  color: var(--gold);
-  border-color: rgba(255, 213, 79, 0.85);
-  box-shadow: 0 0 12px rgba(255, 213, 79, 0.35);
+/* 选中指示线：名称标签正下方的一小段金线，选中时由 0 展开到 28px。
+   只在标签附近，不延伸、不出所属分类卡片的圆角边界 */
+.solar3d__tag::after {
+  content: '';
+  width: 0;
+  height: 2px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #F5C542;
+  opacity: 0;
+  transition: width 240ms var(--ease), opacity 240ms var(--ease);
 }
-/* 小行星带标签（可交互：点击查看介绍） */
+.solar3d__label.is-active .solar3d__tag::after { width: 28px; opacity: 0.9; }
+.solar3d__pill {
+  padding: 4px 14px;
+  background: rgba(8, 14, 32, 0.85);
+  border: 1px solid rgba(120, 160, 220, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  color: #EAF2FF;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+.solar3d__label:hover .solar3d__tag,
+.solar3d__label:focus-visible .solar3d__tag { transform: translateY(-3px); }
+.solar3d__label:hover .solar3d__pill,
+.solar3d__label:focus-visible .solar3d__pill {
+  border-color: rgba(140, 190, 255, 0.7);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 14px rgba(100, 181, 246, 0.4);
+}
+/* 选中：低饱和金底 + 金边 + 浅金字，只保留一行极淡的内描边，不再向外发散光晕 */
+.solar3d__label.is-active .solar3d__pill {
+  background: rgba(69, 50, 10, 0.78);
+  border-color: #F5C542;
+  color: #FFE58A;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 1px rgba(255, 224, 120, 0.10);
+}
+/* 小行星带名称标签：沿用行星名称标签样式，仅作标注、不可交互 */
 .solar3d__label--belt {
-  color: rgba(255, 255, 255, 0.6);
-  border-color: rgba(255, 255, 255, 0.22);
-  border-style: dashed;
-  background: rgba(11, 16, 38, 0.4);
-  font-size: 12px;
-  padding: 2px 8px;
-  cursor: pointer;
+  pointer-events: none;
+  cursor: default;
 }
-.solar3d__label--belt:hover,
-.solar3d__label--belt:focus-visible {
-  color: var(--cyan);
-  border-color: rgba(79, 195, 247, 0.6);
-}
-.solar3d__label--belt.is-active {
-  color: var(--gold);
-  border-color: rgba(255, 213, 79, 0.85);
-  box-shadow: 0 0 10px rgba(255, 213, 79, 0.3);
-}
-/* 行星分组虚线圆角框（覆盖层，随 3D 投影定位；仅示意，不拦截点击） */
+/* 分组矩形卡片（覆盖层，位于 canvas 之下，随 3D 投影定位；不拦截点击）
+   全透明面板：仅保留细蓝描边勾勒分组范围，完全不遮挡背后的行星球体与星空；
+   头部为「蓝色渐变胶囊（白线图标 + 白标题）+ 深色描边说明标签」 */
 .solar3d__group {
   position: absolute;
   left: 0; top: 0;
-  border: 1.5px dashed rgba(122, 160, 255, 0.45);
-  border-radius: 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(84, 148, 236, 0.38);
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;         /* 硬性裁剪：任何选中装饰都不得越过卡片的圆角边界 */
+  pointer-events: none;
+  transition: border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+/* 选中行星所属分类：只提亮描边 + 内侧一圈极淡蓝线，不改变卡片底色与尺寸 */
+.solar3d__group.is-active {
+  border-color: rgba(77, 190, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(62, 170, 255, 0.10);
+}
+/* 选中强调：严格只增加一条顶沿细金线（线身自带轻微金晕），卡片其余一切保持原色 */
+.solar3d__group::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #F5C542 20%, #FFE08A 50%, #F5C542 80%, transparent);
+  box-shadow: 0 0 10px rgba(245, 197, 66, 0.45);
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+.solar3d__group.is-active::before { opacity: 1; }
+/* 卡片头部：蓝色渐变胶囊（图标 + 标题）+ 深色描边说明标签 */
+.solar3d__group-head {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+}
+.solar3d__group-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 16px 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #3B86F4, #1B5FD0);
+  border: 1px solid rgba(140, 190, 255, 0.45);
+  box-shadow:
+    0 4px 14px rgba(20, 80, 190, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+/* 图标为深色 SVG 素材，反相为白色以适配蓝色胶囊底 */
+.solar3d__group-icon {
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+.solar3d__group-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+.solar3d__group-tag {
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(8, 18, 40, 0.72);
+  border: 1px solid rgba(110, 170, 240, 0.35);
+  font-size: 12px;
+  color: rgba(160, 200, 250, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- M6 信息面板：点击行星后的横向知识卡片（复刻参考图样式） ----------
+   参考图（木星卡片）要点：
+   1) 面板：深蓝渐变 + 蓝色发光描边 + 右侧星云背景图（向左平滑淡出）；
+   2) 左：固定尺寸媒体容器中的行星影像（真实表面贴图；带环行星含完整行星环）；
+   3) 中：序号 + 金色行星名 + 分类括注 → 两行简介；
+   4) 右：三张数据小卡（圆形图标徽章 + 标签 + 数值），卡间以细竖线分隔。
+   字号按 clamp + vw 随视口等比缩放（1080px 以下切换为上下堆叠布局），
+   配色沿用课程设计令牌（--gold / --cyan / --type-* ），保持全课统一的深空语言。 */
+/* 信息卡片紧跟 3D 视窗：间距由视窗自身的下留白提供，这里不再额外加边距 */
+.solar-panel { max-width: 1180px; width: calc(100% - 32px); margin: 0 auto; }
+.solar-card {
+  position: relative;
+  padding: 22px 20px;
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 150% at 6% 0%, rgba(38, 92, 168, 0.50), rgba(38, 92, 168, 0) 62%),
+    linear-gradient(158deg, rgba(9, 33, 64, 0.96), rgba(4, 15, 34, 0.97));
+  border: 1px solid rgba(76, 148, 232, 0.52);
+  box-shadow:
+    0 16px 40px rgba(1, 6, 18, 0.50),
+    0 0 34px rgba(46, 118, 214, 0.18),
+    inset 0 1px 0 rgba(150, 200, 255, 0.16);
+  overflow: hidden;
+}
+/* 背景图（星云）：右对齐铺在面板右侧，左侧用遮罩渐隐 → 与面板底色平滑过渡，无硬边 */
+.solar-card::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;          /* 贴右对齐 */
+  width: min(62%, 760px);
+  background:
+    linear-gradient(180deg, rgba(4, 14, 32, 0.32), rgba(4, 14, 32, 0.16)),
+    url("../../assets/images/celestial-classify-artificial-bg.jpg") right center / cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 30%, #000 74%);
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 30%, #000 74%);
   pointer-events: none;
 }
-.solar3d__group-label {
+.solar-card__inner {
+  position: relative;   /* 压在背景图层之上 */
+  z-index: 1;
+  display: grid;
+  /* 两列按比例分配：左（缩略图 + 文字）略宽于右（三张数据小卡） */
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px 26px;
+  min-height: clamp(112px, 15.4vw, 180px);   /* 与 logo 同高：各选择态等高，切换时不跳动 */
+}
+.solar-card__inner--tip { grid-template-columns: 1fr; }
+
+/* 内容切换容器：切换动效由 JS（Web Animations API）驱动，见 solar.ts → buildSolarPanel */
+.solar-card__slot { position: relative; }
+/* 退场幽灵层：旧内容的克隆，绝对定位、脱离文档流 →
+   不参与槽位高度计算，退场动画结束后由 JS 移除 */
+.solar-card__ghost {
   position: absolute;
-  left: 50%;
-  bottom: 100%;
-  transform: translateX(-50%);
-  margin-bottom: 6px;
-  padding: 2px 12px;
-  font-size: 13px;
-  letter-spacing: 3px;
-  white-space: nowrap;
-  color: rgba(170, 200, 255, 0.9);
-  background: rgba(11, 16, 38, 0.6);
-  border: 1px dashed rgba(122, 160, 255, 0.4);
-  border-radius: 999px;
+  top: 0; left: 0; right: 0;
+  z-index: 0;
   pointer-events: none;
+  will-change: opacity, transform;
+}
+
+/* —— 左：行星影像（全部统一为土星卡片的取景样式） ——
+   所有行星共用同一个固定尺寸的圆角矩形媒体框：横向留出空间，切换行星时
+   卡片高度完全不变。框内直接铺真实行星照片，按原始比例完整显示
+   （object-fit: contain，不裁剪、不拉伸）；点击影像可弹出图片查看器放大查看。 */
+.solar-card__identity { display: flex; align-items: center; gap: 22px; min-width: 0; }
+.planet-detail-media {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(150px, 19.6vw, 220px);
+  height: clamp(112px, 15.4vw, 180px);
+  border-radius: 22px;
+  overflow: hidden;
+  background: #05080f;
+  border: 1px solid rgba(67, 184, 255, 0.34);
+  box-shadow:
+    inset 0 0 28px rgba(52, 150, 255, 0.10),
+    0 0 32px rgba(79, 195, 247, 0.14);
+}
+/* 行星照片：原图完整铺在圆角矩形内（不裁剪、不拉伸），可点击放大 */
+.planet-detail-media__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  cursor: zoom-in;
+}
+.planet-detail-media__image.is-loaded { opacity: 1; }
+/* 加载失败：收起影像，容器给出统一的行星渐变占位（不出现破损图标） */
+.planet-detail-media__image.is-error { opacity: 0; }
+.planet-detail-media.is-fallback {
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 236, 190, 0.40), rgba(255, 236, 190, 0) 58%),
+    radial-gradient(circle at 66% 74%, #1B3E6E 0%, #0A1D3C 62%, #061227 100%);
+}
+
+/* —— 中：标题（序号 + 金色行星名 + 分类括注）与简介 —— */
+.solar-card__ident-text { min-width: 0; }
+/* 标题行禁止换行：三段文字保持同一行（序号不收缩，名字/括注按内容宽度） */
+.solar-card__title { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 10px; }
+.solar-card__num {
+  flex: 0 0 auto;
+  font-size: clamp(19.5px, 2.665vw, 31.2px);
+  color: rgba(150, 180, 225, 0.85);
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* 名称（金色渐变，保留纯金回退）+ 括注类型（保留分类色编码） */
+.solar-card__name {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: clamp(30px, 3.95vw, 47px);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  color: var(--gold);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .solar-card__name {
+    background: linear-gradient(180deg, #FFE49A 0%, #F5CE63 52%, #E9A83C 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+.solar-card__name-type {
+  flex: 0 0 auto;
+  font-size: clamp(13px, 1.68vw, 20px);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.solar-card__name-type[data-type="terrestrial"] { color: var(--type-terrestrial); }
+.solar-card__name-type[data-type="giant"] { color: var(--type-giant); }
+.solar-card__name-type[data-type="outer"] { color: var(--type-outer); }
+.solar-card__desc {
+  margin: 8px 0 0;
+  font-size: clamp(14px, 1.71vw, 20px);
+  line-height: 1.6;
+  color: #A9B7CC;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* —— 右：三张数据小卡（等宽，卡间细竖线分隔） ——
+   每张卡是「图标 → 标签 → 数值」的居中纵向排布：
+   各行共用同一条竖直中轴，间距由统一 gap 控制（不再用 space-between，
+   避免数值与标签各自贴边导致的间距不均）。数值一律不折行，
+   数字与单位不会被拆开，也就不会出现单字落单的情况。 */
+.solar-card__data {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 16px;
+  margin: 0;
+}
+.solar-card__data-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* 卡内所有内容水平居中 */
+  justify-content: center;    /* 配合固定 gap，上下留白一致 */
+  gap: 12px;
+  min-height: clamp(104px, 11.5vw, 134px);
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(58, 132, 230, 0.17), rgba(34, 88, 170, 0.07));
+  box-shadow: inset 0 1px 0 rgba(150, 200, 255, 0.10);
+  text-align: center;
+}
+/* 卡间细竖线：居中于间隙、两端渐隐 */
+.solar-card__data-item + .solar-card__data-item::before {
+  content: '';
+  position: absolute;
+  left: -8.5px; top: 50%;
+  width: 1px; height: 89px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    180deg,
+    rgba(88, 150, 235, 0),
+    rgba(88, 150, 235, 0.5) 25%,
+    rgba(88, 150, 235, 0.5) 75%,
+    rgba(88, 150, 235, 0)
+  );
+}
+/* 图标徽章在上、标签在下，两者同轴居中 */
+.solar-card__data-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.solar-card__data-badge {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: clamp(36px, 3.72vw, 43.2px);
+  height: clamp(36px, 3.72vw, 43.2px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 62%, #1F65B8 0%, #17518F 46%, #123C6E 72%, rgba(11, 38, 72, 0) 100%);
+  box-shadow: 0 6px 14px rgba(18, 80, 170, 0.35), inset 0 1px 0 rgba(160, 215, 255, 0.25);
+}
+.solar-card__data-ico {
+  width: clamp(19.2px, 1.98vw, 22.8px);
+  height: clamp(19.2px, 1.98vw, 22.8px);
+  object-fit: contain;
+  filter: brightness(0) invert(1);   /* 图标为深色 SVG 素材，反相为白色 */
+  opacity: 0.96;
+}
+.solar-card__data-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* 标签同轴居中 */
+  gap: 5px;
+  min-width: 0;
+}
+.solar-card__data-label {
+  font-size: clamp(12px, 1.28vw, 15px);
+  font-weight: 600;
+  color: #C4D2E8;
+  white-space: nowrap;
+}
+/* 数值：不折行（数字与单位是一个整体），字号上限按最窄一列的可容纳宽度定，
+   保证"约 17.2 小时"这类最长取值在任意视口下都能完整单行显示 */
+.solar-card__data-value {
+  font-size: clamp(15px, 1.8vw, 22px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #EAF3FF;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.solar-card__tip { margin: 0; font-size: 18px; color: var(--text-dim); }
+/* 窄屏（≤1080px）：横向排布放不下三张数据小卡，改为上下堆叠，尺寸回落为固定值 */
+@media (max-width: 1080px) {
+  .solar-card { padding: 20px; }
+  .solar-card__inner { grid-template-columns: 1fr; gap: 18px; min-height: 0; }
+  .solar-card__inner--tip { grid-template-columns: 1fr; }
+  .solar-card__identity { gap: 20px; }
+  /* 平板：媒体框回落为固定尺寸 */
+  .planet-detail-media { width: 180px; height: 150px; }
+  .solar-card__name { font-size: 34px; }
+  .solar-card__num { font-size: 23.4px; }
+  .solar-card__name-type { font-size: 17px; }
+  .solar-card__desc { font-size: 16px; }
+  /* 窄屏：三张卡竖排成整行信息条，行内「图标 · 标签 · 数值」整体居中，
+     间距统一为 12px */
+  .solar-card__data { grid-template-columns: 1fr; gap: 10px; }
+  .solar-card__data-item {
+    min-height: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .solar-card__data-item + .solar-card__data-item::before { display: none; }
+  .solar-card__data-head { flex-direction: row; align-items: center; gap: 10px; }
+  .solar-card__data-text { flex-direction: row; align-items: center; gap: 10px; }
+  .solar-card__data-badge { width: 38.4px; height: 38.4px; }
+  .solar-card__data-ico { width: 20.4px; height: 20.4px; }
+  .solar-card__data-label { font-size: 14px; }
+  .solar-card__data-value { font-size: 20px; }
+  .solar-card__tip { font-size: 16px; }
+}
+
+/* 小屏手机（≤480px）：整行排布放不下"图标 + 标签 + 数值"，
+   改为两行居中（第一行图标 + 标签，第二行数值），避免任何一侧溢出或被裁切 */
+@media (max-width: 480px) {
+  .solar-card__data-item { flex-direction: column; gap: 8px; }
+  .solar-card__data-head { flex-direction: row; gap: 8px; }
+  .solar-card__data-label { font-size: 13px; }
+  .solar-card__data-value { font-size: 18px; }
 }
 
 /* ---------- M9 复习结构树 ---------- */
@@ -3497,9 +4200,14 @@ body.review-mode #review { padding-top: 40px; }
 @media (max-width: 768px) {
   .hierarchy-svg { max-width: 420px; }
   .tree__label { font-size: 16px; padding: 6px 12px; }
-  .solar3d__label { padding: 2px 8px; font-size: 13px; }
-  .solar3d__group-label { font-size: 11px; padding: 1px 8px; letter-spacing: 2px; }
-  .solar3d__note { top: 10px; left: 10px; font-size: 14px; }
+  .solar3d__pill { padding: 3px 9px; font-size: 13px; }
+  .solar3d__group-head { height: 58px; padding: 0 8px; gap: 7px; }
+  .solar3d__group-badge { padding: 4px 12px 4px 9px; gap: 6px; }
+  .solar3d__group-icon { width: 22px; height: 22px; }
+  .solar3d__group-title { font-size: 15px; letter-spacing: 0.5px; }
+  .solar3d__group-tag { padding: 4px 9px; font-size: 11px; }
+  /* 手机：媒体框进一步收小，保证图片与文字同屏 */
+  .planet-detail-media { width: 150px; height: 112px; }
 }
 
 /* ============================================================

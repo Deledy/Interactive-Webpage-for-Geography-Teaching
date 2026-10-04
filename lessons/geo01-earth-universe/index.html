@@ -901,7 +901,7 @@
             <p class="panel__placeholder">八大行星（由近及远）：水星 · 金星 · 地球 · 火星 · 木星 · 土星 · 天王星 · 海王星<br>示意图，非按比例。启用 JavaScript 后查看行星模型与小行星带。</p>
           </div>
         </div>
-        <div id="solar-info" class="hint" data-widget="solar-info"></div>
+        <div id="solar-info" class="solar-panel" data-widget="solar-info"></div>
       </div>
       <!-- 模块结尾：分隔线 + 模块英文名 -->
       <p class="section__footer"><span class="section__footer-en">MODULE 06 · SOLAR SYSTEM</span></p>
@@ -930,21 +930,75 @@
         </div>
       </div>
       <div class="section__body" data-module="planets">
-        <!-- 无 JS 时静态展示三性；JS 启用时按数据重新渲染 -->
-        <div id="motion-features" class="card-grid" data-widget="motion-features">
-          <div class="motion-feature card"><h4 class="motion-feature__name">同向性</h4><p class="motion-feature__desc">八大行星绕日公转的方向都是自西向东。</p></div>
-          <div class="motion-feature card"><h4 class="motion-feature__name">近圆性</h4><p class="motion-feature__desc">行星绕日公转的轨道近似圆形。</p></div>
-          <div class="motion-feature card"><h4 class="motion-feature__name">共面性</h4><p class="motion-feature__desc">行星轨道面几乎位于同一平面上。</p></div>
-        </div>
-
-        <!-- 八大行星绕日公转演示：直观呈现同向性 / 近圆性 / 共面性（3D 模型，WebGL 不可用时降级 2D 圆形轨道图） -->
         <div class="orbit-demo" id="orbit-demo">
-          <div id="orbit-viewport" class="orbit-viewport" data-widget="orbit-viewport">
-            <div class="orbit-viewport__fallback">
-              <p class="panel__placeholder">八大行星绕日公转演示（示意图，非按比例）：太阳居中，八大行星沿近似圆形轨道绕日公转，方向一致、轨道面几乎在同一平面。<br>启用 JavaScript 后查看公转模型。</p>
+          <div class="orbit-demo__grid">
+            <!-- 模型矩形：内部上方为三个不透明特征按钮，下方为公转模型 -->
+            <div class="orbit-stage">
+              <div class="orbit-feature-tabs" id="orbit-feature-tabs" role="group" aria-label="运动特征">
+                <!-- 三个特征图标取自 assets/icons/（同向性.svg / 近圆性.svg / 共面性.svg），
+                     由 CSS 以遮罩方式上色，不套外层圆形 / 圆角矩形底盘 -->
+                <button type="button" class="orbit-feature-btn" data-feature="同向性" aria-pressed="false">
+                  <span class="orbit-feature-btn__icon" aria-hidden="true"></span>
+                  <span class="orbit-feature-btn__label">同向性</span>
+                </button>
+                <button type="button" class="orbit-feature-btn" data-feature="近圆性" aria-pressed="false">
+                  <span class="orbit-feature-btn__icon" aria-hidden="true"></span>
+                  <span class="orbit-feature-btn__label">近圆性</span>
+                </button>
+                <button type="button" class="orbit-feature-btn" data-feature="共面性" aria-pressed="false">
+                  <span class="orbit-feature-btn__icon" aria-hidden="true"></span>
+                  <span class="orbit-feature-btn__label">共面性</span>
+                </button>
+              </div>
+
+              <!-- 八大行星绕日公转演示：正方形视窗（保持干净，无图例与内部标注；WebGL 不可用时降级 2D 圆形轨道图） -->
+              <div id="orbit-viewport" class="orbit-viewport" data-widget="orbit-viewport">
+                <div class="orbit-viewport__fallback">
+                  <p class="panel__placeholder">八大行星绕日公转演示（示意图，非按比例）：太阳居中，八大行星沿近似圆形轨道绕日公转，方向一致、轨道面几乎在同一平面。<br>启用 JavaScript 后查看公转模型。</p>
+                </div>
+              </div>
             </div>
+
+            <!-- 右侧：不透明的运动特征详解（与模型矩形等高；无 JS 时静态展示三性，JS 启用时按数据重新渲染） -->
+            <aside class="feature-detail" id="feature-detail" aria-label="运动特征详解">
+              <h3 class="feature-detail__title">
+                <span class="feature-detail__title-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4.5"/></svg></span>
+                运动特征详解
+              </h3>
+              <div id="motion-features" class="feature-detail__list" data-widget="motion-features">
+                <div class="motion-feature card" data-feature="同向性" tabindex="0" role="button" aria-pressed="false">
+                  <div class="motion-feature__head">
+                    <span class="motion-feature__icon" aria-hidden="true"></span>
+                    <h4 class="motion-feature__name">同向性</h4>
+                    <span class="motion-feature__state">当前观察</span>
+                  </div>
+                  <span class="motion-feature__rule" aria-hidden="true"></span>
+                  <p class="motion-feature__desc">八大行星绕日公转的方向都是自西向东。</p>
+                  <p class="motion-feature__caption">八颗行星公转方向一致 · 自西向东</p>
+                </div>
+                <div class="motion-feature card" data-feature="近圆性" tabindex="0" role="button" aria-pressed="false">
+                  <div class="motion-feature__head">
+                    <span class="motion-feature__icon" aria-hidden="true"></span>
+                    <h4 class="motion-feature__name">近圆性</h4>
+                    <span class="motion-feature__state">当前观察</span>
+                  </div>
+                  <span class="motion-feature__rule" aria-hidden="true"></span>
+                  <p class="motion-feature__desc">行星绕日公转的轨道近似圆形。</p>
+                  <p class="motion-feature__caption">轨道偏心率小，接近正圆</p>
+                </div>
+                <div class="motion-feature card" data-feature="共面性" tabindex="0" role="button" aria-pressed="false">
+                  <div class="motion-feature__head">
+                    <span class="motion-feature__icon" aria-hidden="true"></span>
+                    <h4 class="motion-feature__name">共面性</h4>
+                    <span class="motion-feature__state">当前观察</span>
+                  </div>
+                  <span class="motion-feature__rule" aria-hidden="true"></span>
+                  <p class="motion-feature__desc">行星轨道面几乎位于同一平面上。</p>
+                  <p class="motion-feature__caption">轨道面几乎重合于同一平面</p>
+                </div>
+              </div>
+            </aside>
           </div>
-          <div id="orbit-info" class="hint" data-widget="orbit-info"></div>
         </div>
       </div>
       <!-- 模块结尾：分隔线 + 模块英文名 -->

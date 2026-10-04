@@ -182,11 +182,32 @@ describe('M8 生命条件因果链（静态分组）', () => {
 })
 
 describe('M7 行星的运动特征', () => {
-  it('渲染同向性、近圆性、共面性三张特征卡', () => {
+  it('渲染同向性、近圆性、共面性三张特征卡，并由按钮联动高亮', () => {
     initMotionFeatures()
     expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
     const names = Array.from(document.querySelectorAll('.motion-feature__name')).map(n => n.textContent)
     expect(names).toEqual(['同向性', '近圆性', '共面性'])
+
+    // 默认选中「近圆性」，选中态唯一
+    expect(document.querySelectorAll('.motion-feature.is-active')).toHaveLength(1)
+    expect(document.querySelector('.motion-feature.is-active .motion-feature__name')!.textContent)
+      .toBe('近圆性')
+
+    // 按钮与子卡片联动：选中态唯一，其余恢复默认
+    const button = (name: string) =>
+      document.querySelector(`.orbit-feature-btn[data-feature="${name}"]`) as HTMLButtonElement
+    button('共面性').click()
+    expect(button('共面性').getAttribute('aria-pressed')).toBe('true')
+    expect(document.querySelectorAll('.orbit-feature-btn.is-active')).toHaveLength(1)
+    expect(document.querySelectorAll('.motion-feature.is-active')).toHaveLength(1)
+    expect(document.querySelector('.motion-feature.is-active .motion-feature__name')!.textContent)
+      .toBe('共面性')
+
+    button('同向性').click()
+    expect(button('共面性').getAttribute('aria-pressed')).toBe('false')
+    expect(document.querySelectorAll('.motion-feature.is-active')).toHaveLength(1)
+    expect(document.querySelector('.motion-feature.is-active .motion-feature__name')!.textContent)
+      .toBe('同向性')
   })
 })
 
@@ -250,11 +271,47 @@ describe('M6 太阳系（WebGL 缺失自动降级 2D）', () => {
     initSolarSystem()
     expect(document.querySelector('.solar-svg')).toBeTruthy()
     expect(document.querySelectorAll('.solar-planet')).toHaveLength(8)
+    expect(document.querySelectorAll('.solar-group')).toHaveLength(3)
+    expect(
+      Array.from(document.querySelectorAll('.solar-group__title')).map(e => e.textContent)
+    ).toEqual(['类地行星', '巨行星', '远日行星'])
 
     ;(document.querySelector('.solar-planet[data-planet="earth"]') as Element)
       .dispatchEvent(new MouseEvent('click'))
     expect(App.selectedPlanet).toBe('earth')
-    expect(document.querySelector('.solar-status')!.textContent).toContain('地球')
+    expect(document.querySelector('.solar-card__name')!.textContent).toContain('地球')
+  })
+
+  it('选中态为克制的卡片内高亮：名称标签金色 + 下方短金线，且选中态在切换时唯一转移', () => {
+    initSolarSystem()
+    const at = (id: string) => document.querySelector(`.solar-planet[data-planet="${id}"]`)!
+
+    // 八颗行星各带一条选中指示线（未选中时收起），且不再有大范围光环与扩散粒子
+    expect(document.querySelectorAll('.solar-planet-tag__rule')).toHaveLength(8)
+    expect(document.querySelectorAll('.solar-planet-aura')).toHaveLength(0)
+
+    // 行星切换：选中态（金色标签 + 指示线）始终唯一，不残留上一颗
+    const click = (id: string) => at(id).dispatchEvent(new MouseEvent('click'))
+    click('venus')
+    expect(document.querySelectorAll('.solar-planet.is-active')).toHaveLength(1)
+    expect(at('venus').classList.contains('is-active')).toBe(true)
+
+    click('mars')
+    expect(document.querySelectorAll('.solar-planet.is-active')).toHaveLength(1)
+    expect(at('mars').classList.contains('is-active')).toBe(true)
+    expect(at('venus').classList.contains('is-active')).toBe(false)
+    expect(App.selectedPlanet).toBe('mars')
+
+    // 详情卡片影像：所有行星共用同一圆角矩形取景框 + 真实行星照片，不再叠加任何 CSS 环片
+    click('earth')
+    const media = document.querySelector('.planet-detail-media')!
+    const img = media.querySelector('.planet-detail-media__image') as HTMLImageElement
+    expect(img).toBeTruthy()
+    expect(img.hasAttribute('data-lightbox')).toBe(true)
+    expect(media.querySelectorAll('.planet-detail-media__ring')).toHaveLength(0)
+
+    click('saturn')
+    expect(document.querySelectorAll('.planet-detail-media__ring')).toHaveLength(0)
   })
 })
 

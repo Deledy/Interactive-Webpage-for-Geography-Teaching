@@ -54,15 +54,24 @@ export interface HierarchyLevel {
   example: string
 }
 
+/** M6 八大行星分类键（对应类地 / 巨 / 远日三组，用于分类主题色） */
+export type PlanetTypeKey = 'terrestrial' | 'giant' | 'outer'
+
 /** M6 八大行星 */
 export interface Planet {
   id: string
   name: string
-  type: string
+  number: string        /* 顺序序号，如 "01" */
+  type: string          /* 分类名称，如 "类地行星" */
+  typeKey: PlanetTypeKey
   color: string
   size: number
   orbit: number
   period: number
+  distance: string      /* 距离太阳 */
+  surfaceTemp: string   /* 表面温度 */
+  revolution: string    /* 公转周期 */
+  rotation: string      /* 自转周期 */
   desc: string
 }
 
