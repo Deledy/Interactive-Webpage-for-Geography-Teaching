@@ -13,6 +13,7 @@ import { initMotionFeatures } from './modules/planets'
 import { initOrbitDemo } from './modules/orbit'
 import { initLifeChain } from './modules/life'
 import { initReviewTree } from './modules/review'
+import { initReviewCards } from './modules/reviewCards'
 import { initNebulaTilt } from './modules/nebulaTilt'
 import { initBodyDeckTabs } from './modules/bodyDeckTabs'
 import { initLightbox } from './modules/lightbox'
@@ -30,6 +31,7 @@ export function init(): void {
   initOrbitDemo();
   initLifeChain();
   initReviewTree();
+  initReviewCards();
   initNebulaTilt();
   initBodyDeckTabs();
   initLightbox();

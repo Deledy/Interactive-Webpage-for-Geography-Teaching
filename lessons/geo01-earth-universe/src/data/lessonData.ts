@@ -133,6 +133,98 @@ export const lessonData: LessonData = {
           }
         ]
       }
+    ],
+    cards: [
+      {
+        id: "universe-concept",
+        type: "cloze",
+        title: "宇宙的概念",
+        target: "universe",
+        parts: [
+          { kind: "text", text: "宇宙是" },
+          { kind: "blank", answer: "空间" },
+          { kind: "text", text: "与" },
+          { kind: "blank", answer: "时间" },
+          { kind: "text", text: "的统一体，" },
+          { kind: "blank", answer: "无边无际" },
+          { kind: "text", text: "、" },
+          { kind: "blank", answer: "无始无终" },
+          { kind: "text", text: "。约" },
+          { kind: "blank", answer: "137 亿" },
+          { kind: "text", text: "年前，宇宙在一次大爆炸中诞生。" }
+        ]
+      },
+      {
+        id: "celestial-types",
+        type: "cloze",
+        title: "天体的分类",
+        target: "celestial",
+        parts: [
+          { kind: "text", text: "天体分为" },
+          { kind: "blank", answer: "自然天体" },
+          { kind: "text", text: "（星云、恒星、行星、卫星、流星体、彗星）和" },
+          { kind: "blank", answer: "人造天体" },
+          { kind: "text", text: "（人造卫星、载人飞船）两大类。" }
+        ]
+      },
+      {
+        id: "celestial-judge",
+        type: "cloze",
+        title: "天体的判别三条件",
+        target: "meteor",
+        parts: [
+          { kind: "text", text: "①" },
+          { kind: "blank", answer: "是物质" },
+          { kind: "text", text: "（有质量、占空间）；②位于" },
+          { kind: "blank", answer: "大气层" },
+          { kind: "text", text: "之外；③" },
+          { kind: "blank", answer: "独立" },
+          { kind: "text", text: "运行、有自身轨道。" }
+        ]
+      },
+      {
+        id: "system-levels",
+        type: "cloze",
+        title: "天体系统的四级层级",
+        target: "hierarchy",
+        parts: [
+          { kind: "text", text: "由低到高：" },
+          { kind: "blank", answer: "地月系" },
+          { kind: "text", text: " → 太阳系 → " },
+          { kind: "blank", answer: "银河系" },
+          { kind: "text", text: " → " },
+          { kind: "blank", answer: "可观测宇宙" },
+          { kind: "text", text: "。" }
+        ]
+      },
+      {
+        id: "planets-motion",
+        type: "cloze",
+        title: "八大行星的运动三性",
+        target: "planets",
+        parts: [
+          { kind: "text", text: "绕日公转共同特征：" },
+          { kind: "blank", answer: "同向性" },
+          { kind: "text", text: "（都自西向东）、" },
+          { kind: "blank", answer: "近圆性" },
+          { kind: "text", text: "（轨道近似圆形）、" },
+          { kind: "blank", answer: "共面性" },
+          { kind: "text", text: "（轨道面几乎共面）。" }
+        ]
+      },
+      {
+        id: "life-reason",
+        type: "cloze",
+        title: "地球存在生命的原因",
+        target: "life",
+        parts: [
+          { kind: "text", text: "包括" },
+          { kind: "blank", answer: "外部" },
+          { kind: "text", text: "条件（太阳稳定、大小行星各行其道）和" },
+          { kind: "blank", answer: "自身" },
+          { kind: "text", text: "条件（温度适宜、大气适宜、液态水）。" }
+        ]
+      }
     ]
   },
 

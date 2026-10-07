@@ -100,8 +100,25 @@ export interface ReviewNode {
   children?: ReviewNode[]
 }
 
+/** M9 复习卡 · 挖空片段 */
+export interface ReviewClozePart {
+  kind: 'text' | 'blank'
+  text?: string    // kind === 'text' 时的正文
+  answer?: string  // kind === 'blank' 时的答案
+}
+
+/** M9 复习卡（当前仅挖空题型，预留拖拽 / 演示图题型） */
+export interface ReviewCard {
+  id: string
+  type: 'cloze'
+  title: string   // 知识点名称
+  target: string  // 跳转目标 section 的 id
+  parts: ReviewClozePart[]
+}
+
 export interface ReviewData {
   nodes: ReviewNode[]
+  cards: ReviewCard[]
 }
 
 /** M10 拓展材料 */

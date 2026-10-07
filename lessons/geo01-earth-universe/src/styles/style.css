@@ -421,19 +421,20 @@ button { font-family: inherit; }
   color: rgba(232, 234, 246, 0.5);
 }
 
-/* “拓展”入口：次级按钮（深蓝半透明底 + 灰蓝描边，hover 转蓝色） */
+/* “拓展”入口：次级按钮（深蓝半透明底 + 灰蓝描边，hover 转蓝色）
+   课堂投屏场景下需保证可点面积与可辨识度，故加大内边距并提高描边/文字对比 */
 .extend-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   flex-shrink: 0;
-  background: var(--navy-glass);
-  border: 1px solid var(--slate-border);
-  color: var(--text-soft);
+  background: rgba(13, 35, 76, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  color: #E8EEF8;
   font-size: var(--fs-note);
   font-weight: 500;
   border-radius: 999px;
-  padding: 8px 18px;
+  padding: 10px 22px;
   cursor: pointer;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
     background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
@@ -472,9 +473,9 @@ button { font-family: inherit; }
   border: 1px solid rgba(100, 181, 246, 0.8);
   color: var(--blue);
   font-size: var(--fs-note);
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 999px;
-  padding: 8px 20px;
+  padding: 10px 24px;
   cursor: pointer;
   box-shadow: 0 0 16px rgba(100, 181, 246, 0.28), inset 0 0 12px rgba(100, 181, 246, 0.12);
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
@@ -1200,6 +1201,139 @@ button { font-family: inherit; }
 body.review-mode .section__desc { display: none; }
 body.review-mode .section:not(#review) .section__body,
 body.review-mode .section:not(#review) .extend-btn { display: none; }
+
+/* ---------- 11b. 复习卡（知识点挖空 + 跳转返回） ---------- */
+.review-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-top: 32px;
+}
+.review-cards__placeholder {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 40px 16px;
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+  text-align: center;
+  border: 1px dashed var(--slate-border);
+  border-radius: var(--radius-card);
+}
+
+.review-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: 22px 24px;
+  backdrop-filter: blur(6px);
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.review-card:hover {
+  border-color: var(--blue-border);
+  transform: translateY(-2px);
+}
+
+.review-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.review-card__title {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+.review-card__jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  background: rgba(13, 35, 76, 0.72);
+  border: 1px solid var(--blue-border);
+  color: var(--cyan-text);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.review-card__jump:hover {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+}
+.review-card__jump-ico {
+  width: 14px;
+  height: 14px;
+}
+
+.review-card__body {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 2.1;
+  color: var(--text-main);
+}
+.cloze-text { color: var(--text-dim); }
+.cloze-blank {
+  display: inline-block;
+  min-width: 4.5em;
+  text-align: center;
+  color: transparent;                    /* 初始隐藏答案 */
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-bottom: 1.5px dashed var(--slate-border);
+  padding: 0 8px;
+  margin: 0 2px;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  vertical-align: baseline;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.cloze-blank:hover {
+  border-color: var(--cyan);
+  background: rgba(79, 195, 247, 0.08);
+}
+.cloze-blank.is-revealed {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+  background: rgba(255, 213, 79, 0.08);
+}
+
+/* 返回复习：跳转后出现的固定按钮 */
+.review-return {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(13, 35, 76, 0.9);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-size: var(--fs-note);
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 12px 20px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.review-return svg { width: 16px; height: 16px; }
+.review-return.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
 
 /* ---------- 12. 响应式 ---------- */
 /* 导航字号：章节链接始终小于课程标题（28px），空间不足时逐级降到 18 → 17 → 16 → 15px */
@@ -3457,87 +3591,388 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 .orbit2d__dot { stroke: rgba(255, 255, 255, 0.5); stroke-width: 1; }
 .orbit2d__name { fill: var(--text-dim); font-size: 15px; }
 
-/* ---------- M8 生命条件因果链（外部/自身两组分开绘制） ---------- */
+/* ---------- M8 地球存在生命的原因：外部 / 自身条件双面板 ---------- */
+/* 图标精灵：仅作符号库，不参与渲染；图标尺寸随所在徽标，颜色随 currentColor */
+.life-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.life-ico { display: block; width: 100%; height: 100%; }
+
+/* M8 中文排印微调：标题加字距、简介放宽行高，长句更易读 */
+#life .section__title { letter-spacing: 0.05em; }
+#life .section__desc { max-width: 900px; line-height: 1.75; letter-spacing: 0.02em; }
+
+/* 双面板：外部条件（蓝）/ 自身条件（绿）等宽，保持"并列对比"的对等关系 */
 .life-panels {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
-  align-items: start;
-}
-.life-panel {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
-  padding: 24px;
-}
-.life-panel__title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 18px;
-  font-size: 22px;
-  font-weight: 700;
-}
-/* 因果链：每条链为一个矩形（条件在上、结果在下），多链水平平行排列且大小一致 */
-.life-panel__chains {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
   align-items: stretch;
-  flex-wrap: wrap;
 }
 
-.chain {
+/* 「外部 + 自身 → 共同作用」汇合指示：两面板下方生成一个汇流图元，
+   两条曲线分别取两类条件的主色向中下方收拢，与底部结论条的"共同作用"形成视觉对应。
+   纯装饰（pointer-events: none），不参与交互与语义。 */
+.life-panels::after {
+  content: "";
+  grid-column: 1 / -1;
+  justify-self: center;
+  align-self: end;
+  width: 132px;
+  height: 40px;
+  margin-top: -14px;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 132 40'%3E%3Cpath d='M10 3C10 21 48 21 66 27' fill='none' stroke='%2364B5F6' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M122 3C122 21 84 21 66 27' fill='none' stroke='%2366BB6A' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M58 27h16l-8 12z' fill='%23BFE9FF'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* 面板（外部条件 / 自身条件 母容器）：不透明毛玻璃 + 分类色渐变描边
+   实现要点：
+   1) backdrop-filter 模糊面板后方的星空与页面背景，面板内文字/图标/子卡片不受影响；
+   2) 渐变描边用「双层背景 + background-clip」实现（padding-box 放玻璃底、border-box 放渐变线），
+      不使用 border-image，因此圆角与尺寸与原先完全一致；
+   3) 玻璃底保持较高不透明度（约 0.70～0.86），无 backdrop-filter 的旧浏览器下同样不发虚。 */
+.life-panel {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  flex: 1 1 220px;
-  min-width: 200px;
-  max-width: 280px;
-  padding: 18px 20px;
-  gap: 12px;
-  border-radius: var(--radius-card);
-  background: rgba(79, 195, 247, 0.06);
-  border: 1px solid rgba(79, 195, 247, 0.4);
+  gap: 20px;
+  padding: 22px 22px 24px;
+  border-radius: 18px;
+  border: 1px solid transparent;   /* 仅占位，颜色由 border-box 层的渐变绘制 */
+  background-origin: border-box;
+  background-repeat: no-repeat;
+  background-clip: padding-box, border-box;
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow:
+    0 18px 44px -26px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
-.chain-node {
-  width: 100%;
-  text-align: center;
-  font-size: 18px;
-  line-height: 1.5;
-  padding: 0;
-  background: transparent;
-  border: none;
+.life-panel--external {
+  /* 第 1 层＝毛玻璃底；第 2 层＝分类色渐变描边（150deg，与全站渐变方向一致） */
+  background-image:
+    linear-gradient(158deg, rgba(22, 44, 88, 0.7), rgba(10, 22, 48, 0.8) 62%, rgba(6, 14, 32, 0.86)),
+    linear-gradient(150deg, rgba(150, 205, 255, 0.9), rgba(100, 181, 246, 0.22) 45%, rgba(88, 148, 240, 0.85));
+  box-shadow:
+    0 18px 44px -26px rgba(0, 0, 0, 0.95),
+    0 0 26px -12px rgba(100, 181, 246, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
-.chain-node--cond { color: var(--text-main); font-weight: 600; }
-.chain-node--result { color: var(--gold); font-weight: 600; }
+.life-panel--internal {
+  background-image:
+    linear-gradient(158deg, rgba(16, 50, 50, 0.7), rgba(8, 28, 30, 0.8) 62%, rgba(5, 18, 20, 0.86)),
+    linear-gradient(150deg, rgba(158, 226, 166, 0.9), rgba(102, 187, 106, 0.22) 45%, rgba(96, 190, 116, 0.85));
+  box-shadow:
+    0 18px 44px -26px rgba(0, 0, 0, 0.95),
+    0 0 26px -12px rgba(102, 187, 106, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+/* 不支持 backdrop-filter 的环境（旧版 Firefox / 部分内嵌浏览器）：提高玻璃底不透明度，
+   避免直接透出星空导致面板内文字对比度下降 */
+@supports not ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .life-panel--external { background-color: rgba(10, 22, 50, 0.96); }
+  .life-panel--internal { background-color: rgba(8, 28, 30, 0.96); }
+}
 
-.chain-arrow { position: relative; width: 26px; height: 34px; flex-shrink: 0; }
-.chain-arrow::after {
+/* 面板标题：分类图标 + 中文标题（加字距、统一行高） */
+.life-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.life-panel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  flex: none;
+}
+/* 面板标题图标统一为白色（外部条件 / 自身条件） */
+.life-panel--external .life-panel__icon,
+.life-panel--internal .life-panel__icon { color: #FFFFFF; }
+.life-panel__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+}
+
+/* 链卡栅格：外部 2 张并排；自身 3 张 = 2 张并排 + 第 3 张通栏 */
+.life-panel__chains {
+  display: grid;
+  gap: 14px;
+  flex: 1;
+}
+.life-panel--external .life-panel__chains,
+.life-panel--internal .life-panel__chains {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.life-panel--internal .chain:last-child { grid-column: 1 / -1; }
+
+/* 链卡（太阳处于壮年 / 大小行星各行其道 / 日地距离适中 / 地球体积、质量适中 / 原始地球内部升温产生水汽）
+   —— 每张卡自带一张背景照片（分组分类色暗罩 + 照片），hover 时缓慢放大 */
+.chain {
+  position: relative;
+  overflow: hidden;                 /* 裁掉背景图放大后溢出圆角的部分 */
+  /* 统一卡片结构：图标徽标 + 条件文字同行，箭头与结果依次在下方居中；
+     外部条件与自身条件的链卡结构完全一致，学生可用同一条阅读路径看两类条件 */
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: rgba(10, 20, 42, 0.55);   /* 背景图加载前的兜底底色 */
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+/* 背景照片层：照片之上压一层分类色暗罩，保证卡片内文字对比度（图片素材见 docs/06_资源引用.md 第 35 项） */
+.chain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  /* 统一五张配图的色相与饱和度，减轻冷暖/明度差异造成的"拼贴感" */
+  filter: saturate(0.88) contrast(1.03);
+  transition: transform 0.6s var(--ease);
+}
+/* 卡片内容压在背景图之上 */
+.chain > * { position: relative; z-index: 1; }
+
+/* 各子卡片的背景照片，按卡片内容逐张匹配（太阳 / 行星 / 液态水 / 大气 / 海洋生命）；
+   顺序与 `life.ts` 中 PANEL_ICONS.chains 一致。
+   每张照片上方压一层"三段式暗罩"（顶部轻、中部中、底部重），
+   保证图标/条件/结果三处文字无论落在画面哪个明暗区域都能稳定达到 4.5:1 对比度 */
+.life-panel--external .chain {
+  border-color: rgba(100, 181, 246, 0.3);
+}
+/* 1 太阳处于壮年 → 耀日与地球弧面 */
+.life-panel--external .chain:nth-child(1)::before {
+  background-image:
+    linear-gradient(180deg, rgba(8, 18, 40, 0.62) 0%, rgba(5, 12, 30, 0.78) 46%, rgba(3, 8, 20, 0.92) 100%),
+    url('../../assets/images/life-card-sun-bg.jpg');
+  background-position: left center;   /* 光源在画面左侧，左对齐保留太阳 */
+}
+/* 2 大小行星各行其道 → 星系、行星与小行星带 */
+.life-panel--external .chain:nth-child(2)::before {
+  background-image:
+    linear-gradient(180deg, rgba(8, 18, 40, 0.62) 0%, rgba(5, 12, 30, 0.78) 46%, rgba(3, 8, 20, 0.92) 100%),
+    url('../../assets/images/life-card-planets-bg.jpg');
+}
+
+.life-panel--internal .chain {
+  border-color: rgba(102, 187, 106, 0.3);
+}
+/* 1 日地距离适中 → 液态水与适宜温度 */
+.life-panel--internal .chain:nth-child(1)::before {
+  background-image:
+    linear-gradient(180deg, rgba(6, 26, 28, 0.62) 0%, rgba(5, 19, 21, 0.78) 46%, rgba(3, 13, 15, 0.92) 100%),
+    url('../../assets/images/life-card-water-bg.jpg');
+}
+/* 2 地球体积、质量适中 → 引力留住的大气层 */
+.life-panel--internal .chain:nth-child(2)::before {
+  background-image:
+    linear-gradient(180deg, rgba(6, 26, 28, 0.62) 0%, rgba(5, 19, 21, 0.78) 46%, rgba(3, 13, 15, 0.92) 100%),
+    url('../../assets/images/life-card-atmosphere-bg.jpg');
+  background-position: center;   /* 取景已按卡片横比例裁好，居中即可完整呈现天空→日出→云海 */
+}
+/* 3 原始地球内部升温产生水汽 → 汇聚成海、孕育生命 */
+.life-panel--internal .chain:nth-child(3)::before {
+  background-image:
+    linear-gradient(180deg, rgba(6, 26, 28, 0.62) 0%, rgba(5, 19, 21, 0.78) 46%, rgba(3, 13, 15, 0.92) 100%),
+    url('../../assets/images/life-card-ocean-bg.jpg');
+  background-position: 30% center;   /* 偏向左侧珊瑚与光束一侧取景 */
+}
+
+/* 悬停互动：卡片轻微上浮 + 分类色描边与光晕增强 + 背景照片缓慢放大 */
+.chain:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px -20px rgba(0, 0, 0, 0.95);
+}
+.chain:hover::before { transform: scale(1.07); }
+.life-panel--external .chain:hover {
+  border-color: rgba(140, 205, 255, 0.72);
+  box-shadow:
+    0 16px 34px -20px rgba(0, 0, 0, 0.95),
+    0 0 26px -8px rgba(100, 181, 246, 0.62);
+}
+.life-panel--internal .chain:hover {
+  border-color: rgba(150, 220, 158, 0.72);
+  box-shadow:
+    0 16px 34px -20px rgba(0, 0, 0, 0.95),
+    0 0 26px -8px rgba(102, 187, 106, 0.62);
+}
+
+/* 链卡圆形图标徽标：外部 = 星空蓝，自身 = 生命绿，各自与所属面板主色一致
+   （全页只保留"蓝＝外部条件 / 绿＝自身条件"两套分类色） */
+.chain__icon {
+  grid-column: 1;                   /* 与条件文字同行，图标在左 */
+  grid-row: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  padding: 14px;
+  flex: none;
+  border-radius: 50%;
+}
+.life-panel--external .chain__icon {
+  color: #FFFFFF;
+  background: rgba(100, 181, 246, 0.12);
+  border: 1px solid rgba(100, 181, 246, 0.45);
+  box-shadow: 0 0 18px -6px rgba(100, 181, 246, 0.8);
+}
+.life-panel--internal .chain__icon {
+  color: #FFFFFF;
+  background: rgba(129, 199, 132, 0.1);
+  border: 1px solid rgba(129, 199, 132, 0.42);
+  box-shadow: 0 0 18px -6px rgba(129, 199, 132, 0.8);
+}
+/* 条件文字：中文正文（略加字距、放宽行高，避免密排） */
+.chain__cond {
+  grid-column: 2;                   /* 与图标同行，文字在右 */
+  grid-row: 1;
+  justify-self: stretch;
+  text-align: left;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  color: var(--text-main);
+  text-shadow: 0 1px 10px rgba(3, 8, 20, 0.75), 0 0 2px rgba(3, 8, 20, 0.6);  /* 压在配图上仍保持清晰 */
+}
+
+/* 条件 → 结果：实心箭头（矩形箭杆 + 三角箭头，随分类主色）。
+   放大尺寸并提高不透明度，让"因果链"从装饰性细节升级为可读的视觉主线 */
+.chain__arrow {
+  grid-column: 1 / -1;              /* 单独占一行，居中在条件下方 */
+  grid-row: 2;
+  justify-self: center;
+  position: relative;
+  width: 20px;
+  height: 34px;
+  flex: none;
+}
+.chain__arrow::before {   /* 箭杆：矩形 */
   content: "";
   position: absolute;
   left: 50%;
   top: 0;
-  bottom: 0;
-  width: 3px;
-  margin-left: -1.5px;
-  background: linear-gradient(var(--cyan), var(--gold));
-  transform: scaleY(1);
-  transform-origin: top;
+  width: 5px;
+  height: 22px;
+  margin-left: -2.5px;
+  border-radius: 2.5px;
+  background: currentColor;
 }
-.chain-arrow::before {
+.chain__arrow::after {    /* 箭头：实心三角形 */
   content: "";
   position: absolute;
   left: 50%;
-  top: calc(100% - 4px);
-  width: 10px;
-  height: 10px;
-  margin-left: -5px;
-  border-right: 2px solid var(--gold);
-  border-bottom: 2px solid var(--gold);
-  transform: rotate(45deg);
-  opacity: 1;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  margin-left: -10px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 12px solid currentColor;
+}
+.life-panel--external .chain__arrow { color: rgba(140, 198, 255, 0.95); }
+.life-panel--internal .chain__arrow { color: rgba(150, 214, 156, 0.95); }
+
+/* 结果文字：外部 = 星空蓝，自身 = 生命绿（与所属面板主色一致）；按语义分组逐行呈现 */
+.chain__result {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  justify-self: center;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 10px rgba(3, 8, 20, 0.75), 0 0 2px rgba(3, 8, 20, 0.6);  /* 压在高频纹理配图上仍保持清晰 */
+}
+.chain__result > span { display: block; }
+.life-panel--external .chain__result { color: #9CCBFF; }
+.life-panel--internal .chain__result { color: #A5D6A7; }
+
+/* 结论条：整幅知识横幅（地球弧面夜景背景图 + 顶部细渐变线 + 齿轮状图标 + 说明文字） */
+.life-conclusion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(100, 181, 246, 0.55);   /* 描边加重：结论是全段最重要的收束，需与链卡拉开层级 */
+  /* 左重右轻的暗罩：左侧图标与说明文字保持高对比，右侧留出地球弧面高光 */
+  background-image:
+    linear-gradient(90deg, rgba(6, 13, 30, 0.95) 0%, rgba(6, 13, 30, 0.9) 40%, rgba(6, 13, 30, 0.78) 72%, rgba(6, 13, 30, 0.55) 100%),
+    url('../../assets/images/life-conclusion-bg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    0 14px 40px -26px rgba(0, 0, 0, 0.95),
+    inset 0 0 34px rgba(79, 163, 247, 0.08);
+  color: #F2F6FF;                   /* 比正文更亮的白，作为全段的视觉落点 */
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 12px rgba(3, 8, 20, 0.85), 0 0 3px rgba(3, 8, 20, 0.7);
+}
+.life-conclusion::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+  /* 顶线由蓝（外部条件）过渡到绿（自身条件），呼应两面板的配色与"共同作用" */
+  background: linear-gradient(90deg, transparent, rgba(100, 181, 246, 0.7), rgba(102, 187, 106, 0.6), transparent);
+}
+.life-conclusion__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  flex: none;
+  border-radius: 50%;
+  color: #8FCBFF;
+  background: rgba(100, 181, 246, 0.12);
+  border: 1px solid rgba(100, 181, 246, 0.35);
+}
+.life-conclusion__text { position: relative; }
+
+/* M8 窄屏适配：面板先堆叠，链卡再收为单列 */
+@media (max-width: 1024px) {
+  .life-panels { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .life-panel--external .life-panel__chains,
+  .life-panel--internal .life-panel__chains { grid-template-columns: minmax(0, 1fr); }
+  .chain { padding: 18px 14px; }
+  .life-conclusion { align-items: flex-start; padding: 16px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chain:hover { transform: none; }
+  .chain:hover::before { transform: none; }
 }
 
 /* ---------- 讲解模块窄屏适配 ---------- */
@@ -3549,10 +3984,6 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   /* 窄屏行间距收窄为 12px，引语行的对齐内边距随之调整（30px 图标 + 12px 行间距） */
   .universe-card__row--quote { padding-left: calc(30px + 12px); }
   .universe-demo__view { max-width: 340px; }
-  .life-panels { grid-template-columns: 1fr; }
-  .life-panel__chains { flex-direction: column; align-items: center; }
-  .chain { flex: none; width: 100%; max-width: 340px; }
-  .chain-node { font-size: 16px; }
   .condition-item__desc { font-size: 15px; }
 }
 
