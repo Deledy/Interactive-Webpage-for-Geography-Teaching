@@ -38,7 +38,7 @@ export const lessonData: LessonData = {
     conclusion: "判别天体看的是“此刻在哪、是什么形态”——在太空独立运行的是天体；进入大气层成为现象、落到地面成为地面物质，都不是天体。"
   },
 
-  /* ---------------- M4 拖拽分类（9 张案例卡） ---------------- */
+  /* ---------------- M3 拖拽分类（9 张案例卡） ---------------- */
   dragCards: [
     { id: "moon", name: "月球", type: "celestial", explain: "在太空中绕地球运行的天然卫星。" },
     { id: "meteor_light", name: "流星现象", type: "non", explain: "发生在大气层内，是现象不是天体。" },
@@ -51,7 +51,7 @@ export const lessonData: LessonData = {
     { id: "lightning", name: "闪电", type: "non", explain: "大气中的放电现象，不是天体。" }
   ],
 
-  /* ---------------- M5 天体系统层级 ---------------- */
+  /* ---------------- M4 天体系统层级 ---------------- */
   hierarchy: [
     {
       id: "earth-moon", name: "地月系",
@@ -75,7 +75,7 @@ export const lessonData: LessonData = {
     }
   ],
 
-  /* ---------------- M6 太阳系八大行星 ---------------- */
+  /* ---------------- M5 太阳系八大行星 ---------------- */
   /* size：3D 视窗中球体相对半径（示意图，非按真实比例） */
   planets: [
     { id: "mercury", name: "水星", number: "01", type: "类地行星", typeKey: "terrestrial", color: "#b0b7c6", size: 0.6,  orbit: 8,   period: 10,   distance: "0.39 AU", surfaceTemp: "约 167 ℃",  revolution: "88 天",     rotation: "58.6 天",    desc: "距太阳最近，固体表面，昼夜温差极大。" },
@@ -88,13 +88,32 @@ export const lessonData: LessonData = {
     { id: "neptune", name: "海王星", number: "08", type: "远日行星", typeKey: "outer",  color: "#5a7fe0", size: 1.3,  orbit: 43,  period: 165,  distance: "30.05 AU", surfaceTemp: "约 −201 ℃", revolution: "164.8 年", rotation: "约 16.1 小时", desc: "距太阳最远的行星，表面温度极低，风速极快、风暴猛烈。" }
   ],
 
-  /* ---------------- M7 行星的运动特征 ---------------- */
+  /* ---------------- M6 行星的运动特征 ---------------- */
   motionFeatures: [
     { name: "同向性", desc: "八大行星绕日公转的方向都是自西向东。" },
     { name: "近圆性", desc: "行星绕日公转的轨道近似圆形。" },
     { name: "共面性", desc: "行星轨道面几乎位于同一平面上。" }
   ],
 
+  /* ---------------- M7 地球的普通性和特殊性 ---------------- */
+  /* 普通性 = 结构特征（类地行星相对地球的体积 / 质量）＋ 运动特征（三性，复用
+     M6 motionFeatures）；特殊性 = 唯一高级智慧生命。
+     结构特征数值为相对地球的近似值（地球 = 1），来源见 docs/06_资源引用.md。 */
+  earthOrdinary: {
+    structure: {
+      note: "地球与类地行星在体积、质量等方面极其相似。",
+      bodies: [
+        { id: "mercury", name: "水星", volume: 0.06, mass: 0.06 },
+        { id: "venus", name: "金星", volume: 0.86, mass: 0.82 },
+        { id: "earth", name: "地球", volume: 1, mass: 1 },
+        { id: "mars", name: "火星", volume: 0.15, mass: 0.11 }
+      ]
+    },
+    motionNote: "地球与其余七颗行星具有同向性、共面性、近圆性。",
+    ordinaryConclusion: "所以，地球是一颗普通的行星。",
+    specialStatement: "地球是太阳系八大行星中唯一存在高级智慧生命的星球。",
+    specialConclusion: "所以，地球其实又是一颗特殊的行星。"
+  },
   /* ---------------- M8 地球存在生命的原因 ---------------- */
   lifeConditions: {
     external: [
@@ -109,24 +128,37 @@ export const lessonData: LessonData = {
     conclusion: "外部条件 + 自身条件共同作用 → 地球成为目前已知唯一适宜生命存在的星球。"
   },
 
-  /* ---------------- M9 复习结构树 ---------------- */
+  /* ---------------- M9 复习与总结 ----------------
+   * nodes 为知识结构树；sections 为复习文档，严格按 docs/复习模式知识点.docx
+   * 逐节还原（挖空答案已填）。文档结构：天体类型（5 类 + 自然/人造）→ 判别三条件
+   * （含判断练习）→ 天体系统（概念 + 层级）→ 太阳系与八大行星（顺序 + 分类 +
+   * 小行星带 + 运动三性）→ 地球的普通性 / 特殊性 → 存在生命的条件（外部 + 自身）。 */
   review: {
     nodes: [
       {
         id: "universe", name: "宇宙", children: [
           {
             id: "celestial", name: "天体", children: [
-              { id: "types", name: "天体分类：自然天体（星云 / 恒星 / 行星 / 卫星 / 流星体 / 彗星）、人造天体（人造卫星 / 载人飞船）" },
-              { id: "judge", name: "判别三条件：是物质 · 大气层之外 · 独立个体" }
+              { id: "types", name: "类型：自然天体（星云 / 恒星 / 行星 / 卫星 / 流星体 / 彗星）、人造天体（人造卫星 / 载人飞船 / 空间站）" },
+              { id: "judge", name: "判别三条件：是物质 · 大气层之外 · 独立个体（有自身轨道）" }
             ]
           },
           {
             id: "system", name: "天体系统", children: [
-              { id: "levels", name: "4 级层级：可观测宇宙 → 银河系 → 太阳系 → 地月系" },
+              { id: "concept", name: "概念：天体相互吸引、相互绕转" },
+              { id: "levels", name: "层级：可观测宇宙 → 银河系 → 太阳系 → 地月系" },
               {
                 id: "solar", name: "太阳系", children: [
-                  { id: "planets", name: "八大行星：同向性、近圆性、共面性" },
-                  { id: "earth", name: "地球的特殊性：外部条件 + 自身条件" }
+                  { id: "order", name: "八大行星（由近及远）：水星、金星、地球、火星、木星、土星、天王星、海王星" },
+                  { id: "classify", name: "分类：类地（水金地火）· 巨（木土）· 远日（天海）" },
+                  { id: "belt", name: "小行星带：火星与木星轨道之间" },
+                  { id: "planets", name: "运动三性：同向性、近圆性、共面性" },
+                  {
+                    id: "earth", name: "地球", children: [
+                      { id: "nature", name: "普通性（距日远近 / 体积 / 公转方式）＋特殊性（唯一高级智慧生命）" },
+                      { id: "life-cond", name: "存在生命条件：外部（太阳稳定 / 宇宙环境安全）＋自身（温度 / 大气 / 液态水）" }
+                    ]
+                  }
                 ]
               }
             ]
@@ -134,101 +166,195 @@ export const lessonData: LessonData = {
         ]
       }
     ],
-    cards: [
+    sections: [
       {
-        id: "universe-concept",
-        type: "cloze",
-        title: "宇宙的概念",
-        target: "universe",
-        parts: [
-          { kind: "text", text: "宇宙是" },
-          { kind: "blank", answer: "空间" },
-          { kind: "text", text: "与" },
-          { kind: "blank", answer: "时间" },
-          { kind: "text", text: "的统一体，" },
-          { kind: "blank", answer: "无边无际" },
-          { kind: "text", text: "、" },
-          { kind: "blank", answer: "无始无终" },
-          { kind: "text", text: "。约" },
-          { kind: "blank", answer: "137 亿" },
-          { kind: "text", text: "年前，宇宙在一次大爆炸中诞生。" }
+        heading: "一、天体的类型",
+        blocks: [
+          { kind: "line", prefix: "1、", segments: [
+            { kind: "text", text: "由气体和尘埃组成的呈云雾状外表的天体类型是" },
+            { kind: "blank", answer: "星云" },
+            { kind: "text", text: "。" }
+          ] },
+          { kind: "line", prefix: "2、", segments: [
+            { kind: "text", text: "由炽热气体组成的、自身能发出光和热的天体类型是" },
+            { kind: "blank", answer: "恒星" },
+            { kind: "text", text: "。" }
+          ] },
+          { kind: "line", prefix: "3、", segments: [
+            { kind: "text", text: "在椭圆轨道上绕恒星运行的、近似球状的天体类型是" },
+            { kind: "blank", answer: "行星" },
+            { kind: "text", text: "。" }
+          ] },
+          { kind: "line", prefix: "4、", segments: [
+            { kind: "text", text: "环绕行星运转的天体类型是" },
+            { kind: "blank", answer: "卫星" },
+            { kind: "text", text: "。" }
+          ] },
+          { kind: "line", prefix: "5、", segments: [
+            { kind: "text", text: "在扁长轨道上绕太阳运行且一种质量很小的天体类型" },
+            { kind: "blank", answer: "彗星" },
+            { kind: "text", text: "。" }
+          ] },
+          { kind: "line", prefix: "以上这些天体统称为", segments: [
+            { kind: "blank", answer: "自然天体" },
+            { kind: "text", text: "。" }
+          ] },
+          { kind: "line", prefix: "除此之外，还有人类制造并发射进入太空运行的天体，被称为", segments: [
+            { kind: "blank", answer: "人造天体" }
+          ] }
         ]
       },
       {
-        id: "celestial-types",
-        type: "cloze",
-        title: "天体的分类",
-        target: "celestial",
-        parts: [
-          { kind: "text", text: "天体分为" },
-          { kind: "blank", answer: "自然天体" },
-          { kind: "text", text: "（星云、恒星、行星、卫星、流星体、彗星）和" },
-          { kind: "blank", answer: "人造天体" },
-          { kind: "text", text: "（人造卫星、载人飞船）两大类。" }
+        heading: "二、天体的判别",
+        blocks: [
+          { kind: "columns", cols: [
+            [
+              { kind: "line", prefix: "1、", segments: [
+                { kind: "text", text: "判断天体的三个标准：" }
+              ] },
+              { kind: "line", prefix: "①", segments: [ { kind: "blank", answer: "是物质（有质量、占空间）" } ] },
+              { kind: "line", prefix: "②", segments: [ { kind: "blank", answer: "位于大气层之外（在太空中运行）" } ] },
+              { kind: "line", prefix: "③", segments: [ { kind: "blank", answer: "独立运行、有自身的运动轨道" } ] }
+            ],
+            [
+              { kind: "line", prefix: "2、", segments: [
+                { kind: "text", text: "请判断下列物质哪些是天体，哪些不是" }
+              ] },
+              { kind: "judge", items: [
+                { name: "流星体", isCelestial: true, explain: "在太空中运行，是天体。" },
+                { name: "流星现象", isCelestial: false, explain: "发生在大气层内，是现象，不是天体。" },
+                { name: "陨石", isCelestial: false, explain: "已落到地面，不属于天体。" },
+                { name: "火星车", isCelestial: false, explain: "依附在火星表面，不是独立运行的天体。" },
+                { name: "空间站", isCelestial: true, explain: "在太空中运行，是人造天体。" }
+              ] }
+            ]
+          ] }
         ]
       },
       {
-        id: "celestial-judge",
-        type: "cloze",
-        title: "天体的判别三条件",
-        target: "meteor",
-        parts: [
-          { kind: "text", text: "①" },
-          { kind: "blank", answer: "是物质" },
-          { kind: "text", text: "（有质量、占空间）；②位于" },
-          { kind: "blank", answer: "大气层" },
-          { kind: "text", text: "之外；③" },
-          { kind: "blank", answer: "独立" },
-          { kind: "text", text: "运行、有自身轨道。" }
+        heading: "三、天体系统",
+        blocks: [
+          { kind: "line", prefix: "1、", segments: [
+            { kind: "text", text: "概念：天体之间相互" },
+            { kind: "blank", answer: "吸引" },
+            { kind: "text", text: "、相互" },
+            { kind: "blank", answer: "绕转" },
+            { kind: "text", text: "，构成不同级别的天体系统。" }
+          ] },
+          { kind: "line", segments: [
+            { kind: "text", text: "天体系统从大到小依次是：" },
+            { kind: "blank", answer: "可观测宇宙" },
+            { kind: "sep", text: "→" },
+            { kind: "blank", answer: "银河系" },
+            { kind: "sep", text: "→" },
+            { kind: "blank", answer: "太阳系" },
+            { kind: "sep", text: "→" },
+            { kind: "blank", answer: "地月系" }
+          ] }
         ]
       },
       {
-        id: "system-levels",
-        type: "cloze",
-        title: "天体系统的四级层级",
-        target: "hierarchy",
-        parts: [
-          { kind: "text", text: "由低到高：" },
-          { kind: "blank", answer: "地月系" },
-          { kind: "text", text: " → 太阳系 → " },
-          { kind: "blank", answer: "银河系" },
-          { kind: "text", text: " → " },
-          { kind: "blank", answer: "可观测宇宙" },
-          { kind: "text", text: "。" }
+        heading: "四、太阳系与八大行星",
+        blocks: [
+          { kind: "line", prefix: "1.", segments: [
+            { kind: "text", text: "太阳系示意图" }
+          ] },
+          { kind: "line", segments: [
+            { kind: "text", text: "八大行星距太阳由近及远的顺序是：" },
+            { kind: "blank", answer: "水星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "金星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "地球" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "火星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "木星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "土星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "天王星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "海王星" }
+          ] },
+          { kind: "line", prefix: "2.", segments: [
+            { kind: "text", text: "八颗行星的分类" }
+          ] },
+          { kind: "line", prefix: "类地行星：", segments: [
+            { kind: "blank", answer: "水星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "金星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "地球" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "火星" }
+          ] },
+          { kind: "line", prefix: "巨行星：", segments: [
+            { kind: "blank", answer: "木星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "土星" }
+          ] },
+          { kind: "line", prefix: "远日行星：", segments: [
+            { kind: "blank", answer: "天王星" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "海王星" }
+          ] },
+          { kind: "line", prefix: "3.", segments: [
+            { kind: "text", text: "小行星带位于" },
+            { kind: "blank", answer: "火星" },
+            { kind: "text", text: "和" },
+            { kind: "blank", answer: "木星" },
+            { kind: "text", text: "的运行轨道之间。" }
+          ] },
+          { kind: "line", prefix: "4.", segments: [
+            { kind: "text", text: "八大行星的运动特征？" }
+          ] },
+          { kind: "line", prefix: "①", segments: [ { kind: "blank", answer: "同向性" } ] },
+          { kind: "line", prefix: "②", segments: [ { kind: "blank", answer: "近圆性" } ] },
+          { kind: "line", prefix: "③", segments: [ { kind: "blank", answer: "共面性" } ] }
         ]
       },
       {
-        id: "planets-motion",
-        type: "cloze",
-        title: "八大行星的运动三性",
-        target: "planets",
-        parts: [
-          { kind: "text", text: "绕日公转共同特征：" },
-          { kind: "blank", answer: "同向性" },
-          { kind: "text", text: "（都自西向东）、" },
-          { kind: "blank", answer: "近圆性" },
-          { kind: "text", text: "（轨道近似圆形）、" },
-          { kind: "blank", answer: "共面性" },
-          { kind: "text", text: "（轨道面几乎共面）。" }
+        heading: "四、地球的普通性和特殊性",
+        blocks: [
+          { kind: "line", prefix: "1、普通性：", segments: [
+            { kind: "text", text: "从" },
+            { kind: "blank", answer: "距日远近" },
+            { kind: "sep", text: "、" },
+            { kind: "blank", answer: "自身的体积" },
+            { kind: "text", text: "，还是从" },
+            { kind: "blank", answer: "公转方式" },
+            { kind: "text", text: "来看，地球都只是太阳系中一颗普通的行星" }
+          ] },
+          { kind: "line", prefix: "2、特殊性：", segments: [
+            { kind: "text", text: "根据人类目前所掌握的宇宙信息，地球是八颗行星中唯一存在" },
+            { kind: "blank", answer: "高级智慧生命" },
+            { kind: "text", text: "的星球" }
+          ] }
         ]
       },
       {
-        id: "life-reason",
-        type: "cloze",
-        title: "地球存在生命的原因",
-        target: "life",
-        parts: [
-          { kind: "text", text: "包括" },
-          { kind: "blank", answer: "外部" },
-          { kind: "text", text: "条件（太阳稳定、大小行星各行其道）和" },
-          { kind: "blank", answer: "自身" },
-          { kind: "text", text: "条件（温度适宜、大气适宜、液态水）。" }
+        heading: "五、地球存在生命的条件：",
+        blocks: [
+          { kind: "columns", cols: [
+            [
+              { kind: "sub", text: "（一）外部条件" },
+              { kind: "line", prefix: "①", segments: [ { kind: "blank", answer: "太阳光照稳定" } ] },
+              { kind: "line", prefix: "②", segments: [ { kind: "blank", answer: "大小行星各行其道（宇宙环境安全）" } ] }
+            ],
+            [
+              { kind: "sub", text: "（二）内部条件" },
+              { kind: "line", prefix: "①", segments: [ { kind: "blank", answer: "日地距离适中，温度适宜" } ] },
+              { kind: "line", prefix: "②", segments: [ { kind: "blank", answer: "体积和质量适中，有适宜的大气" } ] },
+              { kind: "line", prefix: "③", segments: [ { kind: "blank", answer: "存在液态水" } ] }
+            ]
+          ] }
         ]
       }
     ]
   },
 
-  /* ---------------- M10 拓展材料（按模块） ---------------- */
+  /* ---------------- 拓展材料（按模块） ---------------- */
   extends: {
     M1: {
       title: "宇宙的更多奥秘",
@@ -244,7 +370,7 @@ export const lessonData: LessonData = {
         "恒星为什么会发光？恒星内部的氢在高温高压下发生核聚变，把氢\"烧\"成氦，同时释放出巨大的光和热——太阳就是这样发光的。"
       ]
     },
-    M5: {
+    M4: {
       title: "其他行星系案例",
       content: [
         "木星的伽利略卫星系统：木星有 90 多颗卫星，其中最亮的四颗（木卫一至木卫四）是伽利略在 1610 年发现的。",
@@ -252,13 +378,21 @@ export const lessonData: LessonData = {
         "仙女座星系：距离银河系约 250 万光年的河外星系，是肉眼可见的最遥远天体之一。"
       ]
     },
-    M6: {
+    M5: {
       title: "行星数据对比",
       content: [
         "体积最大的是木星，约相当于地球的 1300 倍；最小的是水星。",
         "公转周期：水星约 88 天，地球 1 年，海王星约 165 年——离太阳越远，公转一周越久。",
         "距日距离：水星最近，海王星最远，约是水星距日的 40 倍。",
         "注：上图为示意图，行星大小与轨道间距均未按真实比例绘制。"
+      ]
+    },
+    M7: {
+      title: "轨道倾角与偏心率",
+      content: [
+        "轨道倾角：行星公转轨道面与黄道面（地球公转轨道面）的夹角。八颗行星都小于 7°，所以轨道几乎共面。",
+        "偏心率：描述轨道“扁”的程度，等于两焦点距离与长轴之比；0 为正圆，越大越扁。八颗行星都小于 0.21，所以轨道近似正圆。",
+        "地球的倾角为 0°、偏心率为 0.017，都落在八颗行星的普通区间——它并不因为“特殊”而拥有异常的轨道。"
       ]
     },
     M8: {
@@ -333,7 +467,7 @@ export const lessonData: LessonData = {
       type: "drag",
       intro: "运用判别三条件（是物质 · 大气层之外 · 独立个体），把下面的案例分别拖入\"天体\"或\"非天体\"框中，检验你的判别能力。"
     },
-    M5: {
+    M4: {
       title: "天体系统层级 · 随堂练习",
       intro: "完成下面的小题，检验你对天体系统层级的理解。",
       questions: [
@@ -357,7 +491,7 @@ export const lessonData: LessonData = {
         }
       ]
     },
-    M6: {
+    M5: {
       title: "太阳系与八大行星 · 随堂练习",
       intro: "结合太阳系演示，选出正确答案。",
       questions: [
@@ -381,7 +515,7 @@ export const lessonData: LessonData = {
         }
       ]
     },
-    M7: {
+    M6: {
       title: "行星的运动特征 · 随堂练习",
       intro: "完成下面的小题，检验你对行星运动三性（同向性、近圆性、共面性）的掌握。",
       questions: [
@@ -402,6 +536,42 @@ export const lessonData: LessonData = {
           options: ["同向性", "近圆性", "共面性", "偏心率"],
           answer: 2,
           explain: "轨道面几乎位于同一平面，体现了共面性。"
+        }
+      ]
+    },
+    M7: {
+      title: "地球的普通性和特殊性 · 随堂练习",
+      intro: "结合地球的结构特征（体积、质量）与运动特征，完成下面的小题。",
+      questions: [
+        {
+          q: "地球与类地行星（水星、金星、火星）在体积、质量等方面极其相似，这属于地球的？",
+          options: ["运动特征", "结构特征", "特殊性", "天体系统特征"],
+          answer: 1,
+          explain: "与类地行星在体积、质量等方面相似，属于地球的\"结构特征\"。"
+        },
+        {
+          q: "八大行星的轨道面与黄道面的夹角都很小（地球为 0°），这直接支持了行星公转的？",
+          options: ["同向性", "近圆性", "共面性", "随机性"],
+          answer: 2,
+          explain: "轨道面与黄道面夹角小，说明各行星轨道面接近重合、几乎位于同一平面，支持共面性。"
+        },
+        {
+          q: "行星公转轨道的偏心率越小，说明轨道？",
+          options: ["越接近正圆", "越接近直线", "方向越不一致", "倾角越大"],
+          answer: 0,
+          explain: "偏心率越小，轨道越接近正圆；八颗行星偏心率都很小，体现近圆性。"
+        },
+        {
+          q: "从结构特征（体积、质量）和运动特征（同向性、共面性、近圆性）看，地球是？",
+          options: ["太阳系中体积最大的行星", "太阳系中一颗普通的行星", "公转方向相反的行星", "唯一有卫星的行星"],
+          answer: 1,
+          explain: "从结构特征和运动特征看，地球都只是太阳系中一颗普通的行星。"
+        },
+        {
+          q: "八颗行星中，唯一存在高级智慧生命的是？",
+          options: ["火星", "金星", "地球", "木星"],
+          answer: 2,
+          explain: "地球是八颗行星中唯一存在高级智慧生命的星球，这是它的特殊性。"
         }
       ]
     },

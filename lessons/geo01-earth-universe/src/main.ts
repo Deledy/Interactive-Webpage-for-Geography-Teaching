@@ -11,6 +11,7 @@ import { initHierarchy } from './modules/hierarchy'
 import { initSolarSystem } from './modules/solar'
 import { initMotionFeatures } from './modules/planets'
 import { initOrbitDemo } from './modules/orbit'
+import { initEarth } from './modules/earth'
 import { initLifeChain } from './modules/life'
 import { initReviewTree } from './modules/review'
 import { initReviewCards } from './modules/reviewCards'
@@ -29,6 +30,7 @@ export function init(): void {
   initSolarSystem();
   initMotionFeatures();
   initOrbitDemo();
+  initEarth();
   initLifeChain();
   initReviewTree();
   initReviewCards();

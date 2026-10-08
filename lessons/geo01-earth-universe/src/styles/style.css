@@ -1202,15 +1202,14 @@ body.review-mode .section__desc { display: none; }
 body.review-mode .section:not(#review) .section__body,
 body.review-mode .section:not(#review) .extend-btn { display: none; }
 
-/* ---------- 11b. 复习卡（知识点挖空 + 跳转返回） ---------- */
-.review-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
+/* ---------- 11b. 复习文档（从左到右阅读式挖空） ---------- */
+.review-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
   margin-top: 32px;
 }
-.review-cards__placeholder {
-  grid-column: 1 / -1;
+.review-doc__placeholder {
   margin: 0;
   padding: 40px 16px;
   color: var(--text-dim);
@@ -1220,69 +1219,56 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   border-radius: var(--radius-card);
 }
 
-.review-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-card);
-  padding: 22px 24px;
-  backdrop-filter: blur(6px);
-  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+.review-sec + .review-sec {
+  border-top: 1px solid var(--glass-border);
+  padding-top: 24px;
 }
-.review-card:hover {
-  border-color: var(--blue-border);
-  transform: translateY(-2px);
-}
-
-.review-card__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.review-card__title {
-  margin: 0;
-  font-size: var(--fs-note);
-  font-weight: 600;
+.review-sec__heading {
+  margin: 0 0 14px;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--text-main);
+  line-height: 1.4;
+}
+.review-line {
+  margin: 0 0 10px;
+  font-size: var(--fs-body);
+  line-height: 2;
+  color: var(--text-main);
+}
+.review-line__prefix {
+  font-weight: 600;
+  color: var(--cyan-text);
+}
+.review-sub {
+  margin: 18px 0 8px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--cyan-text);
   line-height: 1.5;
 }
-.review-card__jump {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  background: rgba(13, 35, 76, 0.72);
-  border: 1px solid var(--blue-border);
-  color: var(--cyan-text);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 999px;
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+
+/* 左右并排（如“三个标准”与“判断练习”、“外部条件”与“内部条件”） */
+.review-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
 }
-.review-card__jump:hover {
-  background: var(--blue-soft);
-  border-color: var(--blue);
-}
-.review-card__jump-ico {
-  width: 14px;
-  height: 14px;
+.review-col > :last-child { margin-bottom: 0; }
+
+/* 空与空之间的间隔符号：给前后留出呼吸间距 */
+.review-sep {
+  display: inline-block;
+  margin: 0 6px;
+  color: var(--text-dim);
 }
 
-.review-card__body {
-  margin: 0;
-  font-size: var(--fs-body);
-  line-height: 2.1;
-  color: var(--text-main);
-}
 .cloze-text { color: var(--text-dim); }
 .cloze-blank {
   display: inline-block;
-  min-width: 4.5em;
+  min-width: 3.4em;
   text-align: center;
-  color: transparent;                    /* 初始隐藏答案 */
   background: rgba(255, 255, 255, 0.04);
   border: none;
   border-bottom: 1.5px dashed var(--slate-border);
@@ -1293,46 +1279,81 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   line-height: inherit;
   cursor: pointer;
   vertical-align: baseline;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  user-select: none;                     /* 选中复制时不带出答案 */
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.cloze-blank::after {
+  content: attr(data-answer);            /* 答案由伪元素呈现，伪元素内容不参与复制 */
+  color: transparent;                    /* 未揭示时隐藏 */
+  transition: color var(--dur) var(--ease);
 }
 .cloze-blank:hover {
   border-color: var(--cyan);
   background: rgba(79, 195, 247, 0.08);
 }
 .cloze-blank.is-revealed {
-  color: var(--gold);
   border-bottom-color: var(--gold);
   background: rgba(255, 213, 79, 0.08);
 }
+.cloze-blank.is-revealed::after { color: var(--gold); }
 
-/* 返回复习：跳转后出现的固定按钮 */
-.review-return {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 60;
-  display: inline-flex;
+/* 判断题型（天体判别）：点击单项揭示「天体 / 非天体」与原因 */
+.judge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.judge-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 8px;
-  background: rgba(13, 35, 76, 0.9);
-  border: 1px solid var(--gold);
-  color: var(--gold);
+  gap: 8px 12px;
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.judge-item:hover {
+  border-color: var(--blue-border);
+  background: rgba(79, 195, 247, 0.06);
+}
+.judge-item__name {
+  font-size: var(--fs-body);
+  color: var(--text-main);
+  font-weight: 600;
+}
+.judge-item__verdict {
+  display: none;
   font-size: var(--fs-note);
   font-weight: 600;
+  line-height: 1;
+  padding: 5px 12px;
   border-radius: 999px;
-  padding: 12px 20px;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(12px);
-  pointer-events: none;
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid transparent;
 }
-.review-return svg { width: 16px; height: 16px; }
-.review-return.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+.judge-item__explain {
+  display: none;
+  grid-column: 1 / -1;
+  font-size: var(--fs-note);
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+.judge-item.is-revealed .judge-item__verdict { display: inline-block; }
+.judge-item.is-revealed .judge-item__explain { display: block; }
+.judge-item[data-celestial="1"] .judge-item__verdict {
+  color: var(--cyan);
+  border-color: rgba(79, 195, 247, 0.5);
+  background: rgba(79, 195, 247, 0.12);
+}
+.judge-item[data-celestial="0"] .judge-item__verdict {
+  color: var(--warn);
+  border-color: rgba(255, 183, 77, 0.5);
+  background: rgba(255, 183, 77, 0.12);
 }
 
 /* ---------- 12. 响应式 ---------- */
@@ -1379,6 +1400,7 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
 @media (max-width: 1024px) {
   .card-grid { grid-template-columns: repeat(2, 1fr); }
   .split { grid-template-columns: 1fr; }
+  .review-cols { grid-template-columns: 1fr; gap: 16px; }
 }
 
 @media (max-width: 768px) {
@@ -4849,4 +4871,187 @@ body.review-mode #review { padding-top: 40px; }
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+/* ============================================================
+   M7 地球的普通性和特殊性（.earth- 前缀）
+   双卡（普通性 / 特殊性）：结构特征对比条 + 运动特征三性 + 表 1.2 + 结论条
+   ============================================================ */
+.earth { display: block; }
+
+/* 无 JS 静态兜底 */
+.earth__static { display: block; }
+
+/* 主体：普通性、特殊性自上而下顺序（水平）排布 */
+.earth__dual {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.earth-card {
+  padding: 24px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.earth-card--ordinary { border-color: rgba(79, 195, 247, 0.35); }
+.earth-card--special {
+  border-color: rgba(255, 213, 79, 0.45);
+  background: rgba(255, 213, 79, 0.06);
+}
+
+.earth-card__head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.earth-card__badge {
+  flex: none;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.earth-card--ordinary .earth-card__badge { color: var(--cyan); background: rgba(79, 195, 247, 0.14); }
+.earth-card--special .earth-card__badge { color: var(--gold); background: rgba(255, 213, 79, 0.16); }
+.earth-card__lead { margin: 0; font-size: var(--fs-note); color: var(--text-dim); }
+
+.earth-feature + .earth-feature { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--glass-border); }
+.earth-feature__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--text-main);
+}
+.earth-feature__no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(79, 195, 247, 0.14);
+}
+.earth-feature__desc { margin: 0 0 14px; font-size: var(--fs-note); line-height: var(--lh-body); color: var(--text-dim); }
+
+/* 结构特征：体积 / 质量 两组对比条 */
+.earth-struct { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.earth-bars { min-width: 0; }
+.earth-bars__title {
+  margin: 0 0 12px;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--cyan);
+}
+.earth-bars__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.earth-bar {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: background var(--dur) var(--ease);
+}
+.earth-bar.is-focused { background: rgba(255, 213, 79, 0.1); }
+.earth-bar__name { font-size: 15px; color: var(--text-dim); }
+.earth-bar.is-focused .earth-bar__name { color: var(--gold); font-weight: 700; }
+.earth-bar__track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.earth-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 195, 247, 0.5), rgba(79, 195, 247, 0.9));
+  transition: width var(--dur) var(--ease);
+}
+.earth-bar__fill.is-earth { background: linear-gradient(90deg, rgba(255, 213, 79, 0.55), var(--gold)); }
+.earth-bar__value { font-size: 14px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums; }
+
+/* 运动特征：三性 */
+.earth-motion {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.earth-motion__item { display: flex; gap: 10px; align-items: baseline; font-size: var(--fs-note); line-height: var(--lh-body); }
+.earth-motion__name {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(79, 195, 247, 0.12);
+}
+.earth-motion__desc { color: var(--text-dim); }
+
+/* 表 1.2（横向可滚动，仅无 JS 静态兜底使用） */
+.earth__table-panel { overflow-x: auto; }
+.earth-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-note);
+  color: var(--text-main);
+}
+.earth-table caption {
+  caption-side: top;
+  padding: 0 0 12px;
+  font-size: var(--fs-note);
+  color: var(--text-dim);
+  text-align: left;
+}
+.earth-table th,
+.earth-table td {
+  padding: 10px 8px;
+  border: 1px solid var(--glass-border);
+  text-align: center;
+  white-space: nowrap;
+}
+.earth-table thead th,
+.earth-table tbody th[scope="row"] {
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.04);
+}
+.earth-table tbody th[scope="row"] { color: var(--text-dim); }
+.earth-table .is-earth { color: var(--gold); }
+.earth-table thead th.is-earth { background: rgba(255, 213, 79, 0.1); }
+
+/* 结论条：普通性（青）/ 特殊性（金） */
+.earth-card__statement { margin: 0 0 18px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-main); }
+.earth-card__conclusion {
+  margin: 20px 0 0;
+  padding: 14px 18px;
+  border-radius: var(--radius-card);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: var(--lh-body);
+  color: var(--text-main);
+}
+.earth-card--ordinary .earth-card__conclusion { border: 1px solid rgba(79, 195, 247, 0.4); background: rgba(79, 195, 247, 0.08); }
+.earth-card--special .earth-card__conclusion { border: 1px solid rgba(255, 213, 79, 0.5); background: rgba(255, 213, 79, 0.1); }
+
+/* 窄屏：结构对比条两组改纵向 */
+@media (max-width: 768px) {
+  .earth-struct { grid-template-columns: 1fr; gap: 20px; }
+  .earth-bar { grid-template-columns: 44px minmax(0, 1fr) 42px; }
 }

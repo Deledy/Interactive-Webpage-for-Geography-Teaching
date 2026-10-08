@@ -38,7 +38,7 @@ export interface MeteorCase {
   conclusion: string
 }
 
-/** M4 拖拽分类案例卡 */
+/** M3 拖拽分类案例卡 */
 export interface DragCard {
   id: string
   name: string
@@ -46,7 +46,7 @@ export interface DragCard {
   explain: string
 }
 
-/** M5 天体系统层级 */
+/** M4 天体系统层级 */
 export interface HierarchyLevel {
   id: string
   name: string
@@ -54,10 +54,10 @@ export interface HierarchyLevel {
   example: string
 }
 
-/** M6 八大行星分类键（对应类地 / 巨 / 远日三组，用于分类主题色） */
+/** M5 八大行星分类键（对应类地 / 巨 / 远日三组，用于分类主题色） */
 export type PlanetTypeKey = 'terrestrial' | 'giant' | 'outer'
 
-/** M6 八大行星 */
+/** M5 八大行星 */
 export interface Planet {
   id: string
   name: string
@@ -75,10 +75,39 @@ export interface Planet {
   desc: string
 }
 
-/** M7 行星运动特征 */
+/** M6 行星运动特征 */
 export interface MotionFeature {
   name: string
   desc: string
+}
+
+/** M7 结构特征：类地行星相对地球的体积 / 质量（一行 = 一颗类地行星，地球 = 1） */
+export interface TerrestrialBody {
+  id: string
+  name: string
+  /** 体积，相对地球（地球 = 1） */
+  volume: number
+  /** 质量，相对地球（地球 = 1） */
+  mass: number
+}
+
+/** M7 地球的普通性和特殊性 */
+export interface EarthOrdinaryData {
+  /** 结构特征：类地行星体积 / 质量对比（地球 = 1） */
+  structure: {
+    /** 结构特征描述句 */
+    note: string
+    /** 类地行星数据（按距日由近及远） */
+    bodies: TerrestrialBody[]
+  }
+  /** 运动特征描述句（三性复用 lessonData.motionFeatures） */
+  motionNote: string
+  /** 普通性结论 */
+  ordinaryConclusion: string
+  /** 特殊性陈述句 */
+  specialStatement: string
+  /** 特殊性结论 */
+  specialConclusion: string
 }
 
 /** M8 因果链单项 */
@@ -100,28 +129,38 @@ export interface ReviewNode {
   children?: ReviewNode[]
 }
 
-/** M9 复习卡 · 挖空片段 */
-export interface ReviewClozePart {
-  kind: 'text' | 'blank'
-  text?: string    // kind === 'text' 时的正文
-  answer?: string  // kind === 'blank' 时的答案
+/** M9 复习文档 · 行内片段（文本 / 挖空 / 空与空之间的间隔符号） */
+export type ReviewSegment =
+  | { kind: 'text'; text: string }
+  | { kind: 'blank'; answer: string }
+  | { kind: 'sep'; text: string }
+
+/** M9 复习文档 · 判断练习单项（天体判别） */
+export interface ReviewJudgeItem {
+  name: string
+  isCelestial: boolean
+  explain: string
 }
 
-/** M9 复习卡（当前仅挖空题型，预留拖拽 / 演示图题型） */
-export interface ReviewCard {
-  id: string
-  type: 'cloze'
-  title: string   // 知识点名称
-  target: string  // 跳转目标 section 的 id
-  parts: ReviewClozePart[]
+/** M9 复习文档 · 内容块 */
+export type ReviewBlock =
+  | { kind: 'line'; prefix?: string; segments: ReviewSegment[] }
+  | { kind: 'sub'; text: string }
+  | { kind: 'judge'; items: ReviewJudgeItem[] }
+  | { kind: 'columns'; cols: ReviewBlock[][] }   // 左右并排
+
+/** M9 复习文档 · 节（严格对应知识点清单的一、二、三…） */
+export interface ReviewSection {
+  heading: string
+  blocks: ReviewBlock[]
 }
 
 export interface ReviewData {
   nodes: ReviewNode[]
-  cards: ReviewCard[]
+  sections: ReviewSection[]
 }
 
-/** M10 拓展材料 */
+/** 拓展材料（各模块右上角“拓展”入口，占模块编号之外） */
 export interface ExtendItem {
   title: string
   content: string[]
@@ -161,6 +200,7 @@ export interface LessonData {
   hierarchy: HierarchyLevel[]
   planets: Planet[]
   motionFeatures: MotionFeature[]
+  earthOrdinary: EarthOrdinaryData
   lifeConditions: LifeConditions
   review: ReviewData
   extends: Record<string, ExtendItem>

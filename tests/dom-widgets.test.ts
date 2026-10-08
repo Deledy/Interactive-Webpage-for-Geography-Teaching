@@ -12,6 +12,7 @@ import { initMeteorCase } from '../lessons/geo01-earth-universe/src/modules/mete
 import { initHierarchy } from '../lessons/geo01-earth-universe/src/modules/hierarchy'
 import { initLifeChain } from '../lessons/geo01-earth-universe/src/modules/life'
 import { initMotionFeatures } from '../lessons/geo01-earth-universe/src/modules/planets'
+import { initEarth } from '../lessons/geo01-earth-universe/src/modules/earth'
 import { initReviewTree } from '../lessons/geo01-earth-universe/src/modules/review'
 import { initPracticeModal } from '../lessons/geo01-earth-universe/src/modules/practiceModal'
 import { initExtendModal } from '../lessons/geo01-earth-universe/src/modules/extendModal'
@@ -50,6 +51,7 @@ describe('无 JS 静态降级（兼容性）', () => {
     expect(document.querySelectorAll('#meteor-conditions .condition-item.is-lit').length).toBe(3)
     expect(document.querySelectorAll('#life-chain .chain').length).toBe(5)
     expect(document.querySelector('#orbit-viewport .panel__placeholder')).toBeTruthy()
+    expect(document.querySelector('#earth-table .earth-table--static')).toBeTruthy()
   })
 })
 
@@ -152,7 +154,7 @@ describe('M3 流星案例（循环动画 + 静态判别条件）', () => {
   })
 })
 
-describe('M5 天体系统层级（聚焦切换）', () => {
+describe('M4 天体系统层级（聚焦切换）', () => {
   it('渲染 4 层圆环，可上下级切换并更新信息区', () => {
     initHierarchy()
     expect(document.querySelectorAll('.hier-ring')).toHaveLength(4)
@@ -175,13 +177,13 @@ describe('M8 生命条件因果链（静态分组）', () => {
     initLifeChain()
     expect(document.querySelectorAll('.life-panel')).toHaveLength(2)
     expect(document.querySelectorAll('.chain')).toHaveLength(5)
-    const tags = Array.from(document.querySelectorAll('.life-panel__title .tag')).map(t => t.textContent)
-    expect(tags).toEqual(['外部条件', '自身条件'])
+    const titles = Array.from(document.querySelectorAll('.life-panel__title')).map(t => t.textContent?.trim())
+    expect(titles).toEqual(['外部条件', '自身条件'])
     expect(document.getElementById('life-conclusion')!.textContent).toContain('共同作用')
   })
 })
 
-describe('M7 行星的运动特征', () => {
+describe('M6 行星的运动特征', () => {
   it('渲染同向性、近圆性、共面性三张特征卡，并由按钮联动高亮', () => {
     initMotionFeatures()
     expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
@@ -208,6 +210,22 @@ describe('M7 行星的运动特征', () => {
     expect(document.querySelectorAll('.motion-feature.is-active')).toHaveLength(1)
     expect(document.querySelector('.motion-feature.is-active .motion-feature__name')!.textContent)
       .toBe('同向性')
+  })
+})
+
+describe('M7 地球的普通性和特殊性（普通性 / 特殊性）', () => {
+  it('渲染结构对比条与三性，普通性 / 特殊性上下排布，表 1.2 已移除', () => {
+    initEarth()
+    const box = document.getElementById('earth-table')!
+    // 结构特征：体积 / 质量 两组 × 4 颗类地行星
+    expect(box.querySelectorAll('.earth-bar')).toHaveLength(8)
+    // 运动特征：三性
+    expect(box.querySelectorAll('.earth-motion__item')).toHaveLength(3)
+    // 普通性 / 特殊性两张卡
+    expect(box.querySelector('.earth-card--ordinary')).toBeTruthy()
+    expect(box.querySelector('.earth-card--special')).toBeTruthy()
+    // 已删除表 1.2
+    expect(box.querySelector('.earth-table')).toBeNull()
   })
 })
 
@@ -256,7 +274,7 @@ describe('随堂练习浮层', () => {
   })
 })
 
-describe('M10 拓展浮层', () => {
+describe('拓展浮层', () => {
   it('M1 拓展：打开浮层并渲染逐级放大演示（4 层圆环）', () => {
     initExtendModal()
     ;(document.querySelector('.extend-btn[data-section="M1"]') as HTMLElement).click()
@@ -266,7 +284,7 @@ describe('M10 拓展浮层', () => {
   })
 })
 
-describe('M6 太阳系（WebGL 缺失自动降级 2D）', () => {
+describe('M5 太阳系（WebGL 缺失自动降级 2D）', () => {
   it('jsdom 无 WebGL 时渲染 2D SVG 轨道图，点击行星更新信息', () => {
     initSolarSystem()
     expect(document.querySelector('.solar-svg')).toBeTruthy()
@@ -325,5 +343,6 @@ describe('整页启动冒烟', () => {
     expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
     expect(document.querySelector('.orbit2d')).toBeTruthy()
     expect(document.querySelectorAll('.chain')).toHaveLength(5)
+    expect(document.querySelectorAll('.earth-bar')).toHaveLength(8)
   })
 })
