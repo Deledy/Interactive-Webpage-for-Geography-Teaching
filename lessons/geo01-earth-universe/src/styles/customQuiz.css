@@ -1,0 +1,360 @@
+/* ============================================================
+   自定义练习（M10）
+   视觉沿用全课深空玻璃系统与设计令牌（style.css :root），
+   与 M9 复习、随堂练习浮层保持同一语言。
+   ============================================================ */
+
+.cq-intro {
+  margin: 0 0 28px;
+  color: var(--text-dim);
+  font-size: var(--fs-body);
+}
+
+/* 空态：数据文件缺失或未配置题目 */
+.cq-empty {
+  padding: 28px 32px;
+}
+.cq-empty__title {
+  margin: 0 0 10px;
+  color: var(--text-main);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+.cq-empty__text {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+  line-height: 1.7;
+}
+.cq-empty__issues {
+  margin: 14px 0 0;
+  padding-left: 20px;
+  color: var(--error);
+  font-size: var(--fs-note);
+  line-height: 1.8;
+}
+
+/* ---------- 分节 ---------- */
+.cq-sec {
+  margin-top: 8px;
+}
+.cq-sec + .cq-sec {
+  margin-top: 48px;
+}
+.cq-sec__title {
+  margin: 0 0 20px;
+  padding-left: 14px;
+  border-left: 4px solid var(--gold);
+  color: var(--text-main);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.cq-sec__qs {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---------- 单题卡片 ---------- */
+.cq-q {
+  padding: 24px 28px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(6px);
+}
+.cq-q__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cq-q__no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 50%;
+  background: rgba(255, 213, 79, 0.14);
+  color: var(--gold);
+  font-size: var(--fs-note);
+  font-weight: 700;
+}
+.cq-q__badge {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-border);
+  color: var(--blue);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+.cq-q__badge--essay {
+  background: rgba(255, 213, 79, 0.12);
+  border-color: rgba(255, 213, 79, 0.45);
+  color: var(--gold);
+}
+.cq-q__source {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.cq-q__material {
+  margin: 0 0 14px;
+  padding: 16px 18px;
+  background: rgba(11, 16, 38, 0.55);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 var(--radius-btn) var(--radius-btn) 0;
+}
+.cq-q__stem {
+  margin: 0 0 16px;
+  color: var(--text-main);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  font-weight: 600;
+}
+
+/* ---------- 选项 ---------- */
+.cq-q__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.cq-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-btn);
+  color: var(--text-main);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.cq-opt:hover:not(:disabled) {
+  border-color: var(--blue-border);
+  background: var(--blue-soft);
+}
+.cq-opt:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.cq-opt:disabled {
+  cursor: default;
+}
+.cq-opt__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+}
+.cq-opt__text {
+  padding-top: 1px;
+}
+.cq-opt.is-selected {
+  border-color: var(--blue-border);
+  background: var(--blue-soft);
+  box-shadow: 0 0 0 1px var(--blue-border) inset;
+}
+.cq-opt.is-correct {
+  border-color: var(--success);
+  background: rgba(102, 187, 106, 0.14);
+}
+.cq-opt.is-correct .cq-opt__key {
+  background: var(--success);
+  color: #06210a;
+}
+.cq-opt.is-wrong {
+  border-color: var(--error);
+  background: rgba(239, 83, 80, 0.14);
+}
+.cq-opt.is-wrong .cq-opt__key {
+  background: var(--error);
+  color: #2a0605;
+}
+.cq-opt.is-dim {
+  opacity: 0.5;
+}
+
+/* ---------- 判定条 ---------- */
+.cq-verdict {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 12px 18px;
+  border-radius: var(--radius-btn);
+  font-size: var(--fs-note);
+}
+.cq-verdict.is-right {
+  background: rgba(102, 187, 106, 0.14);
+  border: 1px solid rgba(102, 187, 106, 0.5);
+  color: #cdeed0;
+}
+.cq-verdict.is-wrong {
+  background: rgba(239, 83, 80, 0.14);
+  border: 1px solid rgba(239, 83, 80, 0.5);
+  color: #f6d0cf;
+}
+.cq-verdict__title {
+  font-weight: 700;
+}
+.cq-verdict__key b {
+  color: var(--gold);
+  font-size: 1.15em;
+}
+
+/* ---------- 解析 / 答案区 ---------- */
+.cq-detail {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cq-block {
+  padding: 16px 18px;
+  border-radius: var(--radius-btn);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.cq-block--answer {
+  border-color: rgba(255, 213, 79, 0.4);
+  background: rgba(255, 213, 79, 0.06);
+}
+.cq-block__title {
+  margin: 0 0 10px;
+  color: var(--cyan);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.cq-block--answer .cq-block__title {
+  color: var(--gold);
+}
+.cq-block__body {
+  color: var(--text-main);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+}
+
+.cq-knowledge__title {
+  margin: 0 0 8px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+.cq-knowledge__list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: var(--fs-note);
+  line-height: 1.6;
+}
+
+/* ---------- 设问 ---------- */
+.cq-stems {
+  margin: 0 0 18px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-main);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+}
+
+/* ---------- 操作按钮 ---------- */
+.cq-q__actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 14px;
+}
+
+/* ---------- 富文本：段落 / 表格 / 图片 / 列表 ---------- */
+.cq-p {
+  margin: 0 0 10px;
+  color: var(--text-main);
+  font-size: inherit;
+  line-height: 1.75;
+}
+.cq-p:last-child {
+  margin-bottom: 0;
+}
+.cq-q__material .cq-p {
+  color: var(--text-main);
+  font-size: var(--fs-body);
+}
+.cq-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px auto;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--glass-border);
+}
+.cq-link {
+  color: var(--cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cq-code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+.cq-list {
+  margin: 8px 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-main);
+  line-height: 1.7;
+}
+.cq-table-wrap {
+  margin: 12px 0;
+  overflow-x: auto;
+}
+.cq-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-note);
+}
+.cq-table th,
+.cq-table td {
+  padding: 10px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  text-align: left;
+  color: var(--text-main);
+}
+.cq-table th {
+  background: rgba(79, 195, 247, 0.12);
+  color: var(--cyan-text);
+  font-weight: 700;
+}
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 900px) {
+  .cq-q__options {
+    grid-template-columns: 1fr;
+  }
+  .cq-q {
+    padding: 20px 18px;
+  }
+}

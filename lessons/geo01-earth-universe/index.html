@@ -7,6 +7,7 @@
   <script>document.documentElement.classList.add('js');</script>
   <!-- Vite 入口：样式与脚本均由构建管线打包（开发时直接由 Vite 提供） -->
   <link rel="stylesheet" href="./src/styles/style.css">
+  <link rel="stylesheet" href="./src/styles/customQuiz.css">
 </head>
 <body>
   <!-- 全局星点背景：JS 开启时由 canvas 绘制并缓慢漂移；无 JS 时退化为 CSS 静态星点 -->
@@ -33,6 +34,7 @@
         <a href="#earth" data-target="earth">地球</a>
         <a href="#life" data-target="life">生命</a>
         <a href="#review" data-target="review">复习</a>
+        <a href="#quiz-custom" data-target="quiz-custom">练习</a>
       </nav>
       <!-- 全屏切换按钮：点击进入/退出全屏（JS 由 src/modules/fullscreen.ts 驱动） -->
       <button type="button" class="topnav__fs" id="fs-toggle" aria-label="进入全屏" title="进入全屏">
@@ -743,7 +745,7 @@
             <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
             <span>拓展</span>
           </button>
-          <button type="button" class="practice-btn" data-practice="M3" aria-haspopup="dialog">
+          <button type="button" class="practice-btn" data-practice="M3" data-practice-kind="drag" aria-haspopup="dialog">
             <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
             <span>练习</span>
           </button>
@@ -1029,54 +1031,144 @@
         </div>
       </div>
       <div class="section__body" data-module="earth">
-        <!-- 双卡结构（普通性 / 特殊性）：JS 启用时渲染为结构对比条 + 三性 + 表 1.2 交互；无 JS 时展示下方静态卡片 -->
+        <!-- 可视化：八大行星卡片组（深空导航蓝容器，贴图球体 + 名称胶囊，默认选中地球）+
+             两条证据卡（运动特征 = 太阳系绕日公转 3D 模型 / 结构特征 = 类地行星相对大小
+             3D 模型）+ 普通/特殊结论 -->
         <div id="earth-table" class="earth" data-widget="earth-table">
-          <!-- 无 JS 静态兜底：结构特征表 + 表 1.2 + 两组结论，可读、可打印 -->
+          <!-- 无 JS 静态兜底：与 JS 渲染同构，可读、可打印（JS 启用后该区域由同构卡片组
+               替换并以贴图球体呈现；球体直径 --d 与 JS 口径一致） -->
           <div class="earth__static">
-            <div class="earth__dual">
-              <article class="earth-card earth-card--ordinary">
-                <header class="earth-card__head">
-                  <span class="earth-card__badge">普通性</span>
-                  <p class="earth-card__lead">地球与类地行星、其余七颗行星在特征上高度相似。</p>
-                </header>
-                <section class="earth-feature">
-                  <h3 class="earth-feature__title"><span class="earth-feature__no">一</span>结构特征</h3>
-                  <p class="earth-feature__desc">地球与类地行星在体积、质量等方面极其相似（下表为相对地球的比值）。</p>
-                  <div class="earth__table-panel">
-                    <table class="earth-table earth-table--static">
-                      <caption>类地行星体积、质量（相对地球，地球 = 1）</caption>
-                      <thead>
-                        <tr>
-                          <th scope="col">行星名称</th>
-                          <th scope="col">水星</th><th scope="col">金星</th><th scope="col" class="is-earth">地球</th><th scope="col">火星</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr><th scope="row">体积</th><td>0.06</td><td>0.86</td><td class="is-earth">1.0</td><td>0.15</td></tr>
-                        <tr><th scope="row">质量</th><td>0.06</td><td>0.82</td><td class="is-earth">1.0</td><td>0.11</td></tr>
-                      </tbody>
-                    </table>
+            <div class="earth-viz">
+              <figure class="planet-deck" role="group" aria-label="太阳系八大行星卡片，默认选中地球">
+                <div class="planet-deck__row">
+                  <button type="button" class="planet-deck__card" data-planet="mercury" aria-pressed="false" style="--d:48px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__globe"></span></span>
+                    <span class="planet-deck__pill">水星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card" data-planet="venus" aria-pressed="false" style="--d:52px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__globe"></span></span>
+                    <span class="planet-deck__pill">金星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card is-selected" data-planet="earth" aria-pressed="true" style="--d:53px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__globe"></span></span>
+                    <span class="planet-deck__pill">地球</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card" data-planet="mars" aria-pressed="false" style="--d:50px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__globe"></span></span>
+                    <span class="planet-deck__pill">火星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card" data-planet="jupiter" aria-pressed="false" style="--d:74px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__globe"></span></span>
+                    <span class="planet-deck__pill">木星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card planet-deck__card--wide" data-planet="saturn" aria-pressed="false" style="--d:67px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__ring planet-deck__ring--back"></span><span class="planet-deck__globe"></span><span class="planet-deck__ring planet-deck__ring--front"></span></span>
+                    <span class="planet-deck__pill">土星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card" data-planet="uranus" aria-pressed="false" style="--d:58px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__globe"></span></span>
+                    <span class="planet-deck__pill">天王星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="planet-deck__card" data-planet="neptune" aria-pressed="false" style="--d:57px">
+                    <span class="planet-deck__scene" aria-hidden="true"><span class="planet-deck__ring planet-deck__ring--back"></span><span class="planet-deck__globe"></span><span class="planet-deck__ring planet-deck__ring--front"></span></span>
+                    <span class="planet-deck__pill">海王星</span>
+                    <span class="planet-deck__rule" aria-hidden="true"></span>
+                  </button>
+                </div>
+                <figcaption class="planet-deck__quote">
+                  <span class="planet-deck__quote-line" aria-hidden="true"></span>
+                  <span class="planet-deck__quote-gem" aria-hidden="true"></span>
+                  <span class="planet-deck__quote-text">地球，只是太阳系八颗行星中的一颗。</span>
+                  <span class="planet-deck__quote-gem" aria-hidden="true"></span>
+                  <span class="planet-deck__quote-line" aria-hidden="true"></span>
+                </figcaption>
+              </figure>
+              <div class="earth-evidences">
+                <article class="earth-evidence">
+                  <div class="earth-evidence__inner">
+                    <div class="earth-evidence__head">
+                      <span class="earth-evidence__badge earth-evidence__badge--motion" aria-hidden="true"></span>
+                      <h3 class="earth-evidence__title">运动特征</h3>
+                      <span class="earth-evidence__deco" aria-hidden="true"></span>
+                    </div>
+                    <p class="earth-evidence__desc"><span class="earth-evidence__dot" aria-hidden="true"></span>绕日公转的方向、轨道形状与轨道面，与其余七颗行星一致。</p>
+                    <div class="earth-evidence__figure" aria-hidden="true">
+                      <svg class="earth-evi-svg" viewBox="0 0 300 150" role="img" aria-label="八大行星在同一平面上沿近似圆形轨道同向绕日公转">
+                        <defs>
+                          <marker id="earth-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                            <path d="M0,0 L7,3.5 L0,7 z" fill="#FFD54F"/>
+                          </marker>
+                        </defs>
+                        <ellipse class="earth-orbit" cx="150" cy="78" rx="46" ry="15"/>
+                        <ellipse class="earth-orbit" cx="150" cy="78" rx="76" ry="25"/>
+                        <ellipse class="earth-orbit" cx="150" cy="78" rx="106" ry="35"/>
+                        <circle class="earth-orbit__dot" cx="183.1" cy="67.2" r="3"/>
+                        <circle class="earth-orbit__dot" cx="204.7" cy="60" r="3"/>
+                        <circle class="earth-orbit__dot" cx="226.3" cy="52.8" r="3"/>
+                        <path class="earth-dir" d="M 128 44 Q 150 32 172 44" marker-end="url(#earth-arrow)"/>
+                        <circle class="earth-orbit__sun" cx="150" cy="78" r="9" fill="#FFD54F"/>
+                      </svg>
+                    </div>
+                    <ul class="earth-evidence__tags">
+                      <li class="earth-evidence__tag">同向性</li>
+                      <li class="earth-evidence__tag">近圆性</li>
+                      <li class="earth-evidence__tag">共面性</li>
+                    </ul>
+                  </div>
+                </article>
+                <article class="earth-evidence">
+                  <div class="earth-evidence__inner">
+                    <div class="earth-evidence__head">
+                      <span class="earth-evidence__badge earth-evidence__badge--structure" aria-hidden="true"></span>
+                      <h3 class="earth-evidence__title">结构特征</h3>
+                      <span class="earth-evidence__deco" aria-hidden="true"></span>
+                    </div>
+                    <p class="earth-evidence__desc"><span class="earth-evidence__dot" aria-hidden="true"></span>体积、质量与类地行星相近，与金星最为接近。</p>
+                    <div class="earth-evidence__figure" aria-hidden="true">
+                      <svg class="earth-evi-svg" viewBox="0 0 300 150" role="img" aria-label="四颗类地行星的相对大小，地球与金星最接近">
+                        <circle class="earth-body__dot" cx="26.5" cy="66" r="12.5" fill="#b0b7c6"/>
+                        <rect class="earth-body__tag" x="3.5" y="87" width="46" height="20" rx="10"/>
+                        <text class="earth-body__label" x="26.5" y="101" text-anchor="middle">水星</text>
+                        <circle class="earth-body__dot" cx="91.5" cy="66" r="30.4" fill="#e6c87a"/>
+                        <rect class="earth-body__tag" x="68.5" y="104" width="46" height="20" rx="10"/>
+                        <text class="earth-body__label" x="91.5" y="118" text-anchor="middle">金星</text>
+                        <circle cx="175.9" cy="66" r="39" fill="none" stroke="rgba(79,158,255,0.5)" stroke-width="1.3"/>
+                        <circle class="earth-body__dot is-earth" cx="175.9" cy="66" r="32" fill="#4f9df7"/>
+                        <rect class="earth-body__tag is-earth" x="152.9" y="106" width="46" height="20" rx="10"/>
+                        <text class="earth-body__label is-earth" x="175.9" y="120" text-anchor="middle">地球</text>
+                        <circle class="earth-body__dot" cx="246.9" cy="66" r="17" fill="#d96c4f"/>
+                        <rect class="earth-body__tag" x="223.9" y="91" width="46" height="20" rx="10"/>
+                        <text class="earth-body__label" x="246.9" y="105" text-anchor="middle">火星</text>
+                      </svg>
+                    </div>
+                    <p class="earth-evidence__caption"><span class="earth-evidence__line" aria-hidden="true"></span>与类地行星同量级<span class="earth-evidence__line" aria-hidden="true"></span></p>
+                  </div>
+                </article>
+              </div>
+              <div class="earth-conclusion">
+                <div class="earth-verdict earth-verdict--ordinary">
+                  <div class="earth-verdict__inner">
+                    <span class="earth-verdict__medal" aria-hidden="true"></span>
+                    <p class="earth-verdict__text">所以，地球是一颗普通的行星。</p>
+                  </div>
+                </div>
+                <p class="earth-turn">然而——</p>
+                <section class="earth-verdict earth-verdict--special">
+                  <div class="earth-verdict__inner">
+                    <span class="earth-verdict__badge">特殊性</span>
+                    <p class="earth-verdict__statement">地球是太阳系八大行星中目前已知唯一存在高级智慧生命的星球。</p>
+                    <p class="earth-verdict__conclusion">所以，地球其实又是一颗特殊的行星。</p>
+                    <p class="earth-verdict__bridge">它为什么能孕育生命？→ 下一模块：地球存在生命的原因</p>
                   </div>
                 </section>
-                <section class="earth-feature">
-                  <h3 class="earth-feature__title"><span class="earth-feature__no">二</span>运动特征</h3>
-                  <p class="earth-feature__desc">地球与其余七颗行星具有同向性、共面性、近圆性。</p>
-                  <ul class="earth-motion">
-                    <li class="earth-motion__item"><span class="earth-motion__name">同向性</span><span class="earth-motion__desc">八大行星绕日公转的方向都是自西向东。</span></li>
-                    <li class="earth-motion__item"><span class="earth-motion__name">近圆性</span><span class="earth-motion__desc">行星绕日公转的轨道近似圆形。</span></li>
-                    <li class="earth-motion__item"><span class="earth-motion__name">共面性</span><span class="earth-motion__desc">行星轨道面几乎位于同一平面上。</span></li>
-                  </ul>
-                </section>
-                <p class="earth-card__conclusion">所以，地球是一颗普通的行星。</p>
-              </article>
-              <article class="earth-card earth-card--special">
-                <header class="earth-card__head">
-                  <span class="earth-card__badge">特殊性</span>
-                  <p class="earth-card__lead">在八颗行星中，地球独一无二。</p>
-                </header>
-                <p class="earth-card__statement">地球是太阳系八大行星中唯一存在高级智慧生命的星球。</p>
-                <p class="earth-card__conclusion">所以，地球其实又是一颗特殊的行星。</p>
-              </article>
+              </div>
             </div>
           </div>
         </div>
@@ -1225,6 +1317,35 @@
       </div>
       <!-- 模块结尾：分隔线 + 模块英文名 -->
       <p class="section__footer"><span class="section__footer-en">MODULE 09 · REVIEW &amp; SUMMARY</span></p>
+    </section>
+
+    <!-- ============ M10 自定义练习 ============ -->
+    <section id="quiz-custom" class="section" data-nav="练习">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">10</span>
+          </span>
+          <h2 class="section__title">自定义练习</h2>
+          <p class="section__desc">教师可按学情自行增删题目（选择题 / 综合题，支持表格与图片）。题目内容与答案解析来自外置的 custom-quiz.js，分发后无需重新构建即可替换。</p>
+        </div>
+        <div class="section__head-actions">
+          <a class="extend-btn" href="./custom-quiz-editor.html" target="_blank" rel="noopener">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.3 1.9a1.6 1.6 0 0 1 2.3 2.3L5 12.8l-3 .8.8-3 8.5-8.7z"/></svg>
+            <span>教师：配置题目</span>
+          </a>
+          <button type="button" class="extend-btn" data-cq-reset>
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5V6H10"/></svg>
+            <span>重做本页练习</span>
+          </button>
+        </div>
+      </div>
+      <div class="section__body" id="quiz-custom-body" data-widget="custom-quiz">
+        <p class="panel__placeholder">正在加载自定义练习…</p>
+      </div>
+      <!-- 模块结尾：分隔线 + 模块英文名 -->
+      <p class="section__footer"><span class="section__footer-en">MODULE 10 · CUSTOM PRACTICE</span></p>
     </section>
   </main>
 

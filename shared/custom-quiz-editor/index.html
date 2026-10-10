@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自定义练习编辑器 · 地理教学网页</title>
+<style>
+  :root {
+    --bg: #0b1026;
+    --panel: #121a38;
+    --panel-2: #0e1430;
+    --line: rgba(148,163,184,0.28);
+    --gold: #ffd54f;
+    --cyan: #4fc3f7;
+    --blue: #64b5f6;
+    --success: #66bb6a;
+    --error: #ef5350;
+    --text: #e8eaf6;
+    --dim: rgba(232,234,246,0.66);
+    --radius: 10px;
+    --font: "Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header.bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 20px;
+    background: rgba(11,16,38,0.92);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(8px);
+  }
+  header.bar h1 { margin: 0 16px 0 0; font-size: 18px; letter-spacing: 1px; }
+  header.bar .grow { flex: 1; }
+  .btn {
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--blue); background: rgba(100,181,246,0.14);
+    color: var(--blue); font-size: 14px; font-family: inherit;
+    transition: background .2s, transform .1s;
+  }
+  .btn:hover { background: rgba(100,181,246,0.26); }
+  .btn:active { transform: scale(.98); }
+  .btn--primary { background: var(--blue); color: #06122b; font-weight: 700; }
+  .btn--ghost { border-color: var(--line); background: transparent; color: var(--text); }
+  .btn--danger { border-color: var(--error); color: var(--error); background: rgba(239,83,80,0.1); }
+  .btn--sm { padding: 5px 10px; font-size: 13px; }
+
+  main { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; min-height: calc(100vh - 60px); }
+  .col { padding: 20px; overflow: auto; }
+  .col--edit { border-right: 1px solid var(--line); }
+  .col--preview { background: var(--panel-2); }
+
+  .meta-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px 12px; margin-bottom: 18px; }
+  .meta-grid label { align-self: center; color: var(--dim); font-size: 14px; }
+  input[type=text], input[type=url], select, textarea {
+    width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: rgba(255,255,255,0.04);
+    color: var(--text); font-family: inherit; font-size: 14px; line-height: 1.6;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+
+  .sec { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; background: var(--panel); }
+  .sec__head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .sec__head input { flex: 1; font-weight: 700; }
+
+  .q { border: 1px dashed var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; background: rgba(255,255,255,0.02); }
+  .q__head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q__badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); color: var(--dim); }
+  .q__badge.choice { color: var(--blue); border-color: rgba(100,181,246,.5); }
+  .q__badge.essay { color: var(--gold); border-color: rgba(255,213,79,.5); }
+  .q__head .grow { flex: 1; }
+
+  .field { margin-bottom: 10px; }
+  .field > .lbl { display: block; margin-bottom: 5px; color: var(--dim); font-size: 13px; }
+  .field .tools { display: flex; gap: 6px; margin-top: 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .opt { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .opt input[type=text].key { text-align: center; }
+
+  .answer-row { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .answer-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  .hint { color: var(--dim); font-size: 13px; margin: -4px 0 14px; }
+  .hint--ok { color: var(--success); }
+  .hint--warn { color: var(--gold); }
+  #validate-status { margin-top: -8px; }
+
+  /* 预览区 */
+  .preview { font-size: 15px; }
+  .preview .sec { background: transparent; border: none; padding: 0; margin-bottom: 26px; }
+  .preview .sec__title { color: var(--gold); font-size: 17px; margin: 0 0 12px; padding-left: 10px; border-left: 3px solid var(--gold); }
+  .preview .q { border: 1px solid var(--line); border-style: solid; background: rgba(255,255,255,0.03); }
+  .preview .no { display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px; border-radius:50%; background: rgba(255,213,79,.15); color: var(--gold); font-weight:700; margin-right:8px; font-size: 13px; }
+  .preview .material { padding: 12px 14px; background: rgba(11,16,38,.6); border-left: 3px solid var(--cyan); margin-bottom: 10px; }
+  .preview .stem { font-weight: 700; margin: 0 0 12px; }
+  .preview .options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .preview .opt-btn { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.03); }
+  .preview .opt-btn.correct { border-color: var(--success); background: rgba(102,187,106,.15); }
+  .preview .stems { margin: 0 0 12px; padding-left: 20px; }
+  .preview .answer { margin-top: 10px; padding: 12px 14px; border: 1px solid rgba(255,213,79,.4); background: rgba(255,213,79,.06); border-radius: 8px; }
+  .preview .answer h5 { margin: 0 0 6px; color: var(--gold); font-size: 14px; }
+  .preview table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  .preview th, .preview td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+  .preview th { background: rgba(79,195,247,.12); color: #bfe9ff; }
+  .preview img { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); margin: 8px 0; }
+  .preview code { background: rgba(255,255,255,.1); padding: 1px 5px; border-radius: 4px; }
+  .preview .p { margin: 0 0 8px; }
+  .preview .empty { color: var(--dim); }
+
+  .out {
+    width: 100%; min-height: 160px; margin-top: 10px;
+    font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+    background: #060b1e;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
+    padding: 10px 20px; border-radius: 8px; background: var(--blue); color: #06122b;
+    font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 99;
+  }
+  .toast.show { opacity: 1; }
+  details.export { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+  details.export summary { cursor: pointer; color: var(--cyan); }
+</style>
+</head>
+<body>
+<header class="bar">
+  <h1>自定义练习编辑器</h1>
+  <button class="btn btn--ghost btn--sm" data-act="add-section">+ 分节</button>
+  <button class="btn btn--ghost btn--sm" data-act="reset">清空重来</button>
+  <button class="btn btn--ghost btn--sm" data-act="validate">校验</button>
+  <span class="grow"></span>
+  <label class="btn btn--ghost btn--sm" style="margin:0">
+    导入
+    <input type="file" id="import-file" accept=".js,.json,application/json,text/javascript" hidden>
+  </label>
+  <button class="btn btn--ghost btn--sm" data-act="load-file">载入同目录文件</button>
+  <button class="btn btn--primary btn--sm" data-act="save-file">保存到本文件</button>
+  <button class="btn btn--ghost btn--sm" data-act="download">导出 custom-quiz.js</button>
+  <button class="btn btn--ghost btn--sm" data-act="copy">复制</button>
+</header>
+
+<main>
+  <section class="col col--edit">
+    <p class="hint">提示：内容支持 <b>**加粗**</b>、<code>![说明](图片)</code>、Markdown 表格、<code>- </code>/<code>1. </code> 列表；每个文本框下方可「插入图片（自动转 base64）」与「插入表格」。打开时会自动预填同目录的 <code>custom-quiz.js</code>，改完点「保存到本文件」就近写回（不支持时回退为下载）；编辑结果同时保存在本机浏览器。</p>
+    <p class="hint" id="validate-status" aria-live="polite"></p>
+    <div class="meta-grid">
+      <label>课程标识 lesson</label><input type="text" data-path="lesson" placeholder="geo01-earth-universe">
+      <label>标题 title</label><input type="text" data-path="title" placeholder="自定义练习">
+      <label>副标题 subtitle</label><input type="text" data-path="subtitle" placeholder="教师可按学情增删题目">
+    </div>
+    <div id="sections"></div>
+
+    <details class="export">
+      <summary>导出内容预览 / 手动复制</summary>
+      <textarea class="out" id="output" readonly></textarea>
+    </details>
+  </section>
+
+  <section class="col col--preview">
+    <div class="preview" id="preview"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   自定义练习编辑器（离线单文件，无任何外部依赖）
+   数据模型与 lessons/<课>/public/custom-quiz.js 中的 window.__CUSTOM_QUIZ__ 一致。
+   ============================================================ */
+(function () {
+  'use strict';
+  var STORE_KEY = 'custom-quiz-editor-state-v1';
+
+  /* ---------- Markdown 子集渲染（与运行时模块保持一致） ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function inline(s) {
+    var t = esc(s);
+    t = t.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (m, alt, src) {
+      return '<img src="' + src + '" alt="' + alt + '">';
+    });
+    t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, label, href) {
+      return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
+    });
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return t;
+  }
+  function isRow(l) { return /^\s*\|.*\|\s*$/.test(l); }
+  function isSep(l) { return /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/.test(l) && l.indexOf('|') >= 0; }
+  function splitRow(l) {
+    return l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(function (c) { return c.trim(); });
+  }
+  function isBullet(l) { return /^\s*[-*]\s+/.test(l); }
+  function isOrdered(l) { return /^\s*\d+[.、]\s+/.test(l); }
+  function md(src) {
+    if (!src) return '';
+    var lines = String(src).replace(/\r\n?/g, '\n').split('\n');
+    var out = [], i = 0;
+    while (i < lines.length) {
+      var line = lines[i];
+      if (!line.trim()) { i++; continue; }
+      if (isRow(line) && i + 1 < lines.length && isSep(lines[i + 1])) {
+        var head = splitRow(line), j = i + 2, rows = [];
+        while (j < lines.length && isRow(lines[j])) { rows.push(splitRow(lines[j])); j++; }
+        out.push('<table><thead><tr>' + head.map(function (c) { return '<th>' + inline(c) + '</th>'; }).join('') +
+          '</tr></thead><tbody>' + rows.map(function (r) {
+            return '<tr>' + r.map(function (c) { return '<td>' + inline(c) + '</td>'; }).join('') + '</tr>';
+          }).join('') + '</tbody></table>');
+        i = j; continue;
+      }
+      if (isBullet(line)) {
+        var items = [];
+        while (i < lines.length && isBullet(lines[i])) { items.push(lines[i].replace(/^\s*[-*]\s+/, '')); i++; }
+        out.push('<ul>' + items.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>');
+        continue;
+      }
+      if (isOrdered(line)) {
+        var oitems = [];
+        while (i < lines.length && isOrdered(lines[i])) { oitems.push(lines[i].replace(/^\s*\d+[.、]\s+/, '')); i++; }
+        out.push('<ol>' + oitems.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ol>');
+        continue;
+      }
+      var para = [];
+      while (i < lines.length && lines[i].trim() && !isRow(lines[i]) && !isBullet(lines[i]) && !isOrdered(lines[i])) {
+        para.push(lines[i]); i++;
+      }
+      out.push('<p class="p">' + para.map(inline).join('<br>') + '</p>');
+    }
+    return out.join('');
+  }
+
+  /* ---------- 状态读写 ---------- */
+  function el(sel, root) { return (root || document).querySelector(sel); }
+  function els(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function getPath(obj, path) {
+    var parts = String(path).split('.'), cur = obj;
+    for (var i = 0; i < parts.length; i++) { if (cur == null) return undefined; cur = cur[parts[i]]; }
+    return cur;
+  }
+  function setPath(obj, path, value) {
+    var parts = String(path).split('.'), cur = obj;
+    for (var i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
+    cur[parts[parts.length - 1]] = value;
+  }
+
+  function newChoice() {
+    return {
+      id: '', type: 'choice', mode: 'single', source: '', material: '', stem: '',
+      options: [{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }],
+      answer: 'A', analysis: '', knowledge: { title: '', items: [] }
+    };
+  }
+  function newEssay() {
+    return {
+      id: '', type: 'essay', source: '', material: '', stems: [''],
+      referenceAnswer: '', analysis: '', criteria: ['']
+    };
+  }
+  var state = {
+    version: 1, lesson: '', title: '自定义练习', subtitle: '',
+    sections: [
+      { id: 'part-choice', title: '一、选择题', questions: [newChoice()] },
+      { id: 'part-essay', title: '二、综合题', questions: [newEssay()] }
+    ]
+  };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) { var parsed = JSON.parse(raw); if (parsed && parsed.sections) { state = parsed; return true; } }
+    } catch (e) { /* 忽略损坏数据 */ }
+    return false;
+  }
+  var saveTimer = null;
+  function save() {
+    renderValidate();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+    }, 300);
+  }
+
+  function toast(msg) {
+    var t = el('#toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function () { t.classList.remove('show'); }, 1600);
+  }
+
+  /* ---------- 表单渲染 ---------- */
+  function toolsHtml() {
+    return '<div class="tools">' +
+      '<button class="btn btn--ghost btn--sm" data-insert-image>插入图片</button>' +
+      '<button class="btn btn--ghost btn--sm" data-insert-table>插入表格</button>' +
+      '</div>';
+  }
+  function areaHtml(label, path, value, rows) {
+    return '<div class="field"><span class="lbl">' + label + '</span>' +
+      '<textarea rows="' + (rows || 2) + '" data-path="' + path + '">' + esc(value || '') + '</textarea>' +
+      toolsHtml() + '</div>';
+  }
+  function inputHtml(label, path, value) {
+    return '<div class="field"><span class="lbl">' + label + '</span>' +
+      '<input type="text" data-path="' + path + '" value="' + esc(value || '') + '"></div>';
+  }
+
+  function optionHtml(si, qi, oi, opt) {
+    return '<div class="opt">' +
+      '<input type="text" class="key" data-path="sections.' + si + '.questions.' + qi + '.options.' + oi + '.key" value="' + esc(opt.key) + '">' +
+      '<input type="text" data-path="sections.' + si + '.questions.' + qi + '.options.' + oi + '.text" value="' + esc(opt.text) + '" placeholder="选项内容">' +
+      '<button class="btn btn--danger btn--sm" data-act="del-option" data-si="' + si + '" data-qi="' + qi + '" data-oi="' + oi + '">删</button>' +
+      '</div>';
+  }
+
+  function answerHtml(si, qi, q) {
+    var isMulti = q.mode === 'multiple';
+    var selected = Array.isArray(q.answer) ? q.answer : [q.answer];
+    return '<div class="field"><span class="lbl">正确答案（' + (isMulti ? '多选，勾选所有正确项' : '单选') + '）</span>' +
+      '<div class="answer-row">' + (q.options || []).map(function (opt) {
+        var on = selected.indexOf(opt.key) >= 0;
+        return '<label><input type="' + (isMulti ? 'checkbox' : 'radio') + '" name="ans-' + si + '-' + qi + '"' +
+          ' data-answer="sections.' + si + '.questions.' + qi + '" data-multi="' + isMulti + '" value="' + esc(opt.key) + '"' + (on ? ' checked' : '') + '>' +
+          esc(opt.key) + '</label>';
+      }).join('') + '</div></div>';
+  }
+
+  function choiceFormHtml(si, qi, q) {
+    var isMulti = q.mode === 'multiple';
+    return '' +
+      '<div class="row2">' +
+      '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="sections.' + si + '.questions.' + qi + '.source" value="' + esc(q.source) + '"></div>' +
+      '<div class="field"><span class="lbl">题型</span><select data-mode-path="sections.' + si + '.questions.' + qi + '.mode">' +
+      '<option value="single"' + (!isMulti ? ' selected' : '') + '>单选题</option>' +
+      '<option value="multiple"' + (isMulti ? ' selected' : '') + '>多选题</option></select></div>' +
+      '</div>' +
+      areaHtml('材料 material（可空）', 'sections.' + si + '.questions.' + qi + '.material', q.material, 3) +
+      areaHtml('题干 stem', 'sections.' + si + '.questions.' + qi + '.stem', q.stem, 2) +
+      '<div class="field"><span class="lbl">选项</span>' + (q.options || []).map(function (opt, oi) { return optionHtml(si, qi, oi, opt); }).join('') +
+      '<button class="btn btn--ghost btn--sm" data-act="add-option" data-si="' + si + '" data-qi="' + qi + '">+ 选项</button></div>' +
+      answerHtml(si, qi, q) +
+      areaHtml('解析 analysis', 'sections.' + si + '.questions.' + qi + '.analysis', q.analysis, 3) +
+      inputHtml('知识归纳标题（可空）', 'sections.' + si + '.questions.' + qi + '.knowledge.title', q.knowledge && q.knowledge.title) +
+      areaHtml('知识归纳要点（每行一条）', 'sections.' + si + '.questions.' + qi + '.knowledge.items', ((q.knowledge && q.knowledge.items) || []).join('\n'), 3);
+  }
+
+  function essayFormHtml(si, qi, q) {
+    var stems = Array.isArray(q.stems) ? q.stems.join('\n') : (q.stems || '');
+    return '' +
+      '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="sections.' + si + '.questions.' + qi + '.source" value="' + esc(q.source) + '"></div>' +
+      areaHtml('材料 material', 'sections.' + si + '.questions.' + qi + '.material', q.material, 4) +
+      areaHtml('设问 stems（每行一问）', 'sections.' + si + '.questions.' + qi + '.stems', stems, 3) +
+      areaHtml('参考答案 referenceAnswer', 'sections.' + si + '.questions.' + qi + '.referenceAnswer', q.referenceAnswer, 4) +
+      areaHtml('解析 analysis（可空）', 'sections.' + si + '.questions.' + qi + '.analysis', q.analysis, 3) +
+      areaHtml('评分标准 criteria（每行一条）', 'sections.' + si + '.questions.' + qi + '.criteria', (q.criteria || []).join('\n'), 3);
+  }
+
+  function questionHtml(si, qi, q) {
+    return '<div class="q">' +
+      '<div class="q__head">' +
+      '<span class="q__badge ' + (q.type === 'essay' ? 'essay' : 'choice') + '">' + (q.type === 'essay' ? '综合题' : '选择题') + '</span>' +
+      '<span class="grow"></span>' +
+      '<button class="btn btn--ghost btn--sm" data-act="up-q" data-si="' + si + '" data-qi="' + qi + '">↑</button>' +
+      '<button class="btn btn--ghost btn--sm" data-act="down-q" data-si="' + si + '" data-qi="' + qi + '">↓</button>' +
+      '<button class="btn btn--ghost btn--sm" data-act="dup-q" data-si="' + si + '" data-qi="' + qi + '">复制</button>' +
+      '<button class="btn btn--danger btn--sm" data-act="del-q" data-si="' + si + '" data-qi="' + qi + '">删除</button>' +
+      '</div>' +
+      (q.type === 'essay' ? essayFormHtml(si, qi, q) : choiceFormHtml(si, qi, q)) +
+      '</div>';
+  }
+
+  function sectionsHtml() {
+    return state.sections.map(function (sec, si) {
+      return '<div class="sec">' +
+        '<div class="sec__head">' +
+        '<input type="text" data-path="sections.' + si + '.title" value="' + esc(sec.title) + '" placeholder="分节标题，如：一、选择题">' +
+        '<button class="btn btn--danger btn--sm" data-act="del-section" data-si="' + si + '">删分节</button>' +
+        '</div>' +
+        (sec.questions || []).map(function (q, qi) { return questionHtml(si, qi, q); }).join('') +
+        '<button class="btn btn--ghost btn--sm" data-act="add-choice" data-si="' + si + '">+ 选择题</button> ' +
+        '<button class="btn btn--ghost btn--sm" data-act="add-essay" data-si="' + si + '">+ 综合题</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderForm() {
+    el('#sections').innerHTML = sectionsHtml();
+    renderMeta();
+  }
+  function renderMeta() {
+    els('[data-path="lesson"]').forEach(function (i) { i.value = state.lesson || ''; });
+    els('[data-path="title"]').forEach(function (i) { i.value = state.title || ''; });
+    els('[data-path="subtitle"]').forEach(function (i) { i.value = state.subtitle || ''; });
+  }
+
+  /* ---------- 预览渲染 ---------- */
+  function previewQuestionHtml(q, no) {
+    if (q.type === 'essay') {
+      var stems = Array.isArray(q.stems) ? q.stems : (q.stems ? [q.stems] : []);
+      return '<div class="q"><div>' +
+        '<span class="no">' + no + '</span><span class="q__badge essay">综合题</span>' +
+        (q.material ? '<div class="material">' + md(q.material) + '</div>' : '') +
+        (stems.length ? '<ol class="stems">' + stems.map(function (s) { return '<li>' + inline(s) + '</li>'; }).join('') + '</ol>' : '') +
+        '<div class="answer"><h5>参考答案</h5>' + (md(q.referenceAnswer) || '<span class="empty">（未填写）</span>') +
+        (q.analysis ? '<h5>解析</h5>' + md(q.analysis) : '') +
+        (q.criteria && q.criteria.length ? '<h5>评分标准</h5><ol>' + q.criteria.map(function (c) { return '<li>' + inline(c) + '</li>'; }).join('') + '</ol>' : '') +
+        '</div></div></div>';
+    }
+    var answer = Array.isArray(q.answer) ? q.answer : [q.answer];
+    return '<div class="q"><div>' +
+      '<span class="no">' + no + '</span><span class="q__badge choice">' + (q.mode === 'multiple' ? '多选题' : '单选题') + '</span>' +
+      (q.material ? '<div class="material">' + md(q.material) + '</div>' : '') +
+      '<p class="stem">' + inline(q.stem || '') + '</p>' +
+      '<div class="options">' + (q.options || []).map(function (opt) {
+        var c = answer.indexOf(opt.key) >= 0 ? ' correct' : '';
+        return '<div class="opt-btn' + c + '">' + esc(opt.key) + '. ' + inline(opt.text) + '</div>';
+      }).join('') + '</div>' +
+      '<div class="answer"><h5>正确答案：' + answer.join('') + '</h5>' +
+      (q.analysis ? md(q.analysis) : '<span class="empty">（未填写解析）</span>') +
+      (q.knowledge && q.knowledge.items && q.knowledge.items.length
+        ? '<h5>知识归纳</h5>' + (q.knowledge.title ? '<p>' + inline(q.knowledge.title) + '</p>' : '') +
+          '<ul>' + q.knowledge.items.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>'
+        : '') +
+      '</div></div></div>';
+  }
+
+  function renderPreview() {
+    var no = 1;
+    var html = (state.sections || []).map(function (sec) {
+      return '<div class="sec"><h3 class="sec__title">' + esc(sec.title || '') + '</h3>' +
+        (sec.questions || []).map(function (q) { return previewQuestionHtml(q, no++); }).join('') + '</div>';
+    }).join('');
+    el('#preview').innerHTML = html || '<p class="empty">暂无内容</p>';
+    renderOutput();
+  }
+
+  function generated() {
+    var payload = {};
+    for (var k in state) { if (Object.prototype.hasOwnProperty.call(state, k)) payload[k] = state[k]; }
+    payload.version = state.version || 1;
+    payload.updatedAt = new Date().toISOString();
+    return '/* 自定义练习数据 · 由编辑器生成 · 教师可继续手工微调 */\n' +
+      'window.__CUSTOM_QUIZ__ = ' + JSON.stringify(payload, null, 2) + ';\n';
+  }
+  function renderOutput() { el('#output').value = generated(); }
+
+  /* ---------- 结构校验（校验并预览） ---------- */
+  function validateState() {
+    var issues = [];
+    if (!state.sections || !state.sections.length) { issues.push('至少需要一个分节'); return issues; }
+    state.sections.forEach(function (sec, si) {
+      var label = '第 ' + (si + 1) + ' 节';
+      if (!sec.questions || !sec.questions.length) { issues.push(label + '：没有题目'); return; }
+      sec.questions.forEach(function (q, qi) {
+        var t = label + '第 ' + (qi + 1) + ' 题';
+        if (q.type === 'essay') {
+          var stems = (Array.isArray(q.stems) ? q.stems : [q.stems]).filter(function (s) { return s && String(s).trim(); });
+          if (!stems.length) issues.push(t + '（综合题）：缺少设问');
+          if (!q.referenceAnswer) issues.push(t + '（综合题）：缺少参考答案');
+          return;
+        }
+        if (!q.stem) issues.push(t + '：缺少题干');
+        var filled = (q.options || []).filter(function (o) { return o && String(o.text).trim(); });
+        if (filled.length < 2) issues.push(t + '：至少需要两个有内容的选项');
+        var keys = (q.options || []).map(function (o) { return o.key; });
+        var answers = (Array.isArray(q.answer) ? q.answer : [q.answer]).filter(function (a) { return keys.indexOf(a) >= 0; });
+        if (!answers.length) issues.push(t + '：未设置有效答案');
+      });
+    });
+    return issues;
+  }
+
+  function renderValidate() {
+    var node = el('#validate-status');
+    var issues = validateState();
+    if (node) {
+      if (!issues.length) {
+        node.textContent = '校验通过：结构完整，可导出。';
+        node.className = 'hint hint--ok';
+      } else {
+        node.textContent = '校验发现 ' + issues.length + ' 处待完善：' + issues.slice(0, 3).join('；') +
+          (issues.length > 3 ? ' 等' : '');
+        node.className = 'hint hint--warn';
+      }
+    }
+    return issues;
+  }
+
+  /* ---------- 事件 ---------- */
+  function renumberOptions(q) {
+    q.options.forEach(function (o, i) { o.key = String.fromCharCode(65 + i); });
+  }
+
+  function handleStruct(act, t) {
+    var si = Number(t.dataset.si), qi = Number(t.dataset.qi), oi = Number(t.dataset.oi);
+    var sec = state.sections[si];
+    var q = sec && sec.questions[qi];
+    switch (act) {
+      case 'add-section':
+        state.sections.push({ id: 'part-' + (state.sections.length + 1), title: '', questions: [] });
+        break;
+      case 'del-section':
+        if (state.sections.length <= 1) { toast('至少保留一个分节'); return; }
+        if (!confirm('删除该分节及其全部题目？')) return;
+        state.sections.splice(si, 1); break;
+      case 'add-choice':
+        sec.questions.push(newChoice()); break;
+      case 'add-essay':
+        sec.questions.push(newEssay()); break;
+      case 'del-q':
+        if (!confirm('删除该题？')) return;
+        sec.questions.splice(qi, 1); break;
+      case 'dup-q':
+        sec.questions.splice(qi + 1, 0, JSON.parse(JSON.stringify(q))); break;
+      case 'up-q':
+        if (qi > 0) { sec.questions.splice(qi - 1, 0, sec.questions.splice(qi, 1)[0]); } break;
+      case 'down-q':
+        if (qi < sec.questions.length - 1) { sec.questions.splice(qi + 1, 0, sec.questions.splice(qi, 1)[0]); } break;
+      case 'add-option':
+        q.options.push({ key: String.fromCharCode(65 + q.options.length), text: '' }); break;
+      case 'del-option':
+        if (q.options.length <= 2) { toast('至少保留两个选项'); return; }
+        q.options.splice(oi, 1); renumberOptions(q);
+        if (!Array.isArray(q.answer) && q.options.every(function (o) { return o.key !== q.answer; })) q.answer = q.options[0].key;
+        break;
+      default: return;
+    }
+    save(); renderForm(); renderPreview();
+  }
+
+  function insertAt(textarea, text) {
+    var start = textarea.selectionStart || 0, end = textarea.selectionEnd || 0;
+    var value = textarea.value;
+    textarea.value = value.slice(0, start) + text + value.slice(end);
+    var pos = start + text.length;
+    textarea.selectionStart = textarea.selectionEnd = pos;
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function pickImage(textarea) {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        insertAt(textarea, '![' + (file.name || '图片') + '](' + reader.result + ')\n');
+        toast('图片已转 base64 内联');
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
+  function pickTable(textarea) {
+    var cols = parseInt(prompt('表格列数（1-6）：', '3'), 10);
+    if (!cols || cols < 1 || cols > 6) return;
+    var rows = parseInt(prompt('表格数据行数（不含表头）：', '3'), 10);
+    if (!rows || rows < 1) rows = 1;
+    var head = [], sep = [], body = [];
+    for (var c = 0; c < cols; c++) { head.push('表头' + (c + 1)); sep.push('---'); }
+    for (var r = 0; r < rows; r++) {
+      var row = [];
+      for (var k = 0; k < cols; k++) row.push('内容');
+      body.push('| ' + row.join(' | ') + ' |');
+    }
+    var table = '\n| ' + head.join(' | ') + ' |\n| ' + sep.join(' | ') + ' |\n' + body.join('\n') + '\n';
+    insertAt(textarea, table);
+  }
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.matches && t.matches('[data-path]')) {
+      var path = t.dataset.path;
+      if (path === 'lesson' || path === 'title' || path === 'subtitle') {
+        state[path] = t.value; save(); renderPreview(); return;
+      }
+      setPath(state, path, t.value);
+      if (/\.criteria$/.test(path)) {
+        setPath(state, path, t.value.split('\n'));
+      } else if (/\.stems$/.test(path)) {
+        setPath(state, path, t.value.split('\n'));
+      } else if (/\.knowledge\.items$/.test(path)) {
+        setPath(state, path, t.value.split('\n'));
+      }
+      save(); renderPreview();
+    }
+  });
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.matches && t.matches('[data-answer]')) {
+      var path = t.dataset.answer;
+      if (t.dataset.multi === 'true') {
+        var checked = els('[data-answer="' + path + '"]').filter(function (i) { return i.checked; }).map(function (i) { return i.value; });
+        setPath(state, path, checked);
+      } else {
+        setPath(state, path, t.value);
+        axRenderAnswer(path);
+      }
+      save(); renderPreview(); return;
+    }
+    if (t.matches && t.matches('[data-mode-path]')) {
+      var mp = t.dataset.modePath;
+      var q = getPath(state, mp.replace(/\.mode$/, ''));
+      q.mode = t.value;
+      if (t.value === 'single') q.answer = Array.isArray(q.answer) ? (q.answer[0] || 'A') : q.answer;
+      save(); renderForm(); renderPreview(); return;
+    }
+    if (t.id === 'import-file' && t.files && t.files[0]) {
+      importFile(t.files[0]);
+    }
+  });
+
+  function axRenderAnswer(path) { /* 单选：仅刷新预览即可，表单无需重排 */ }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('button') : null;
+    if (!t) return;
+    if (t.hasAttribute('data-insert-image')) { var ta = t.parentElement.parentElement.querySelector('textarea'); if (ta) pickImage(ta); return; }
+    if (t.hasAttribute('data-insert-table')) { var ta2 = t.parentElement.parentElement.querySelector('textarea'); if (ta2) pickTable(ta2); return; }
+    var act = t.dataset.act;
+    if (!act) return;
+    if (act === 'reset') {
+      if (!confirm('清空当前编辑内容（本机保存也会重置）？')) return;
+      state = { version: 1, lesson: '', title: '自定义练习', subtitle: '', sections: [{ id: 'part-1', title: '一、选择题', questions: [newChoice()] }] };
+      save(); renderForm(); renderPreview(); return;
+    }
+    if (act === 'download') { download(); return; }
+    if (act === 'copy') { copyOut(); return; }
+    if (act === 'validate') {
+      var vissues = renderValidate();
+      toast(vissues.length ? '校验发现 ' + vissues.length + ' 处待完善' : '校验通过');
+      return;
+    }
+    if (act === 'save-file') { saveToFile(); return; }
+    if (act === 'load-file') {
+      loadFromFile().then(function (data) {
+        if (adopt(data)) toast('已载入同目录 custom-quiz.js');
+        else toast('未找到同目录 custom-quiz.js');
+      });
+      return;
+    }
+    handleStruct(act, t);
+  });
+
+  function download() {
+    var blob = new Blob([generated()], { type: 'text/javascript;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'custom-quiz.js';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    toast('已导出 custom-quiz.js');
+  }
+  function copyOut() {
+    var text = generated();
+    var done = function () { toast('已复制到剪贴板'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
+    } else { fallbackCopy(text, done); }
+  }
+  function fallbackCopy(text, done) {
+    var ta = el('#output');
+    ta.value = text; ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('请手动复制下方文本'); }
+  }
+
+  function importFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var raw = String(reader.result);
+        var m = raw.match(/\{[\s\S]*\}/);
+        var parsed = JSON.parse(m ? m[0] : raw);
+        if (!parsed || !parsed.sections) throw new Error('缺少 sections');
+        state = parsed;
+        save(); renderForm(); renderPreview();
+        toast('导入成功');
+      } catch (err) { toast('导入失败：' + err.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---------- 同目录文件读写（就近预填 / 写回） ----------
+     数据文件与主页面 index.html 同级，名为 custom-quiz.js。
+     file:// 下 fetch 会被 CORS 拦截，故读用经典 <script> 注入读 window.__CUSTOM_QUIZ__；
+     写优先用 File System Access API 就近覆盖，不可用时回退为下载。 */
+  var DATA_FILE = './custom-quiz.js';
+
+  function loadFromFile() {
+    return new Promise(function (resolve) {
+      var s = document.createElement('script');
+      s.src = DATA_FILE;
+      s.onload = function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        resolve(window.__CUSTOM_QUIZ__ || null);
+      };
+      s.onerror = function () { resolve(null); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function adopt(data) {
+    if (!data || !data.sections) return false;
+    state = data;
+    save(); renderForm(); renderPreview();
+    return true;
+  }
+
+  function saveToFile() {
+    var text = generated();
+    if (!window.showSaveFilePicker) { download(); return; }
+    window.showSaveFilePicker({
+      suggestedName: 'custom-quiz.js',
+      types: [{ description: 'JavaScript 数据文件', accept: { 'text/javascript': ['.js'] } }]
+    }).then(function (handle) {
+      return handle.createWritable().then(function (w) {
+        return w.write(text).then(function () { return w.close(); });
+      });
+    }).then(function () { toast('已保存到所选文件'); })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        toast('直接保存不可用，已改为下载');
+        download();
+      });
+  }
+
+  /* ---------- 启动 ---------- */
+  var hadDraft = load();
+  renderForm();
+  renderPreview();
+  renderValidate();
+  // 自动预填：本机无草稿时采用同目录 custom-quiz.js；有草稿则保留，避免覆盖未导出的编辑
+  loadFromFile().then(function (data) {
+    if (hadDraft) { if (data) toast('已载入本机草稿；如改用同目录文件请点「载入同目录文件」'); return; }
+    if (adopt(data)) toast('已载入同目录 custom-quiz.js');
+  });
+})();
+</script>
+</body>
+</html>

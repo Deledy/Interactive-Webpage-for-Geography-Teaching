@@ -18,6 +18,7 @@ import { initReviewCards } from './modules/reviewCards'
 import { initNebulaTilt } from './modules/nebulaTilt'
 import { initBodyDeckTabs } from './modules/bodyDeckTabs'
 import { initLightbox } from './modules/lightbox'
+import { initCustomQuiz } from './modules/customQuiz'
 
 export function init(): void {
   initStarfield();
@@ -37,6 +38,7 @@ export function init(): void {
   initNebulaTilt();
   initBodyDeckTabs();
   initLightbox();
+  initCustomQuiz();
 }
 
 if (document.readyState === 'loading') {

@@ -51,7 +51,10 @@ describe('无 JS 静态降级（兼容性）', () => {
     expect(document.querySelectorAll('#meteor-conditions .condition-item.is-lit').length).toBe(3)
     expect(document.querySelectorAll('#life-chain .chain').length).toBe(5)
     expect(document.querySelector('#orbit-viewport .panel__placeholder')).toBeTruthy()
-    expect(document.querySelector('#earth-table .earth-table--static')).toBeTruthy()
+    // M7 无 JS 时保留静态可视化兜底：八大行星卡片组（地球默认选中）
+    expect(document.querySelector('#earth-table .earth__static')).toBeTruthy()
+    expect(document.querySelectorAll('#earth-table .planet-deck').length).toBe(1)
+    expect(document.querySelectorAll('#earth-table .planet-deck__card').length).toBe(8)
   })
 })
 
@@ -213,31 +216,87 @@ describe('M6 行星的运动特征', () => {
   })
 })
 
-describe('M7 地球的普通性和特殊性（普通性 / 特殊性）', () => {
-  it('渲染结构对比条与三性，普通性 / 特殊性上下排布，表 1.2 已移除', () => {
+describe('M7 地球的普通性和特殊性（可视化：八大行星卡片组 + 两条证据 + 结论）', () => {
+  it('渲染八大行星卡片组与两条证据卡，静态兜底被替换', () => {
     initEarth()
     const box = document.getElementById('earth-table')!
-    // 结构特征：体积 / 质量 两组 × 4 颗类地行星
-    expect(box.querySelectorAll('.earth-bar')).toHaveLength(8)
-    // 运动特征：三性
-    expect(box.querySelectorAll('.earth-motion__item')).toHaveLength(3)
-    // 普通性 / 特殊性两张卡
-    expect(box.querySelector('.earth-card--ordinary')).toBeTruthy()
-    expect(box.querySelector('.earth-card--special')).toBeTruthy()
-    // 已删除表 1.2
-    expect(box.querySelector('.earth-table')).toBeNull()
+    // 主视觉：八大行星卡片组（贴图球体 + 名称胶囊），地球默认唯一选中
+    expect(box.querySelectorAll('.planet-deck__card')).toHaveLength(8)
+    expect(box.querySelectorAll('.planet-deck__card.is-selected')).toHaveLength(1)
+    expect(box.querySelector('.planet-deck__card.is-selected')!.getAttribute('data-planet')).toBe('earth')
+    expect(box.querySelector('.planet-deck__quote-text')!.textContent).toContain('地球，只是太阳系八颗行星中的一颗。')
+    // 每张卡：球体 + 胶囊 + 装饰线；土星带光环且卡片加宽
+    expect(box.querySelectorAll('.planet-deck__globe')).toHaveLength(8)
+    expect(box.querySelectorAll('.planet-deck__pill')).toHaveLength(8)
+    expect(box.querySelectorAll('.planet-deck__rule')).toHaveLength(8)
+    expect(box.querySelectorAll('.planet-deck__card--wide')).toHaveLength(1)
+    expect(box.querySelectorAll('.planet-deck__ring')).toHaveLength(4) // 土星前后两层 + 海王星前后两层
+    // 两条证据卡（运动特征 / 结构特征），各含一张 SVG 示意图
+    expect(box.querySelectorAll('.earth-evidence')).toHaveLength(2)
+    expect(box.querySelectorAll('.earth-evidence .earth-evi-svg')).toHaveLength(2)
+    // HUD 结构：切角外框 + 内层、圆形徽章（各卡一枚）、描述蓝点、标题右延装饰
+    expect(box.querySelectorAll('.earth-evidence__inner')).toHaveLength(2)
+    expect(box.querySelectorAll('.earth-evidence__badge')).toHaveLength(2)
+    expect(box.querySelectorAll('.earth-evidence__badge--motion')).toHaveLength(1)
+    expect(box.querySelectorAll('.earth-evidence__badge--structure')).toHaveLength(1)
+    expect(box.querySelectorAll('.earth-evidence__desc .earth-evidence__dot')).toHaveLength(2)
+    expect(box.querySelectorAll('.earth-evidence__deco')).toHaveLength(2)
+    // 底部标签行：运动特征卡为三个特征胶囊；结构特征卡为「线—文字—线」注记
+    expect(box.querySelectorAll('.earth-evidence__tag')).toHaveLength(3)
+    expect(
+      Array.from(box.querySelectorAll('.earth-evidence__tag')).map(e => e.textContent)
+    ).toEqual(['同向性', '近圆性', '共面性'])
+    expect(box.querySelectorAll('.earth-evidence__caption .earth-evidence__line')).toHaveLength(2)
+    // 结构特征卡：2D 兜底的行星名称胶囊（地球唯一高亮）
+    expect(box.querySelectorAll('.earth-body__tag')).toHaveLength(4)
+    expect(box.querySelectorAll('.earth-body__tag.is-earth')).toHaveLength(1)
+    // 结构特征：四颗类地行星相对大小圆，地球唯一高亮
+    expect(box.querySelectorAll('.earth-body__dot')).toHaveLength(4)
+    expect(box.querySelectorAll('.earth-body__dot.is-earth')).toHaveLength(1)
+    // 普通 → 转折 → 特殊（普通结论条为「徽章 + 结论文字」的 HUD 切角卡片）
+    expect(box.querySelector('.earth-verdict--ordinary')).toBeTruthy()
+    expect(box.querySelectorAll('.earth-verdict__medal')).toHaveLength(1)
+    expect(box.querySelector('.earth-verdict__text')!.textContent).toContain('普通的行星')
+    expect(box.querySelector('.earth-turn')).toBeTruthy()
+    expect(box.querySelector('.earth-verdict--special')).toBeTruthy()
+    // JS 渲染后替换静态兜底
+    expect(box.querySelector('.earth__static')).toBeNull()
+  })
+
+  it('卡片选中态唯一转移：点击后蓝色高亮移动、aria-pressed 同步、引言随行星更新', () => {
+    initEarth()
+    const box = document.getElementById('earth-table')!
+    const card = (id: string) =>
+      box.querySelector(`.planet-deck__card[data-planet="${id}"]`) as HTMLElement
+
+    card('mars')!.click()
+    expect(box.querySelectorAll('.planet-deck__card.is-selected')).toHaveLength(1)
+    expect(card('mars').classList.contains('is-selected')).toBe(true)
+    expect(card('mars').getAttribute('aria-pressed')).toBe('true')
+    expect(card('earth').classList.contains('is-selected')).toBe(false)
+    expect(card('earth').getAttribute('aria-pressed')).toBe('false')
+    expect(box.querySelector('.planet-deck__quote-text')!.textContent).toBe('火星，只是太阳系八颗行星中的一颗。')
+
+    card('earth')!.click()
+    expect(box.querySelectorAll('.planet-deck__card.is-selected')).toHaveLength(1)
+    expect(card('earth').classList.contains('is-selected')).toBe(true)
+    expect(box.querySelector('.planet-deck__quote-text')!.textContent).toBe('地球，只是太阳系八颗行星中的一颗。')
   })
 })
 
 describe('M9 复习与总结', () => {
   it('渲染结构树，可折叠并切换复习模式', () => {
     initReviewTree()
-    expect(document.querySelectorAll('.tree__toggle').length).toBeGreaterThan(0)
+    const box = document.getElementById('review-tree')!
+    expect(box.classList.contains('mt')).toBe(true)
+    expect(box.querySelector('.mt-node.is-root')).toBeTruthy()
+    // initialDepth = 1：根 + 两个一级分支
+    expect(box.querySelectorAll('.mt-node')).toHaveLength(3)
 
-    const toggle = document.querySelector('.tree__toggle') as HTMLElement
-    const li = toggle.closest('.tree__item')!
-    toggle.click()
-    expect(li.classList.contains('is-open')).toBe(false)
+    // 点击根节点收起子级
+    const root = box.querySelector('.mt-node.is-root') as SVGElement
+    root.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    expect(box.querySelectorAll('.mt-node')).toHaveLength(1)
 
     const modeBtn = document.querySelector('[data-widget="review-mode"]') as HTMLElement
     modeBtn.click()
@@ -339,10 +398,12 @@ describe('整页启动冒烟', () => {
     expect(document.querySelector('.meteor-canvas')).toBeTruthy()
     expect(document.querySelector('.hierarchy-svg')).toBeTruthy()
     expect(document.querySelector('.solar-svg')).toBeTruthy()
-    expect(document.querySelector('.tree')).toBeTruthy()
+    expect(document.querySelector('#review-tree.mt')).toBeTruthy()
+    expect(document.querySelector('#review-tree .mt-node.is-root')).toBeTruthy()
     expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
     expect(document.querySelector('.orbit2d')).toBeTruthy()
     expect(document.querySelectorAll('.chain')).toHaveLength(5)
-    expect(document.querySelectorAll('.earth-bar')).toHaveLength(8)
+    expect(document.querySelectorAll('.earth-evidence')).toHaveLength(2)
+    expect(document.querySelectorAll('.planet-deck__card')).toHaveLength(8)
   })
 })

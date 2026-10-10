@@ -19,6 +19,7 @@
     "vitest.config.ts",
     "lessons/**/src",
     "lessons/**/index.html",
+    "shared/**/*.ts",
     "tests"
   ]
 }

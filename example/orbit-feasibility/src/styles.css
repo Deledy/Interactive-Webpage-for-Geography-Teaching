@@ -1,0 +1,848 @@
+/* ============================================================
+   可行性验证 Demo 的界面样式（五站导航 + 讲解卡 + 宇宙尺度独立视图）
+   仅服务于验证，非课程定稿视觉。
+   ============================================================ */
+:root {
+  --space: #03070d;
+  --ink: #e8f0fb;
+  --dim: #8fa3bd;
+  --accent: #42c9ff;
+  --accent-2: #ffd479;
+  --line: rgba(140, 175, 215, 0.24);
+  --tree-line: rgba(140, 175, 215, 0.46);
+  --panel: rgba(10, 20, 33, 0.66);
+  --panel-solid: rgba(8, 16, 27, 0.92);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--space);
+  color: var(--ink);
+  font-family: "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+}
+
+#stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------- 左上标题 ---------------- */
+.hud {
+  position: fixed;
+  left: 24px;
+  top: 20px;
+  pointer-events: none;
+}
+
+.hud__title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.hud__sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* ---------------- 右上读数 ---------------- */
+.readout {
+  position: fixed;
+  right: 24px;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+.readout__label {
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.16em;
+}
+
+.readout__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.readout__meta {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* ---------------- 右侧讲解卡 ---------------- */
+.card {
+  position: fixed;
+  right: 24px;
+  top: 112px;
+  width: 300px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  transition: opacity 0.25s ease;
+}
+
+.card__kind {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--accent-2);
+}
+
+.card__title {
+  margin: 6px 0 8px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.card__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #cfe0f2;
+}
+
+.card__meta {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.card__meta li {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--dim);
+  padding-left: 12px;
+  position: relative;
+}
+
+.card__meta li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+/* ---------------- 左侧：天体系统架构图（教材式树状图 · 根在上 · 向下分叉） ----------------
+   结构与连线：
+   ul.org（根层，仅一个根节点）
+     └ li.org__branch            ← 每个分支 = [节点] + 其子层
+         ├ button.org__node      ← 节点（可点击）
+         └ ul.org__children      ← 子层：横向排布，顶部有一条竖直落线连回父节点
+   连线全靠伪元素：
+   · ul.org__children::before  = 父节点 → 横向母线 的竖直落线
+   · li.org__branch::before    = 横向母线的左半段
+   · li.org__branch::after     = 横向母线的右半段 + 母线 → 本节点 的竖直落线
+   首/末节点的外半段（::before / ::after 的 border-top）设为透明，母线不外溢。 */
+.tree {
+  position: fixed;
+  left: 24px;
+  top: 132px;
+  width: 300px;
+  max-height: calc(100vh - 244px);
+  overflow: auto;
+  padding: 16px 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+}
+
+.org,
+.org__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.org {
+  display: flex;
+  justify-content: center;
+}
+
+.org__children {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding-top: 18px;
+}
+
+.org__children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 18px;
+  border-left: 1px solid var(--tree-line);
+  transform: translateX(-50%);
+}
+
+.org__branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 18px 4px 0;
+}
+
+.org__branch::before,
+.org__branch::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 18px;
+  border-top: 1px solid var(--tree-line);
+}
+
+.org__branch::after {
+  right: auto;
+  left: 50%;
+  border-left: 1px solid var(--tree-line);
+}
+
+/* 最外侧节点的外半段收口，母线只画到最外侧节点中点 */
+.org__branch:first-child::before {
+  border-top-color: transparent;
+}
+
+.org__branch:last-child::after {
+  border-top-color: transparent;
+}
+
+/* 独生子（根节点）：不画母线、不留落线区间，一条竖直落线直接连下 */
+.org__branch:only-child {
+  padding-top: 0;
+}
+
+.org__branch:only-child::before,
+.org__branch:only-child::after {
+  display: none;
+}
+
+.org__node {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  max-width: 84px;
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink);
+  background: rgba(10, 20, 33, 0.72);
+  cursor: pointer;
+  white-space: normal;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.org__node:hover {
+  border-color: var(--accent);
+  background: rgba(66, 201, 255, 0.16);
+}
+
+/* 当前层级的上级链路：描边提亮，表示"你在这一支里" */
+.org__node.is-ancestor {
+  border-color: rgba(66, 201, 255, 0.55);
+  color: #dff0ff;
+}
+
+.org__node.is-active {
+  color: #04121c;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(66, 201, 255, 0.18);
+}
+
+.org__node--extended {
+  border-style: dashed;
+  border-color: rgba(255, 212, 121, 0.5);
+  color: var(--accent-2);
+}
+
+.org__node--extended:hover {
+  border-color: var(--accent-2);
+  background: rgba(255, 212, 121, 0.14);
+}
+
+.org__node--extended.is-active {
+  color: #1c1405;
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(255, 212, 121, 0.2);
+}
+
+.org__node--root {
+  border-color: rgba(66, 201, 255, 0.5);
+}
+
+/* ---------------- 底部：对数尺度轴 ---------------- */
+.scalebar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 48px));
+  height: 60px;
+  pointer-events: none;
+}
+
+.scalebar__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 27px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(140, 175, 215, 0.45), transparent);
+}
+
+.scalebar__tick {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--dim);
+  cursor: pointer;
+  white-space: nowrap;
+  pointer-events: auto;
+  transition: color 0.18s ease;
+}
+
+.scalebar__tick::before {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 11px;
+  margin: 0 auto 5px;
+  background: var(--line);
+  transition: background 0.18s ease, height 0.18s ease;
+}
+
+.scalebar__tick:hover {
+  color: var(--ink);
+}
+
+.scalebar__tick.is-active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.scalebar__tick.is-active::before {
+  height: 16px;
+  background: var(--accent);
+}
+
+/* 游标：随视距在对数轴上移动 */
+.scalebar__cursor {
+  position: absolute;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 40px;
+  border-radius: 2px;
+  background: linear-gradient(to top, var(--accent), transparent);
+  box-shadow: 0 0 8px rgba(66, 201, 255, 0.85);
+  transition: left 0.08s linear;
+}
+
+/* ---------------- 层级切换提示 ---------------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  top: 84px;
+  transform: translate(-50%, -6px);
+  z-index: 15;
+  padding: 8px 18px;
+  border: 1px solid rgba(66, 201, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(8, 16, 27, 0.92);
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+/* ---------------- 深空恒星名称标签（随视角投影到屏幕，可点击飞达） ---------------- */
+.starlabels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.starlabel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.25s ease, color 0.18s ease;
+}
+
+/* 圆点：标记恒星所在位置（进入银河系层级即可见，不要求本体已按距离显形） */
+.starlabel i {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(66, 201, 255, 0.9);
+  transition: background 0.18s ease;
+}
+
+.starlabel span {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(8, 16, 27, 0.5);
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.starlabel.is-visible {
+  opacity: 1;
+}
+
+.starlabel:hover span {
+  color: var(--ink);
+  background: rgba(66, 201, 255, 0.18);
+}
+
+.starlabel:hover i {
+  background: var(--accent-2);
+}
+
+/* ---------------- 站点内目标列表 ---------------- */
+.subdock {
+  position: fixed;
+  left: 50%;
+  bottom: 92px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 20, 33, 0.5);
+  backdrop-filter: blur(6px);
+  max-width: calc(100vw - 32px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.subdock:empty {
+  display: none;
+}
+
+.subdock__btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+}
+
+.subdock__btn:hover {
+  background: rgba(66, 201, 255, 0.16);
+}
+
+.subdock__btn.is-active {
+  background: rgba(66, 201, 255, 0.24);
+  color: #eaf7ff;
+  font-weight: 600;
+}
+
+.subdock__btn--extended {
+  color: var(--accent-2);
+  border-color: rgba(255, 212, 121, 0.36);
+}
+
+.subdock__btn--extended.is-active {
+  background: rgba(255, 212, 121, 0.24);
+  color: #fff3d4;
+}
+
+.subdock__label {
+  font-size: 11px;
+  color: var(--dim);
+  padding: 0 6px;
+  letter-spacing: 0.08em;
+}
+
+.subdock__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--line);
+}
+
+/* ---------------- 开关 ---------------- */
+.switches {
+  position: fixed;
+  left: 24px;
+  top: 84px;
+  display: flex;
+  gap: 8px;
+}
+
+.chip {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--panel);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.chip[aria-pressed="true"] {
+  color: #04121c;
+  background: var(--accent);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* ---------------- 常驻标注 ---------------- */
+.watermark {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  font-size: 11px;
+  color: rgba(143, 163, 189, 0.78);
+  pointer-events: none;
+}
+
+.hint {
+  position: fixed;
+  left: 24px;
+  bottom: 48px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--dim);
+  pointer-events: none;
+  max-width: 320px;
+}
+
+/* ---------------- 宇宙尺度独立视图 ---------------- */
+.universe {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  animation: fade-in 0.45s ease both;
+}
+
+.universe[hidden] {
+  display: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.universe__bg {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transform: scale(1.04);
+}
+
+.universe__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 40%, rgba(3, 7, 13, 0.55), rgba(3, 7, 13, 0.92) 70%);
+}
+
+.universe__body {
+  position: relative;
+  width: min(880px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 26px 30px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-solid);
+  backdrop-filter: blur(10px);
+}
+
+.universe__sub {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--accent-2);
+}
+
+.universe__title {
+  margin: 6px 0 18px;
+  font-size: 26px;
+}
+
+.ladder {
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.ladder li {
+  position: relative;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(66, 201, 255, 0.06);
+}
+
+.ladder li b {
+  display: block;
+  font-size: 14px;
+}
+
+.ladder li span {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.ladder li::after {
+  content: "▸";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+.universe__points {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.universe__points li {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #d7e6f6;
+}
+
+.universe__caption {
+  margin: 0 0 18px;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.universe__back {
+  appearance: none;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 13px;
+  color: #04121c;
+  background: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.universe__back:hover {
+  filter: brightness(1.08);
+}
+
+/* ---------------- 降级面板 ---------------- */
+.fallback {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--space);
+  text-align: center;
+  padding: 24px;
+  z-index: 30;
+}
+
+/* 必须显式处理：.fallback 的 display:flex 会覆盖 HTML 的 hidden 属性 */
+.fallback[hidden] {
+  display: none;
+}
+
+.fallback p {
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.7;
+}
+
+.fallback p:first-of-type {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.fallback__detail {
+  font-size: 13px;
+  color: var(--accent);
+  word-break: break-word;
+}
+
+.fallback__hint {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.fallback__btn {
+  appearance: none;
+  margin-top: 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 13px;
+  color: #04121c;
+  background: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* ---------------- 小屏适配 ---------------- */
+@media (max-width: 900px) {
+  .card {
+    width: 250px;
+    top: 104px;
+  }
+}
+
+@media (max-width: 720px) {
+  .hud {
+    left: 14px;
+    top: 12px;
+  }
+  .hud__title {
+    font-size: 15px;
+  }
+  .readout {
+    right: 14px;
+    top: 12px;
+    padding: 8px 10px;
+  }
+  .readout__value {
+    font-size: 16px;
+  }
+  .switches {
+    left: 14px;
+    top: 74px;
+  }
+  .card {
+    right: 14px;
+    left: 14px;
+    width: auto;
+    top: auto;
+    bottom: 148px;
+    padding: 12px 14px;
+  }
+  .card__desc {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+  /* 小屏：架构图收起，改为全靠底部尺度轴 + 滚轮换层 */
+  .tree {
+    display: none;
+  }
+  .scalebar {
+    width: calc(100vw - 24px);
+    bottom: 10px;
+  }
+  .scalebar__tick {
+    font-size: 10px;
+  }
+  .subdock {
+    bottom: 84px;
+    border-radius: 16px;
+  }
+  .watermark,
+  .hint {
+    display: none;
+  }
+  .universe {
+    padding: 12px;
+  }
+  .universe__body {
+    padding: 18px 16px;
+  }
+}

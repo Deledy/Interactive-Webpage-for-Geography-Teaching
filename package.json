@@ -20,11 +20,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "d3-hierarchy": "^3.1.2",
     "echarts": "^6.1.0",
     "gsap": "^3.15.0",
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/node": "^26.1.2",
     "@types/three": "^0.180.0",
     "archiver": "^8.0.0",

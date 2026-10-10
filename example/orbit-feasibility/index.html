@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>天体系统 · 多级漫游（ORBIT 模块移植 · 教学增强验证）</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <!-- 渲染容器：Three.js canvas 挂载于此 -->
+    <div id="stage"></div>
+
+    <!-- 深空恒星名称标签层（进入银河系层级后出现，随视角投影，可点击飞达） -->
+    <nav class="starlabels" id="starlabels" aria-label="可见恒星名称"></nav>
+
+    <header class="hud">
+      <div class="hud__title">天体系统 · 多级漫游</div>
+      <div class="hud__sub">地球的宇宙环境 · 增强演示（ORBIT 模块移植验证）</div>
+    </header>
+
+    <!-- 右上：当前尺度读数 -->
+    <div class="readout" id="readout" aria-live="polite">
+      <span class="readout__label" id="readout-label">当前天体系统</span>
+      <span class="readout__value" id="readout-value">地月系</span>
+      <span class="readout__meta" id="readout-meta">视距 —</span>
+    </div>
+
+    <!-- 右侧：当前目标讲解卡 -->
+    <aside class="card" id="card" aria-live="polite">
+      <div class="card__kind" id="card-kind">行星系统</div>
+      <h2 class="card__title" id="card-title">地月系</h2>
+      <p class="card__desc" id="card-desc"></p>
+      <ul class="card__meta" id="card-meta"></ul>
+    </aside>
+
+    <!-- 底部上方：当前站点的目标列表（随站点切换） -->
+    <nav class="subdock" id="subdock" aria-label="当前站点的可观察目标"></nav>
+
+    <!-- 底部：对数尺度轴（游标随视距移动，刻度可点击跳转） -->
+    <nav class="scalebar" id="scalebar" aria-label="宇宙尺度轴"></nav>
+
+    <!-- 左侧：天体系统架构图（竖向层级树，随滚轮自动高亮当前层级） -->
+    <aside class="tree" id="tree" aria-label="天体系统架构图"></aside>
+
+    <!-- 左下：开关 -->
+    <div class="switches">
+      <button type="button" class="chip" data-toggle="orbits" aria-pressed="true">轨道线</button>
+      <button type="button" class="chip" data-toggle="pause" aria-pressed="false">暂停</button>
+    </div>
+
+    <!-- 层级切换提示 -->
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- 常驻标注：所有画面均为非等比示意 -->
+    <div class="watermark">非等比示意 · 位置、大小与颜色为可看性做了艺术化处理</div>
+
+    <p class="hint" id="hint">滚轮缩放即可在不同层级之间连续切换 · 拖动旋转视角 · 点击恒星 / 行星或标签可直接飞达 · 左侧架构图与底部尺度轴也可点击跳转</p>
+
+    <!-- 宇宙尺度独立视图（非 3D，无 WebGL 时同样可用） -->
+    <section class="universe" id="universe" hidden aria-hidden="true">
+      <div class="universe__bg" id="universe-bg"></div>
+      <div class="universe__scrim"></div>
+      <div class="universe__body">
+        <div class="universe__head">
+          <span class="universe__sub" id="universe-sub"></span>
+          <h2 class="universe__title" id="universe-title"></h2>
+        </div>
+        <ol class="ladder" id="universe-ladder"></ol>
+        <ul class="universe__points" id="universe-points"></ul>
+        <p class="universe__caption" id="universe-caption"></p>
+        <button type="button" class="universe__back" id="universe-back">返回天体系统</button>
+      </div>
+    </section>
+
+    <!-- WebGL 不可用时的降级提示（标题与详情由脚本按实际原因填充） -->
+    <div class="fallback" id="fallback" hidden>
+      <p id="fallback-title">无法启动三维演示</p>
+      <p id="fallback-detail" class="fallback__detail"></p>
+      <p class="fallback__hint">
+        请使用支持 WebGL 2 的新版 Chrome / Edge / Safari，并确认已开启硬件加速。<br />
+        若在 IDE 内置预览窗口中打开，请改用独立的浏览器窗口。<br />
+        你仍可点击下方按钮查看「可观测宇宙」独立视图（该视图不需要 WebGL）。
+      </p>
+      <button type="button" class="fallback__btn" id="fallback-universe">查看「可观测宇宙」</button>
+    </div>
+
+    <!-- 防呆：源码入口依赖 Vite 编译，直接以 file:// 打开会因 CORS 无法加载 .ts 模块。 -->
+    <script>
+      ;(function () {
+        if (location.protocol !== 'file:') return
+        if (!document.querySelector('script[type="module"][src]')) return
+        document.addEventListener('DOMContentLoaded', function () {
+          var el = document.getElementById('fallback')
+          if (!el) return
+          el.innerHTML =
+            '<p>打开的文件不对</p>' +
+            '<p class="fallback__detail">这是源码入口 index.html，它需要 Vite 编译才能运行（浏览器无法直接执行 .ts 模块）。</p>' +
+            '<p class="fallback__hint">请打开构建产物 <b>dist/index.html</b>；<br>' +
+            '或在项目根目录执行 <code>npx vite --config example/orbit-feasibility/vite.config.ts</code>，' +
+            '再访问 http://localhost:5180/</p>'
+          el.hidden = false
+        })
+      })()
+    </script>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

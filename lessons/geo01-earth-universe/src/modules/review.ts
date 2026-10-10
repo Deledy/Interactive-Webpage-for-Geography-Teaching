@@ -1,39 +1,37 @@
 /* ============================================================
-   M9 复习与总结：结构树折叠 + 复习模式切换
+   M9 复习与总结：单向树状思维导图（mindTree）+ 复习模式切换
+   ------------------------------------------------------------
+   数据来自 lessonData.review.nodes（本课写死，供课堂讲解与收束）。
+   叶子节点的 link 指向本页模块的 section id，点击节点即滚动定位，
+   把复习导图与前面各模块联动起来（单向树状：根在左，逐级向右展开）。
+   交互：点击带子级的节点展开 / 收起；控制条支持「展开下一层 / 全部展开 / 全部收起」。
    ============================================================ */
-import { $$ } from '../utils/dom'
+import { createMindTree } from '../../../../shared/components/mindTree/mindTree'
+import { prefersReducedMotion } from '../utils/dom'
 import { App } from '../state'
 import { lessonData } from '../data/lessonData'
-import type { ReviewNode } from '../types'
 
 export function initReviewTree(): void {
-  const box = document.getElementById('review-tree');
-  const modeBtn = document.querySelector('[data-widget="review-mode"]');
+  const box = document.getElementById('review-tree')
+  const modeBtn = document.querySelector('[data-widget="review-mode"]')
   if (!box || !modeBtn || !lessonData.review) return;
 
   box.classList.remove('panel--hint');
-  box.innerHTML = renderTree(lessonData.review.nodes);
+  box.innerHTML = '';
 
-  function renderTree(nodes: ReviewNode[]): string {
-    return '<ul class="tree">' + nodes.map(n => {
-      const hasKids = !!(n.children && n.children.length);
-      const kids = hasKids ? renderTree(n.children || []) : '';
-      return `
-          <li class="tree__item${hasKids ? ' has-children is-open' : ''}" data-node="${n.id}">
-            ${hasKids ? '<button type="button" class="tree__toggle" aria-expanded="true" aria-label="折叠"></button>' : ''}
-            <span class="tree__label">${n.name}</span>
-            ${kids ? '<ul class="tree__children">' + kids + '</ul>' : ''}
-          </li>`;
-    }).join('') + '</ul>';
-  }
-
-  $$('.tree__toggle', box).forEach(t => {
-    t.addEventListener('click', () => {
-      const li = t.closest('.tree__item');
-      if (!li) return;
-      li.classList.toggle('is-open');
-      t.setAttribute('aria-expanded', String(li.classList.contains('is-open')));
-    });
+  createMindTree(box, lessonData.review.nodes, {
+    initialDepth: 1,
+    maxNodeWidth: 240,
+    colGap: 44,
+    onLink: (link) => {
+      const target = document.querySelector(link);
+      if (target) {
+        target.scrollIntoView({
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+          block: 'start'
+        });
+      }
+    }
   });
 
   modeBtn.addEventListener('click', () => {

@@ -428,6 +428,7 @@ button { font-family: inherit; }
   align-items: center;
   gap: 7px;
   flex-shrink: 0;
+  text-decoration: none;
   background: rgba(13, 35, 76, 0.72);
   border: 1px solid rgba(148, 163, 184, 0.5);
   color: #E8EEF8;
@@ -4601,50 +4602,26 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .solar-card__data-value { font-size: 18px; }
 }
 
-/* ---------- M9 复习结构树 ---------- */
-.tree { list-style: none; margin: 0; padding: 0; }
-.tree__children {
-  list-style: none;
-  margin: 8px 0 8px 14px;
-  padding-left: 18px;
-  border-left: 1px dashed rgba(255, 255, 255, 0.2);
-  display: none;
+/* ---------- M9 复习结构树（mindTree 单向树状思维导图） ---------- */
+/* 令牌覆盖：让组件贴合本课深空玻璃配色（明暗均由组件内部自适应，这里只换色） */
+#review-tree {
+  --mt-line: rgba(255, 255, 255, 0.22);
+  --mt-line-strong: rgba(255, 255, 255, 0.4);
+  --mt-surface: rgba(255, 255, 255, 0.06);
+  --mt-surface-hover: rgba(255, 255, 255, 0.12);
+  --mt-text: var(--text-main);
+  --mt-text-dim: var(--text-dim);
+  --mt-accent: var(--cyan);
+  --mt-accent-soft: rgba(79, 195, 247, 0.16);
 }
-.tree__item.is-open > .tree__children { display: block; }
-.tree__item { margin: 8px 0; }
-.tree__label {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  font-size: 18px;
-  line-height: 1.4;
-  color: var(--text-main);
+/* 根节点用恒星金突出，与各模块标题呼应 */
+#review-tree .mt-node.is-root > rect {
+  fill: rgba(255, 213, 79, 0.12);
+  stroke: var(--gold);
 }
-.tree__item.has-children > .tree__label {
-  font-weight: 700;
-  color: var(--gold);
-  border-color: rgba(255, 213, 79, 0.4);
+#review-tree .mt-node.is-root > text {
+  fill: var(--gold);
 }
-.tree__toggle {
-  display: inline-block;
-  width: 22px;
-  height: 22px;
-  margin-right: 6px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: var(--cyan);
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  vertical-align: middle;
-  transition: transform 0.25s var(--ease);
-}
-.tree__toggle::before { content: "▸"; display: inline-block; }
-.tree__item.is-open > .tree__toggle { transform: rotate(90deg); }
 
 /* 复习模式下结构树聚焦显示 */
 body.review-mode #review { padding-top: 40px; }
@@ -4652,7 +4629,8 @@ body.review-mode #review { padding-top: 40px; }
 /* 互动模块窄屏适配 */
 @media (max-width: 768px) {
   .hierarchy-svg { max-width: 420px; }
-  .tree__label { font-size: 16px; padding: 6px 12px; }
+  /* 窄屏：结构树不缩到不可读，改为横向滚动 */
+  #review-tree .mt__svg { min-width: 900px; }
   .solar3d__pill { padding: 3px 9px; font-size: 13px; }
   .solar3d__group-head { height: 58px; padding: 0 8px; gap: 7px; }
   .solar3d__group-badge { padding: 4px 12px 4px 9px; gap: 6px; }
@@ -4874,184 +4852,719 @@ body.review-mode #review { padding-top: 40px; }
 }
 
 /* ============================================================
-   M7 地球的普通性和特殊性（.earth- 前缀）
-   双卡（普通性 / 特殊性）：结构特征对比条 + 运动特征三性 + 表 1.2 + 结论条
+   M7 地球的普通性和特殊性（可视化呈现）
+   顶部「八大行星」横向 3D 行星模型（地球高亮）→ 两条证据卡
+   （运动特征：SVG 示意图；结构特征：类地行星相对大小 3D 模型）→
+   普通 → 转折 → 特殊的结论。
+   行星模型与 M5 太阳系、M6 公转演示共用同一套标准 3D 资源与参数
+   （见 src/modules/planetRow3d.ts）；WebGL 不可用时保留 2D 示意兜底。
    ============================================================ */
 .earth { display: block; }
 
 /* 无 JS 静态兜底 */
 .earth__static { display: block; }
 
-/* 主体：普通性、特殊性自上而下顺序（水平）排布 */
-.earth__dual {
+.earth-viz {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 30px;
 }
 
-.earth-card {
-  padding: 24px;
-  border-radius: var(--radius-card);
-  border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.03);
+/* ---------- M7 八大行星卡片组（参考稿 1:1 复刻） ----------
+   深空导航蓝大容器（圆角 20px + 星点背景 + 底缘青色辉光带）内排 8 张行星卡片：
+   卡片（圆角 14px、竖向渐变深蓝面、灰蓝细描边、下沉投影）自上而下为
+   贴图球体（左上受光高光 / 右下夜影terminator）→ 名称胶囊（全圆角、深底细边）
+   → 点–线–点装饰；选中卡（默认地球）：蓝色描边 + 蓝色外发光 + 蓝色胶囊白字 +
+   点线提亮；悬停：上浮 3px + 描边提亮 + 球体轻微放大。
+   球体贴图由 JS 以 --tex 注入（Vite base64 内联，file:// 可用）；无 JS 静态兜底
+   使用 [data-planet] 渐变球（--globe），直径统一由 --d 控制（与 JS 口径一致）。
+   色彩令牌：容器 #0E2137→#0A1728；卡片面 rgba(24,46,73,.66)→rgba(13,27,46,.66)；
+   描边 rgba(130,172,230,.17)；选中蓝 #4F8DF9→#2563EB；辉光青 rgba(62,224,208,.9)；
+   文字 #E8F1FB / 引言 #D9E6F8。动效统一 var(--dur)·var(--ease)（0.35s）。 */
+.planet-deck {
+  position: relative;
+  margin: 0;
+  padding: 26px 26px 18px;
+  border: 1px solid rgba(122, 168, 226, 0.14);
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(38, 74, 118, 0.20), transparent 60%),
+    linear-gradient(180deg, #0E2137 0%, #0B1930 55%, #0A1728 100%);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.38),
+    0 14px 40px -6px rgba(32, 210, 196, 0.10);
+  overflow: hidden;
 }
-.earth-card--ordinary { border-color: rgba(79, 195, 247, 0.35); }
-.earth-card--special {
-  border-color: rgba(255, 213, 79, 0.45);
-  background: rgba(255, 213, 79, 0.06);
+/* 星点背景（多层 1~2px 光点，低透明度） */
+.planet-deck::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%, rgba(255, 255, 255, 0.55), transparent 55%),
+    radial-gradient(1.1px 1.1px at 24% 68%, rgba(210, 230, 255, 0.40), transparent 55%),
+    radial-gradient(1.6px 1.6px at 38% 14%, rgba(255, 255, 255, 0.35), transparent 55%),
+    radial-gradient(1.1px 1.1px at 52% 78%, rgba(210, 230, 255, 0.35), transparent 55%),
+    radial-gradient(1.5px 1.5px at 66% 18%, rgba(255, 255, 255, 0.50), transparent 55%),
+    radial-gradient(1.1px 1.1px at 78% 62%, rgba(210, 230, 255, 0.40), transparent 55%),
+    radial-gradient(1.4px 1.4px at 90% 26%, rgba(255, 255, 255, 0.45), transparent 55%),
+    radial-gradient(1.1px 1.1px at 45% 40%, rgba(210, 230, 255, 0.30), transparent 55%),
+    radial-gradient(1.3px 1.3px at 8% 84%, rgba(255, 255, 255, 0.35), transparent 55%),
+    radial-gradient(1.2px 1.2px at 95% 80%, rgba(210, 230, 255, 0.35), transparent 55%);
+}
+/* 底缘青色辉光带（参考稿底部地平辉光） */
+.planet-deck::after {
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, transparent, rgba(62, 224, 208, 0.9) 50%, transparent);
+  filter: blur(0.6px);
+  pointer-events: none;
 }
 
-.earth-card__head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.earth-card__badge {
+.planet-deck__row {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.planet-deck__card {
+  flex: 1 1 96px;
+  min-width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px 12px;
+  border: 1px solid rgba(130, 172, 230, 0.17);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(24, 46, 73, 0.66), rgba(13, 27, 46, 0.66));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+/* 土星卡加宽以容纳光环（与参考稿一致） */
+.planet-deck__card--wide { flex: 1.3 1 122px; min-width: 122px; }
+
+.planet-deck__card:hover {
+  border-color: rgba(150, 190, 245, 0.38);
+}
+/* 卡片上浮仅在 CSS 兜底态生效：3D 态下球体绘制在独立画布层，卡片位移会与球体错位 */
+.planet-deck:not(.is-3d) .planet-deck__card:hover { transform: translateY(-3px); }
+.planet-deck__card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* 选中卡：蓝色描边 + 蓝色外发光 + 面板提亮（选中态唯一，由 JS 转移） */
+.planet-deck__card.is-selected {
+  border-color: rgba(72, 138, 250, 0.9);
+  background: linear-gradient(180deg, rgba(30, 62, 100, 0.78), rgba(17, 38, 64, 0.78));
+  box-shadow:
+    0 0 0 1px rgba(72, 138, 250, 0.35),
+    0 0 22px rgba(64, 140, 255, 0.28),
+    0 8px 22px rgba(0, 0, 0, 0.38);
+}
+
+/* 球体舞台：固定高度使大小球共用一条视觉中线 */
+.planet-deck__scene {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 84px;
+}
+/* 贴图球体：--tex 为贴图（JS 注入），--globe 为渐变兜底（无 JS / 贴图前）；
+   左上高光 + 右下暗部 + 内阴影夜面 + 下沉投影。
+   直径 min(--d, 舞台宽 88%)：与 3D 渲染的半径口径一致（见 planetDeck3d.ts） */
+.planet-deck__globe {
+  position: relative;
+  z-index: 2;
+  width: min(var(--d, 54px), 88%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-image:
+    radial-gradient(circle at 32% 27%, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0) 46%),
+    radial-gradient(circle at 72% 76%, rgba(3, 8, 20, 0.50), rgba(3, 8, 20, 0) 60%),
+    var(--tex, none),
+    var(--globe, none);
+  background-size: 100% 100%, 100% 100%, cover, cover;
+  background-position: center;
+  box-shadow:
+    inset -10px -13px 22px rgba(2, 6, 16, 0.70),
+    inset 3px 4px 10px rgba(255, 255, 255, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.40);
+  transition: transform var(--dur) var(--ease);
+}
+/* 悬停放大仅在 CSS 兜底态生效（3D 态由球体自身提亮表达反馈） */
+.planet-deck:not(.is-3d) .planet-deck__card:hover .planet-deck__globe { transform: scale(1.05); }
+
+/* 3D 球体画布：铺满卡片行并叠于卡片之上（球体在此绘制，透明区域不遮挡卡片内容） */
+.planet-deck__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* 3D 态：隐藏 CSS 兜底球 / 环（保留占位，卡片布局不变），球体改由画布渲染 */
+.planet-deck.is-3d .planet-deck__globe,
+.planet-deck.is-3d .planet-deck__ring { visibility: hidden; }
+
+/* 无 JS / 贴图缺失时的渐变球兜底（按行星本色，左上受光） */
+.planet-deck__card[data-planet="mercury"] .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #d8dee8, #9aa3b4 52%, #565e70 78%, #2e3442); }
+.planet-deck__card[data-planet="venus"]   .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #f4dfae, #d9b877 55%, #8a6a34 82%, #4a3a1e); }
+.planet-deck__card[data-planet="earth"]   .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #9ed2ff, #4f9df7 50%, #1d5fb8 78%, #0c2f66); }
+.planet-deck__card[data-planet="mars"]    .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #f0a284, #d96c4f 52%, #8f3d27 80%, #4a1e12); }
+.planet-deck__card[data-planet="jupiter"] .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #f0d2a4, #d9a05b 52%, #8f6234 80%, #4a3018); }
+.planet-deck__card[data-planet="saturn"]  .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #f4e3b8, #e3c98a 52%, #96803f 80%, #4d3f1e); }
+.planet-deck__card[data-planet="uranus"]  .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #c2f0ef, #7fd4d4 52%, #3f8f8f 80%, #1d4a4a); }
+.planet-deck__card[data-planet="neptune"] .planet-deck__globe { --globe: radial-gradient(circle at 34% 30%, #9fc0f5, #5a7fe0 52%, #2f4a9e 80%, #16224d); }
+
+/* 光环：压扁椭圆环面（倾角与 3D 一致：土星 rotate -6° + scaleY .30）；
+   back 层在球后，front 层裁下半环叠于球前 —— 形成环被球体遮挡的前后关系 */
+.planet-deck__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: min(calc(var(--d, 54px) * 1.95), 96%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-6deg) scaleY(0.30);
+  background: radial-gradient(
+    closest-side,
+    transparent 58%,
+    rgba(214, 186, 132, 0.30) 64%,
+    rgba(236, 212, 160, 0.95) 72%,
+    rgba(170, 140, 92, 0.60) 82%,
+    rgba(120, 98, 64, 0.22) 92%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+.planet-deck__ring--front {
+  z-index: 3;
+  clip-path: inset(50% 0 0 0);
+}
+/* 海王星：极淡细环（更细更斜，与 3D 的 tilt/roll 口径一致） */
+.planet-deck__card[data-planet="neptune"] .planet-deck__ring {
+  width: min(calc(var(--d, 54px) * 1.7), 84%);
+  transform: translate(-50%, -50%) rotate(9deg) scaleY(0.45);
+  background: radial-gradient(
+    closest-side,
+    transparent 66%,
+    rgba(160, 190, 240, 0.35) 72%,
+    rgba(160, 190, 240, 0.50) 76%,
+    rgba(160, 190, 240, 0.18) 82%,
+    transparent 92%
+  );
+}
+
+/* 名称胶囊：全圆角、深底细边、白字（与参考稿一致） */
+.planet-deck__pill {
+  margin-top: 2px;
+  padding: 4px 15px;
+  border: 1px solid rgba(132, 176, 235, 0.22);
+  border-radius: 999px;
+  background: rgba(7, 15, 28, 0.78);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  line-height: 1.5;
+  color: #e8f1fb;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.planet-deck__card.is-selected .planet-deck__pill {
+  border-color: transparent;
+  background: linear-gradient(180deg, #4f8df9, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.55);
+}
+
+/* 点–线–点装饰：中缝细线 + 两端小圆点，选中时提亮为蓝 */
+.planet-deck__rule {
+  position: relative;
+  width: 46px;
+  height: 1px;
+  margin-top: 9px;
+  background: rgba(150, 185, 235, 0.30);
+  transition: background var(--dur) var(--ease);
+}
+.planet-deck__rule::before,
+.planet-deck__rule::after {
+  content: "";
+  position: absolute;
+  top: -1.5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(150, 185, 235, 0.45);
+  transition: background var(--dur) var(--ease);
+}
+.planet-deck__rule::before { left: -7px; }
+.planet-deck__rule::after { right: -7px; }
+.planet-deck__card.is-selected .planet-deck__rule { background: rgba(110, 165, 255, 0.85); }
+.planet-deck__card.is-selected .planet-deck__rule::before,
+.planet-deck__card.is-selected .planet-deck__rule::after { background: rgba(130, 180, 255, 0.95); }
+
+/* 容器底部引言：渐变线 — 菱形 — 文字 — 菱形 — 渐变线 */
+.planet-deck__quote {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 26px 0 6px;
+}
+.planet-deck__quote-line {
+  flex: 0 1 150px;
+  width: clamp(48px, 11vw, 150px);
+  height: 1px;
+}
+.planet-deck__quote-line:first-child { background: linear-gradient(90deg, transparent, rgba(98, 152, 224, 0.60)); }
+.planet-deck__quote-line:last-child { background: linear-gradient(270deg, transparent, rgba(98, 152, 224, 0.60)); }
+.planet-deck__quote-gem {
   flex: none;
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: #4180de;
+  box-shadow: 0 0 8px rgba(80, 150, 255, 0.65);
+}
+.planet-deck__quote-text {
+  font-size: 17px;
+  letter-spacing: 1px;
+  color: #d9e6f8;
+  text-align: center;
+}
+
+/* ---------- 行星 3D 模型舞台（与 M5/M6 同一套标准资源） ----------
+   .earth-model-stage 是 3D 画布与名称标签层的宿主：WebGL 可用时由 JS 填入
+   .planet3d（绝对定位铺满），不可用时保留其内部的 2D SVG 示意并居中显示。 */
+.earth-model-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.earth-model-stage:not(.is-3d) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 结构特征卡内的类地行星模型：加宽取值，让四颗行星在卡片中居中且大小合适
+   （display 沿用上方 .earth-evidence__figure 的 flex，2D 兜底 SVG 仍能居中） */
+.earth-evidence__figure--model {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 280px;
+  margin: 14px auto 12px;
+}
+/* 运动特征卡内的太阳系绕日公转模型：侧面俯视（仰角 38°），轨道呈扁椭圆，故用扁舞台承载
+   高度 300px ≈ 12.33·sin38°·(480/2·halfW) 的反算值，取景后不会被裁切 */
+.earth-evidence__figure--orbit {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 300px;
+  margin: 14px auto 12px;
+}
+
+.planet3d { position: absolute; inset: 0; }
+.planet3d__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: manipulation;
+}
+
+/* 太阳系绕日公转 3D 模型（运动特征卡）：画布铺满舞台 */
+.solarorbit { position: absolute; inset: 0; }
+.solarorbit__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.planet3d__labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* 行星名称标签（结构特征卡的 3D 模型）：胶囊样式，与 2D 兜底的 .earth-body__tag 一致；
+   地球（is-highlight）为蓝色填充高亮 —— 与参考稿中「地球」标签的呈现一致 */
+.planet3d__label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 3px 14px;
+  border: 1px solid rgba(74, 158, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(9, 30, 58, 0.85);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: #E8F2FF;
+}
+.planet3d__label.is-highlight {
+  border-color: #7EC0FF;
+  background: #2A6FE0;
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(79, 158, 255, 0.6);
+}
+
+/* ---------- 两条证据卡（HUD 科技风，圆角矩形） ----------
+   外形：圆角矩形 + 蓝色渐变描边 + 外发光。外框仅承担描边与发光
+   （背景 = 描边渐变 + border-radius），内容放内层（圆角内缩 1px + 卡片底渐变），
+   外框 1px 内边距即为描边线宽。
+   内容自上而下：圆形徽章 + 标题 + 右延渐隐斜线 → 发光蓝点 + 描述 →
+   3D / 2D 图示 → 底部标签行（贴底对齐）。
+   底部标签行：运动特征卡为三个特征胶囊（左置发光蓝点）；结构特征卡为
+   「渐变线—文字—渐变线」注记（与参考稿一致）。
+   配色：卡片底 #0C2138→#08172A + 顶部蓝光晕；描边 rgba(104,182,255,.9)→rgba(36,88,180,.6)；
+   徽章 #2F76E8→#12386F；文字标题 #FFFFFF（蓝光晕）/ 描述 #9DB4CC / 强调 #4A9EFF。 */
+.earth-evidences {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.earth-evidence {
+  display: flex;
+  min-width: 0;
+  padding: 1px;
+  border-radius: 16px;
+  background: linear-gradient(150deg, rgba(104, 182, 255, 0.9), rgba(48, 118, 230, 0.55) 45%, rgba(36, 88, 180, 0.6));
+  box-shadow:
+    0 0 18px rgba(42, 111, 224, 0.30),
+    0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.earth-evidence__inner {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px 18px;
+  border-radius: 15px;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(34, 86, 158, 0.38), transparent 62%),
+    linear-gradient(180deg, #0C2138 0%, #0A1B31 52%, #08172A 100%);
+}
+
+/* 标题行：圆形徽章 + 标题 + 右延渐隐斜线装饰 */
+.earth-evidence__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.earth-evidence__badge {
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 28%, #2F76E8, #12386F 72%);
+  border: 1.5px solid rgba(126, 192, 255, 0.75);
+  box-shadow:
+    0 0 0 3px rgba(42, 111, 224, 0.18),
+    0 0 14px rgba(64, 140, 255, 0.55),
+    inset 0 0 10px rgba(140, 200, 255, 0.35);
+}
+/* 徽章内图标：课内 assets/icons/ 图标（CSS 遮罩上色，白色） */
+.earth-evidence__badge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 22px;
+  height: 22px;
+  background-color: #EAF4FF;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+.earth-evidence__badge--motion { --icon: url('../../assets/icons/公转周期.svg'); }
+.earth-evidence__badge--structure { --icon: url('../../assets/icons/类地行星.svg'); }
+.earth-evidence__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(90, 170, 255, 0.5);
+}
+.earth-evidence__deco {
+  flex: 1;
+  min-width: 24px;
+  height: 12px;
+  background: repeating-linear-gradient(105deg, rgba(92, 164, 255, 0.55) 0 1.5px, transparent 1.5px 9px);
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.95), transparent);
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.95), transparent);
+}
+
+/* 描述行：发光蓝点 + 说明文字 */
+.earth-evidence__desc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  color: #9DB4CC;
+}
+.earth-evidence__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4A9EFF;
+  box-shadow: 0 0 8px rgba(74, 158, 255, 0.9);
+}
+
+/* 图示区：仅做居中，不设 flex 伸缩 —— 舞台高度由 --model / --orbit 的固定高度决定
+   （若设 flex: 1，flex-basis: 0 会在纵向 flex 容器里覆盖 height，把 3D 舞台压塌） */
+.earth-evidence__figure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto 6px;
+}
+.earth-evi-svg { display: block; width: 100%; max-width: 320px; height: auto; }
+
+/* 运动特征示意图：同一平面上的近圆轨道 + 同向箭头 */
+.earth-orbit { fill: none; stroke: rgba(96, 156, 232, 0.6); stroke-width: 1.3; }
+.earth-orbit__dot { fill: rgba(168, 196, 224, 0.95); }
+.earth-orbit__sun { filter: drop-shadow(0 0 8px rgba(255, 213, 79, 0.85)); }
+.earth-dir { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; }
+
+/* 结构特征示意图：类地行星名称胶囊（圆角矩形 + 文字），地球为蓝色填充高亮 */
+.earth-body__tag { fill: rgba(9, 30, 58, 0.85); stroke: rgba(74, 158, 255, 0.45); stroke-width: 1; }
+.earth-body__tag.is-earth { fill: #2A6FE0; stroke: #7EC0FF; }
+.earth-body__label { font-size: 12.5px; font-weight: 600; fill: #E8F2FF; }
+.earth-body__label.is-earth { fill: #FFFFFF; }
+.earth-body__dot.is-earth { filter: drop-shadow(0 0 10px rgba(79, 158, 255, 0.85)); }
+
+/* 底部标签行（运动特征卡）：三个特征胶囊（margin-top: auto → 贴卡片底部对齐） */
+.earth-evidence__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: auto 0 0;
+  padding: 14px 0 0;
+  list-style: none;
+}
+.earth-evidence__tag {
+  position: relative;
+  padding: 6px 18px 6px 28px;
+  border: 1px solid rgba(74, 158, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(10, 34, 66, 0.72);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: #E8F2FF;
+}
+.earth-evidence__tag::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4A9EFF;
+  box-shadow: 0 0 7px rgba(74, 158, 255, 0.9);
+}
+
+/* 底部注记（结构特征卡）：渐变线 — 文字 — 渐变线（同样贴卡片底部对齐） */
+.earth-evidence__caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: auto 0 0;
+  padding: 14px 0 0;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #A8BFD8;
+}
+.earth-evidence__line {
+  flex: 0 1 90px;
+  width: clamp(28px, 8vw, 90px);
+  height: 1px;
+}
+.earth-evidence__caption .earth-evidence__line:first-child {
+  background: linear-gradient(90deg, transparent, rgba(74, 158, 255, 0.65));
+}
+.earth-evidence__caption .earth-evidence__line:last-child {
+  background: linear-gradient(270deg, transparent, rgba(74, 158, 255, 0.65));
+}
+
+/* ---------- 结论：普通 → 转折 → 特殊（与证据卡同一套圆角 HUD 风格） ----------
+   普通结论条：横向「圆形徽章（行星图标）+ 结论文字」居中；特殊性区块为同款圆角
+   金色卡片（金色在本课代表重点/特殊性，与蓝色证据卡区分）。 */
+.earth-conclusion {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.earth-verdict {
+  display: flex;
+  min-width: 0;
+  padding: 1px;
+  border-radius: 16px;
+}
+.earth-verdict__inner {
+  flex: 1;
+  min-width: 0;
+  border-radius: 15px;
+}
+
+.earth-verdict--ordinary {
+  background: linear-gradient(150deg, rgba(104, 182, 255, 0.9), rgba(48, 118, 230, 0.5) 50%, rgba(36, 88, 180, 0.6));
+  box-shadow:
+    0 0 18px rgba(42, 111, 224, 0.30),
+    0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.earth-verdict--ordinary .earth-verdict__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px 26px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(34, 86, 158, 0.42), transparent 65%),
+    linear-gradient(180deg, #0C2138, #08172A);
+}
+/* 结论条徽章：行星图标（课内 assets/icons/行星.svg，遮罩上色） */
+.earth-verdict__medal {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 28%, #2F76E8, #12386F 72%);
+  border: 1.5px solid rgba(126, 192, 255, 0.75);
+  box-shadow:
+    0 0 0 3px rgba(42, 111, 224, 0.18),
+    0 0 14px rgba(64, 140, 255, 0.55),
+    inset 0 0 10px rgba(140, 200, 255, 0.35);
+}
+.earth-verdict__medal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 21px;
+  height: 21px;
+  background-color: #EAF4FF;
+  -webkit-mask: url('../../assets/icons/行星.svg') center / contain no-repeat;
+  mask: url('../../assets/icons/行星.svg') center / contain no-repeat;
+}
+.earth-verdict__text {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(90, 170, 255, 0.45);
+}
+
+.earth-turn {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--gold);
+}
+
+.earth-verdict--special {
+  background: linear-gradient(150deg, rgba(255, 213, 79, 0.85), rgba(200, 150, 40, 0.45) 50%, rgba(160, 115, 30, 0.55));
+  box-shadow:
+    0 0 18px rgba(200, 160, 60, 0.26),
+    0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.earth-verdict--special .earth-verdict__inner {
+  padding: 20px 24px 18px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(120, 95, 25, 0.30), transparent 65%),
+    linear-gradient(180deg, #0F2233, #0A1726);
+}
+.earth-verdict__badge {
+  display: inline-block;
+  margin-bottom: 14px;
   padding: 4px 14px;
   border-radius: 999px;
   font-size: var(--fs-note);
   font-weight: 700;
   letter-spacing: 1px;
+  color: var(--gold);
+  background: rgba(255, 213, 79, 0.16);
 }
-.earth-card--ordinary .earth-card__badge { color: var(--cyan); background: rgba(79, 195, 247, 0.14); }
-.earth-card--special .earth-card__badge { color: var(--gold); background: rgba(255, 213, 79, 0.16); }
-.earth-card__lead { margin: 0; font-size: var(--fs-note); color: var(--text-dim); }
-
-.earth-feature + .earth-feature { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--glass-border); }
-.earth-feature__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 10px;
-  font-size: var(--fs-body);
-  font-weight: 700;
-  color: var(--text-main);
-}
-.earth-feature__no {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cyan);
-  background: rgba(79, 195, 247, 0.14);
-}
-.earth-feature__desc { margin: 0 0 14px; font-size: var(--fs-note); line-height: var(--lh-body); color: var(--text-dim); }
-
-/* 结构特征：体积 / 质量 两组对比条 */
-.earth-struct { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.earth-bars { min-width: 0; }
-.earth-bars__title {
-  margin: 0 0 12px;
-  font-size: var(--fs-note);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: var(--cyan);
-}
-.earth-bars__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.earth-bar {
-  display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) 44px;
-  align-items: center;
-  gap: 10px;
-  padding: 3px 6px;
-  border-radius: 6px;
-  transition: background var(--dur) var(--ease);
-}
-.earth-bar.is-focused { background: rgba(255, 213, 79, 0.1); }
-.earth-bar__name { font-size: 15px; color: var(--text-dim); }
-.earth-bar.is-focused .earth-bar__name { color: var(--gold); font-weight: 700; }
-.earth-bar__track {
-  position: relative;
-  height: 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-.earth-bar__fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(79, 195, 247, 0.5), rgba(79, 195, 247, 0.9));
-  transition: width var(--dur) var(--ease);
-}
-.earth-bar__fill.is-earth { background: linear-gradient(90deg, rgba(255, 213, 79, 0.55), var(--gold)); }
-.earth-bar__value { font-size: 14px; text-align: right; color: var(--text-main); font-variant-numeric: tabular-nums; }
-
-/* 运动特征：三性 */
-.earth-motion {
-  list-style: none;
+.earth-verdict__statement { margin: 0 0 14px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-main); }
+.earth-verdict__conclusion {
   margin: 0 0 16px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.earth-motion__item { display: flex; gap: 10px; align-items: baseline; font-size: var(--fs-note); line-height: var(--lh-body); }
-.earth-motion__name {
-  flex: none;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-  color: var(--cyan);
-  background: rgba(79, 195, 247, 0.12);
-}
-.earth-motion__desc { color: var(--text-dim); }
-
-/* 表 1.2（横向可滚动，仅无 JS 静态兜底使用） */
-.earth__table-panel { overflow-x: auto; }
-.earth-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-note);
-  color: var(--text-main);
-}
-.earth-table caption {
-  caption-side: top;
-  padding: 0 0 12px;
-  font-size: var(--fs-note);
-  color: var(--text-dim);
-  text-align: left;
-}
-.earth-table th,
-.earth-table td {
-  padding: 10px 8px;
-  border: 1px solid var(--glass-border);
-  text-align: center;
-  white-space: nowrap;
-}
-.earth-table thead th,
-.earth-table tbody th[scope="row"] {
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.04);
-}
-.earth-table tbody th[scope="row"] { color: var(--text-dim); }
-.earth-table .is-earth { color: var(--gold); }
-.earth-table thead th.is-earth { background: rgba(255, 213, 79, 0.1); }
-
-/* 结论条：普通性（青）/ 特殊性（金） */
-.earth-card__statement { margin: 0 0 18px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-main); }
-.earth-card__conclusion {
-  margin: 20px 0 0;
-  padding: 14px 18px;
-  border-radius: var(--radius-card);
   font-size: var(--fs-body);
   font-weight: 700;
   line-height: var(--lh-body);
-  color: var(--text-main);
+  color: var(--gold);
 }
-.earth-card--ordinary .earth-card__conclusion { border: 1px solid rgba(79, 195, 247, 0.4); background: rgba(79, 195, 247, 0.08); }
-.earth-card--special .earth-card__conclusion { border: 1px solid rgba(255, 213, 79, 0.5); background: rgba(255, 213, 79, 0.1); }
+.earth-verdict__bridge {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px dashed var(--glass-border);
+  font-size: var(--fs-note);
+  color: var(--text-dim);
+}
 
-/* 窄屏：结构对比条两组改纵向 */
-@media (max-width: 768px) {
-  .earth-struct { grid-template-columns: 1fr; gap: 20px; }
-  .earth-bar { grid-template-columns: 44px minmax(0, 1fr) 42px; }
+/* 窄屏：证据卡两列降为单列 */
+@media (max-width: 900px) {
+  .earth-evidences { grid-template-columns: 1fr; }
+  /* 卡片组：收窄后允许换行（4 + 4），保持居中与间距 */
+  .planet-deck { padding: 20px 16px 14px; }
+  .planet-deck__row { gap: 10px; }
+  .planet-deck__card { flex: 1 1 86px; min-width: 86px; padding: 12px 6px 10px; }
+  .planet-deck__card--wide { flex: 1.3 1 108px; min-width: 108px; }
+  .planet-deck__scene { height: 72px; }
+  .planet-deck__quote { margin: 18px 0 2px; }
+}
+@media (max-width: 640px) {
+  .earth-viz { gap: 22px; }
+  .planet-deck { padding: 16px 10px 12px; border-radius: 16px; }
+  .planet-deck__row { gap: 8px; }
+  .planet-deck__card { flex: 1 1 72px; min-width: 72px; padding: 10px 4px 8px; border-radius: 12px; }
+  .planet-deck__card--wide { flex: 1.3 1 88px; min-width: 88px; }
+  .planet-deck__scene { height: 58px; }
+  .planet-deck__pill { font-size: 12px; padding: 3px 10px; }
+  .planet-deck__rule { width: 34px; margin-top: 6px; }
+  .planet-deck__quote { gap: 8px; }
+  .planet-deck__quote-text { font-size: 14px; letter-spacing: 0.5px; }
+  /* 证据卡内容内边距（外框 padding 恒为 1px，用于形成切角描边） */
+  .earth-evidence__inner { padding: 16px 16px 14px; }
+  .earth-evidence__title { font-size: 19px; }
+  .earth-evidence__badge { width: 36px; height: 36px; }
+  .earth-evidence__badge::before { width: 19px; height: 19px; }
+  .earth-evidence__deco { display: none; }
+  .earth-verdict--ordinary .earth-verdict__inner { padding: 14px 18px; }
+  .earth-verdict__text { font-size: 18px; }
 }

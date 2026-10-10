@@ -22,6 +22,7 @@
    - 零依赖或注明依赖；纯 CSS 可实现的交互不要引入 JavaScript。
    - 类名前缀与组件名对应（如 `tsd-`），复制进单课时避免样式冲突。
    - 演示文案建议中文；颜色如用较新语法（oklch 等）必须内置十六进制降级。
+   - 需要逻辑交互的组件以「子目录 + TS 模块」形式放在 `components/` 下（如 `components/mindTree/`），由单课源码按相对路径 `import`（示例：`import { createMindTree } from '../../../shared/components/mindTree/mindTree'`），样式随组件自带 CSS 引入，不再复制 HTML。
 4. 新增组件后，在 `components.html` 中登记区块，并同步更新目录页底部组件数量。
 5. 后续可在此基础上建立统一的封面、导航、练习弹窗等共享组件。
 6. 当前为增量迁移，先建立目录规范，资源按需逐步抽离。

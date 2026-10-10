@@ -1,0 +1,203 @@
+/* ============================================================
+   mindTree · 单向树状思维导图组件样式
+   ------------------------------------------------------------
+   令牌 --mt-* 可由课程覆盖以贴合配色；默认取中性灰（明暗主题均可读），
+   文字用 currentColor 继承宿主，节点面用半透明中性色，无需 color-mix / oklch。
+   使用方法：createMindTree(容器, 数据, 选项)，样式随组件自动引入。
+   ============================================================ */
+.mt {
+  --mt-line: rgba(148, 163, 184, 0.5);
+  --mt-line-strong: rgba(148, 163, 184, 0.9);
+  --mt-surface: rgba(148, 163, 184, 0.1);
+  --mt-surface-hover: rgba(148, 163, 184, 0.2);
+  --mt-text: currentColor;
+  --mt-text-dim: rgba(148, 163, 184, 0.95);
+  --mt-accent: #3b82f6;
+  --mt-accent-soft: rgba(59, 130, 246, 0.16);
+  --mt-radius: 10px;
+  --mt-font-size: 15px;
+  --mt-dur: 0.36s;
+  --mt-ease: cubic-bezier(0.25, 0.8, 0.35, 1);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: inherit;
+}
+
+/* ---------- 控制条 ---------- */
+.mt__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mt__btn {
+  font: inherit;
+  font-size: var(--mt-font-size);
+  line-height: 1.4;
+  color: inherit;
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-line);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background var(--mt-dur) var(--mt-ease), border-color var(--mt-dur) var(--mt-ease);
+}
+
+.mt__btn:hover:not(:disabled) {
+  background: var(--mt-surface-hover);
+  border-color: var(--mt-line-strong);
+}
+
+.mt__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mt__hint {
+  margin-left: 4px;
+  font-size: 13px;
+  color: var(--mt-text-dim);
+}
+
+/* ---------- 画布 ---------- */
+.mt__viewport {
+  width: 100%;
+  overflow: auto;
+}
+
+.mt__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- 连线 ---------- */
+.mt-link {
+  fill: none;
+  stroke: var(--mt-line);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mt-link.is-enter {
+  animation: mt-fade var(--mt-dur) var(--mt-ease) both;
+}
+
+@keyframes mt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- 节点 ---------- */
+.mt-node {
+  cursor: default;
+}
+
+.mt-node > rect {
+  fill: var(--mt-surface);
+  stroke: var(--mt-line);
+  stroke-width: 1;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+
+.mt-node > text {
+  fill: var(--mt-text);
+  font-family: inherit;
+  font-size: var(--mt-font-size);
+}
+
+.mt-node.is-collapsed,
+.mt-node.is-expanded,
+.mt-node.is-link {
+  cursor: pointer;
+}
+
+.mt-node.is-collapsed:hover > rect,
+.mt-node.is-expanded:hover > rect,
+.mt-node.is-link:hover > rect {
+  fill: var(--mt-surface-hover);
+  stroke: var(--mt-line-strong);
+}
+
+/* 配置了 link 的叶子节点：下划线提示可跳转 */
+.mt-node.is-link > text {
+  text-decoration: underline;
+  text-decoration-color: var(--mt-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.mt-node.is-link:hover > rect {
+  stroke: var(--mt-accent);
+}
+
+.mt-node.is-root > rect {
+  fill: var(--mt-accent-soft);
+  stroke: var(--mt-accent);
+}
+
+.mt-node.is-root > text {
+  font-weight: 600;
+}
+
+.mt-node__dot {
+  fill: var(--mt-surface);
+  stroke: var(--mt-line-strong);
+  stroke-width: 1;
+}
+
+.mt-node.is-expanded .mt-node__dot {
+  fill: var(--mt-accent-soft);
+  stroke: var(--mt-accent);
+}
+
+.mt-node__sign {
+  fill: var(--mt-text-dim);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.mt-node.is-expanded .mt-node__sign {
+  fill: var(--mt-accent);
+}
+
+.mt-node:focus {
+  outline: none;
+}
+
+.mt-node:focus-visible > rect {
+  stroke: var(--mt-accent);
+  stroke-width: 2;
+}
+
+.mt-node.is-enter {
+  animation: mt-pop var(--mt-dur) var(--mt-ease) both;
+}
+
+@keyframes mt-pop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- 打印：隐藏控制条，避免画布被裁剪 ---------- */
+@media print {
+  .mt__bar {
+    display: none;
+  }
+
+  .mt__viewport {
+    overflow: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-node.is-enter,
+  .mt-link.is-enter {
+    animation: none;
+  }
+}

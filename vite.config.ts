@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 const projectRoot = fileURLToPath(new URL('.', import.meta.url))
@@ -36,10 +36,30 @@ function resolveLessonDir(): string {
 
 const lessonDir = resolveLessonDir()
 
+/**
+ * 开发期把 shared/ 下的离线编辑器挂到 /custom-quiz-editor.html，
+ * 使主页面「教师：配置题目」入口在 `npm run dev` 下同样可用（单一真源，不复制副本）。
+ * 构建产物由 scripts/build.mjs 复制同名文件到 dist/。
+ */
+function sharedEditorDevPlugin(): Plugin {
+  const editorFile = join(projectRoot, 'shared', 'custom-quiz-editor', 'index.html')
+  return {
+    name: 'shared-quiz-editor-dev',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const pathname = (req.url || '').split('?')[0]
+        if (pathname !== '/custom-quiz-editor.html' || !existsSync(editorFile)) return next()
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.end(readFileSync(editorFile))
+      })
+    }
+  }
+}
+
 export default defineConfig({
   root: `lessons/${lessonDir}`,
   base: './',
-  plugins: [viteSingleFile({ useRecommendedBuildConfig: false })],
+  plugins: [sharedEditorDevPlugin(), viteSingleFile({ useRecommendedBuildConfig: false })],
   resolve: {
     alias: {
       // 单课源码快捷导入（示例：import { $ } from '@/utils/dom'）

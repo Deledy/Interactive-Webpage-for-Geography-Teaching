@@ -68,21 +68,19 @@ describe('lessonData 数据完整性', () => {
     expect(lessonData.motionFeatures.map(f => f.name)).toEqual(['同向性', '近圆性', '共面性'])
   })
 
-  it('M7 地球的普通性和特殊性：结构特征（类地行星）+ 运动特征 + 双结论', () => {
+  it('M7 地球的普通性和特殊性：可视化数据（两条证据 + 类地行星体积 + 双结论）', () => {
     const e = lessonData.earthOrdinary
-    // 结构特征：类地行星（水金地火），地球 = 1
-    expect(e.structure.bodies.map(b => b.name)).toEqual(['水星', '金星', '地球', '火星'])
-    const bodyEarth = e.structure.bodies.find(b => b.id === 'earth')!
-    expect(bodyEarth.volume).toBe(1)
-    expect(bodyEarth.mass).toBe(1)
-    expect(e.structure.note).toContain('体积、质量')
-    // 运动特征：三性
-    expect(e.motionNote).toContain('同向性')
-    expect(e.motionNote).toContain('共面性')
-    expect(e.motionNote).toContain('近圆性')
-    // 普通 / 特殊结论
+    // 两条证据：运动特征 / 结构特征（各含一句说明与一行图注）
+    expect(e.evidences.map(x => x.title)).toEqual(['运动特征', '结构特征'])
+    expect(e.evidences.every(x => x.desc && x.caption)).toBe(true)
+    // 类地行星体积（水金地火），地球 = 1
+    expect(e.bodies.map(b => b.name)).toEqual(['水星', '金星', '地球', '火星'])
+    expect(e.bodies.find(b => b.id === 'earth')!.volume).toBe(1)
+    // 普通 → 转折 → 特殊结论（特殊性一律加"目前已知"限定）
     expect(e.ordinaryConclusion).toContain('普通的行星')
+    expect(e.turn).toContain('然而')
     expect(e.specialStatement).toContain('高级智慧生命')
+    expect(e.specialStatement).toContain('目前已知')
     expect(e.specialConclusion).toContain('特殊的行星')
   })
 

@@ -81,33 +81,42 @@ export interface MotionFeature {
   desc: string
 }
 
-/** M7 结构特征：类地行星相对地球的体积 / 质量（一行 = 一颗类地行星，地球 = 1） */
-export interface TerrestrialBody {
+/** M7 结构特征：类地行星相对地球的体积（地球 = 1），用于相对大小示意 */
+export interface EarthBody {
   id: string
   name: string
   /** 体积，相对地球（地球 = 1） */
   volume: number
-  /** 质量，相对地球（地球 = 1） */
-  mass: number
 }
 
-/** M7 地球的普通性和特殊性 */
+/** M7 证据卡（运动特征 / 结构特征）：一句说明 + 一行图注 */
+export interface EarthEvidence {
+  /** 卡片标题 */
+  title: string
+  /** 一句说明 */
+  desc: string
+  /** 图注（关键词，小字） */
+  caption: string
+}
+
+/** M7 地球的普通性和特殊性（可视化：八大行星示意图 + 两条证据 + 普通/特殊结论） */
 export interface EarthOrdinaryData {
-  /** 结构特征：类地行星体积 / 质量对比（地球 = 1） */
-  structure: {
-    /** 结构特征描述句 */
-    note: string
-    /** 类地行星数据（按距日由近及远） */
-    bodies: TerrestrialBody[]
-  }
-  /** 运动特征描述句（三性复用 lessonData.motionFeatures） */
-  motionNote: string
+  /** 八大行星横向示意图下方的图注 */
+  lineupCaption: string
+  /** 两条证据（运动特征 / 结构特征） */
+  evidences: EarthEvidence[]
+  /** 类地行星体积（相对地球，用于相对大小示意） */
+  bodies: EarthBody[]
   /** 普通性结论 */
   ordinaryConclusion: string
+  /** 转折语（普通 → 特殊） */
+  turn: string
   /** 特殊性陈述句 */
   specialStatement: string
   /** 特殊性结论 */
   specialConclusion: string
+  /** 指向下一模块（M8 生命条件）的桥接句 */
+  bridge: string
 }
 
 /** M8 因果链单项 */
@@ -126,6 +135,8 @@ export interface LifeConditions {
 export interface ReviewNode {
   id: string
   name: string
+  /** 叶子节点可配置跳转锚点（对应页面模块的 section id），点击后滚动定位 */
+  link?: string
   children?: ReviewNode[]
 }
 
