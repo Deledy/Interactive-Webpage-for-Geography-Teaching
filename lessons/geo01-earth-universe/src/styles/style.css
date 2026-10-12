@@ -273,6 +273,7 @@ button { font-family: inherit; }
   align-items: center;
   justify-content: center;
   flex: none;
+  grid-column: 3;   /* 固定占第 3 列：复习模式隐藏导航项后，按钮仍靠右、位置不变 */
   width: 42px;
   height: 42px;
   padding: 0;
@@ -1197,11 +1198,90 @@ button { font-family: inherit; }
   background: var(--gold);
 }
 
-/* ---------- 11. 复习模式 ---------- */
-/* 隐藏全部模块讲解文字；只保留结构图（#review）与各模块“✎ 练习”入口 */
-body.review-mode .section__desc { display: none; }
-body.review-mode .section:not(#review) .section__body,
-body.review-mode .section:not(#review) .extend-btn { display: none; }
+/* ---------- 11. 复习模块（默认仅入口按钮）与复习模式 ---------- */
+/* 复习模块默认仅展示「进入复习模式」入口：隐藏复习题与模块操作按钮 */
+#review .section__head-actions { display: none; }
+#review .review-doc { display: none; }
+.review-entry {
+  display: flex;
+  justify-content: center;
+  padding: 36px 0 12px;
+}
+
+/* 复习模式：仅展示复习题，隐藏其余全部内容、模块与导航项 */
+body.review-mode .topnav__links { display: none; }
+body.review-mode .section:not(#review) { display: none; }
+body.review-mode .footer { display: none; }
+body.review-mode #review .section__head,
+body.review-mode #review .section__footer { display: none; }
+body.review-mode #review .review-doc { display: flex; }
+
+/* 复习章节标题行：标题 + 「前往对应内容」跳转按钮 */
+.review-sec__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.review-sec__head .review-sec__heading { margin: 0; }
+.review-sec__jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid rgba(79, 195, 247, 0.4);
+  border-radius: 999px;
+  background: rgba(79, 195, 247, 0.08);
+  color: var(--cyan-text);
+  font-size: var(--fs-note);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.review-sec__jump:hover {
+  color: #FFFFFF;
+  border-color: rgba(79, 195, 247, 0.7);
+  background: rgba(79, 195, 247, 0.16);
+}
+.review-sec__jump-icon { width: 15px; height: 15px; }
+
+/* 复习章节跳转后常驻的「返回复习模式」浮动按钮（仅 body.review-return 时显示）
+   注意：这里必须用 id 选择器（#review-return）而不是类选择器——因为同一状态类
+   `review-return` 会被加到 <body> 上，若用 `.review-return` 会把 body 本身也命中
+   并置为 display:none，导致整页空白。 */
+#review-return {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border: 1px solid rgba(255, 213, 79, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 213, 79, 0.14);
+  color: var(--gold);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    transform 0.12s var(--ease);
+}
+#review-return .review-return__icon { width: 16px; height: 16px; }
+#review-return:hover { color: #1a1405; background: var(--gold); }
+#review-return:active { transform: scale(0.96); }
+body.review-return #review-return { display: inline-flex; }
 
 /* ---------- 11b. 复习文档（从左到右阅读式挖空） ---------- */
 .review-doc {
@@ -4602,9 +4682,9 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   .solar-card__data-value { font-size: 18px; }
 }
 
-/* ---------- M9 复习结构树（mindTree 单向树状思维导图） ---------- */
+/* ---------- M9 总结结构树（mindTree 单向树状思维导图） ---------- */
 /* 令牌覆盖：让组件贴合本课深空玻璃配色（明暗均由组件内部自适应，这里只换色） */
-#review-tree {
+#summary-tree {
   --mt-line: rgba(255, 255, 255, 0.22);
   --mt-line-strong: rgba(255, 255, 255, 0.4);
   --mt-surface: rgba(255, 255, 255, 0.06);
@@ -4615,22 +4695,22 @@ body.review-mode .section:not(#review) .extend-btn { display: none; }
   --mt-accent-soft: rgba(79, 195, 247, 0.16);
 }
 /* 根节点用恒星金突出，与各模块标题呼应 */
-#review-tree .mt-node.is-root > rect {
+#summary-tree .mt-node.is-root > rect {
   fill: rgba(255, 213, 79, 0.12);
   stroke: var(--gold);
 }
-#review-tree .mt-node.is-root > text {
+#summary-tree .mt-node.is-root > text {
   fill: var(--gold);
 }
 
-/* 复习模式下结构树聚焦显示 */
+/* 复习模式下复习模块聚焦显示 */
 body.review-mode #review { padding-top: 40px; }
 
 /* 互动模块窄屏适配 */
 @media (max-width: 768px) {
   .hierarchy-svg { max-width: 420px; }
   /* 窄屏：结构树不缩到不可读，改为横向滚动 */
-  #review-tree .mt__svg { min-width: 900px; }
+  #summary-tree .mt__svg { min-width: 900px; }
   .solar3d__pill { padding: 3px 9px; font-size: 13px; }
   .solar3d__group-head { height: 58px; padding: 0 8px; gap: 7px; }
   .solar3d__group-badge { padding: 4px 12px 4px 9px; gap: 6px; }

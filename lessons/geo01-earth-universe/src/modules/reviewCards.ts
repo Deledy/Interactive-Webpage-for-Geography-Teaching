@@ -61,7 +61,15 @@ export function initReviewCards(): void {
 
   box.innerHTML = sections.map(sec => `
     <section class="review-sec">
-      <h3 class="review-sec__heading">${sec.heading}</h3>
+      <div class="review-sec__head">
+        <h3 class="review-sec__heading">${sec.heading}</h3>
+        ${sec.link
+          ? `<button type="button" class="review-sec__jump" data-review-jump="${sec.link}">
+          <span>前往对应内容</span>
+          <svg class="review-sec__jump-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9"/><path d="M8.5 3.5 12.5 8l-4 4.5"/></svg>
+        </button>`
+          : ''}
+      </div>
       ${sec.blocks.map(renderBlock).join('')}
     </section>`).join('');
 

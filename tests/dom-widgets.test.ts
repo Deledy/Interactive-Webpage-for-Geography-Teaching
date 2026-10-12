@@ -13,7 +13,9 @@ import { initHierarchy } from '../lessons/geo01-earth-universe/src/modules/hiera
 import { initLifeChain } from '../lessons/geo01-earth-universe/src/modules/life'
 import { initMotionFeatures } from '../lessons/geo01-earth-universe/src/modules/planets'
 import { initEarth } from '../lessons/geo01-earth-universe/src/modules/earth'
-import { initReviewTree } from '../lessons/geo01-earth-universe/src/modules/review'
+import { initSummaryTree } from '../lessons/geo01-earth-universe/src/modules/summary'
+import { initReviewMode } from '../lessons/geo01-earth-universe/src/modules/review'
+import { initReviewCards } from '../lessons/geo01-earth-universe/src/modules/reviewCards'
 import { initPracticeModal } from '../lessons/geo01-earth-universe/src/modules/practiceModal'
 import { initExtendModal } from '../lessons/geo01-earth-universe/src/modules/extendModal'
 import { initSolarSystem } from '../lessons/geo01-earth-universe/src/modules/solar'
@@ -284,10 +286,10 @@ describe('M7 地球的普通性和特殊性（可视化：八大行星卡片组 
   })
 })
 
-describe('M9 复习与总结', () => {
-  it('渲染结构树，可折叠并切换复习模式', () => {
-    initReviewTree()
-    const box = document.getElementById('review-tree')!
+describe('M9 知识总结（思维导图）', () => {
+  it('在总结模块渲染结构树，可折叠', () => {
+    initSummaryTree()
+    const box = document.getElementById('summary-tree')!
     expect(box.classList.contains('mt')).toBe(true)
     expect(box.querySelector('.mt-node.is-root')).toBeTruthy()
     // initialDepth = 1：根 + 两个一级分支
@@ -297,39 +299,74 @@ describe('M9 复习与总结', () => {
     const root = box.querySelector('.mt-node.is-root') as SVGElement
     root.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(box.querySelectorAll('.mt-node')).toHaveLength(1)
+  })
+})
 
+describe('M11 复习（复习模式切换）', () => {
+  it('默认仅展示入口按钮，点击进入 / 退出复习模式', () => {
+    initReviewMode()
     const modeBtn = document.querySelector('[data-widget="review-mode"]') as HTMLElement
+    expect(modeBtn.textContent).toBe('进入复习模式')
+    // 默认不展示复习题（review-doc 由 CSS 控制显隐，此处校验初始无复习模式类）
+    expect(document.body.classList.contains('review-mode')).toBe(false)
+
     modeBtn.click()
     expect(document.body.classList.contains('review-mode')).toBe(true)
     expect(App.reviewMode).toBe(true)
     expect(modeBtn.textContent).toBe('退出复习模式')
+
+    modeBtn.click()
+    expect(document.body.classList.contains('review-mode')).toBe(false)
+    expect(App.reviewMode).toBe(false)
+    expect(modeBtn.textContent).toBe('进入复习模式')
+  })
+
+  it('每章「前往对应内容」跳转后常驻「返回复习模式」，可一键返回', () => {
+    initReviewCards()
+    initReviewMode()
+
+    // 每个复习章节都带一个跳转按钮，指向对应模块锚点
+    const jumps = Array.from(document.querySelectorAll<HTMLElement>('[data-review-jump]'))
+    expect(jumps).toHaveLength(6)
+    expect(jumps.map(b => b.dataset.reviewJump)).toEqual([
+      '#celestial', '#meteor', '#hierarchy', '#planets', '#earth', '#life'
+    ])
+
+    // 进入复习模式后点击某一章跳转：退出复习模式并常驻返回按钮
+    ;(document.querySelector('[data-widget="review-mode"]') as HTMLElement).click()
+    expect(document.body.classList.contains('review-mode')).toBe(true)
+
+    jumps[0].click()
+    expect(document.body.classList.contains('review-mode')).toBe(false)
+    expect(App.reviewMode).toBe(false)
+    expect(document.body.classList.contains('review-return')).toBe(true)
+
+    // 浮动「返回复习模式」按钮：重新回到复习模式
+    ;(document.getElementById('review-return') as HTMLElement).click()
+    expect(document.body.classList.contains('review-mode')).toBe(true)
+    expect(App.reviewMode).toBe(true)
+    expect(document.body.classList.contains('review-return')).toBe(false)
   })
 })
 
 describe('随堂练习浮层', () => {
-  it('M1 选择题：打开浮层渲染题目，点选正确项即时反馈', () => {
+  it('题目已全部清空：点开任一模块练习浮层均为空态占位', () => {
     initPracticeModal()
+    const content = document.getElementById('practice-content')!
+
     ;(document.querySelector('[data-practice="M1"]') as HTMLElement).click()
     const modal = document.getElementById('practice-modal')!
     expect(modal.hidden).toBe(false)
-    expect(document.querySelectorAll('.practice-q')).toHaveLength(3)
+    expect(document.querySelectorAll('.practice-q')).toHaveLength(0)
+    expect(content.textContent).toContain('敬请期待')
 
-    const firstOpts = document.querySelectorAll('.practice-q')[0].querySelectorAll('.practice-q__opt')
-    ;(firstOpts[1] as HTMLElement).click() // 第一题正确答案下标 1
-    const fb = document.querySelector('.practice-q__feedback')!
-    expect(fb.textContent).toContain('✓ 正确')
-    expect(fb.classList.contains('is-correct')).toBe(true)
-  })
+    // 地球 / 生命模块同样保留练习入口，但内容为空
+    ;(document.querySelector('[data-practice="M7"]') as HTMLElement).click()
+    expect(document.querySelectorAll('.practice-q')).toHaveLength(0)
+    expect(content.textContent).toContain('敬请期待')
 
-  it('M3 拖拽分类（点击降级路径）：选卡→入框→即时反馈', () => {
-    initPracticeModal()
-    ;(document.querySelector('[data-practice="M3"]') as HTMLElement).click()
-    expect(document.querySelectorAll('.drag-card')).toHaveLength(9)
-
-    ;(document.querySelector('.drag-card[data-card="moon"]') as HTMLElement).click()
-    ;(document.querySelector('.drop-zone[data-type="celestial"]') as HTMLElement).click()
-    expect(document.querySelector('[data-drop="celestial"] .drag-card[data-card="moon"]')).toBeTruthy()
-    expect(document.querySelector('[data-drag-feedback]')!.textContent).toContain('正确')
+    ;(document.querySelector('[data-practice="M8"]') as HTMLElement).click()
+    expect(content.textContent).toContain('敬请期待')
   })
 })
 
@@ -398,8 +435,8 @@ describe('整页启动冒烟', () => {
     expect(document.querySelector('.meteor-canvas')).toBeTruthy()
     expect(document.querySelector('.hierarchy-svg')).toBeTruthy()
     expect(document.querySelector('.solar-svg')).toBeTruthy()
-    expect(document.querySelector('#review-tree.mt')).toBeTruthy()
-    expect(document.querySelector('#review-tree .mt-node.is-root')).toBeTruthy()
+    expect(document.querySelector('#summary-tree.mt')).toBeTruthy()
+    expect(document.querySelector('#summary-tree .mt-node.is-root')).toBeTruthy()
     expect(document.querySelectorAll('.motion-feature')).toHaveLength(3)
     expect(document.querySelector('.orbit2d')).toBeTruthy()
     expect(document.querySelectorAll('.chain')).toHaveLength(5)

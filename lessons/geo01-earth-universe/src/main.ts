@@ -13,7 +13,8 @@ import { initMotionFeatures } from './modules/planets'
 import { initOrbitDemo } from './modules/orbit'
 import { initEarth } from './modules/earth'
 import { initLifeChain } from './modules/life'
-import { initReviewTree } from './modules/review'
+import { initSummaryTree } from './modules/summary'
+import { initReviewMode } from './modules/review'
 import { initReviewCards } from './modules/reviewCards'
 import { initNebulaTilt } from './modules/nebulaTilt'
 import { initBodyDeckTabs } from './modules/bodyDeckTabs'
@@ -33,8 +34,9 @@ export function init(): void {
   initOrbitDemo();
   initEarth();
   initLifeChain();
-  initReviewTree();
-  initReviewCards();
+  initSummaryTree();
+  initReviewCards();   // 先渲染复习题（含每章跳转按钮），再挂复习模式交互
+  initReviewMode();
   initNebulaTilt();
   initBodyDeckTabs();
   initLightbox();

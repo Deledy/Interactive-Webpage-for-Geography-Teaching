@@ -163,6 +163,8 @@ export type ReviewBlock =
 /** M9 复习文档 · 节（严格对应知识点清单的一、二、三…） */
 export interface ReviewSection {
   heading: string
+  /** 对应页面模块的 section 锚点，渲染「前往对应内容」跳转按钮 */
+  link?: string
   blocks: ReviewBlock[]
 }
 

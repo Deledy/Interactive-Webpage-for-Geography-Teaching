@@ -1,42 +1,61 @@
 /* ============================================================
-   M9 复习与总结：单向树状思维导图（mindTree）+ 复习模式切换
+   M11 复习：复习模式切换 + 章节跳转 + 返回复习模式
    ------------------------------------------------------------
-   数据来自 lessonData.review.nodes（本课写死，供课堂讲解与收束）。
-   叶子节点的 link 指向本页模块的 section id，点击节点即滚动定位，
-   把复习导图与前面各模块联动起来（单向树状：根在左，逐级向右展开）。
-   交互：点击带子级的节点展开 / 收起；控制条支持「展开下一层 / 全部展开 / 全部收起」。
+   - 复习模块默认仅展示「进入复习模式」入口按钮，不渲染复习题。
+     点击后给 <body> 加上 review-mode 类：页面切换为纯复习题视图，
+     其余模块、导航项与非复习题内容全部隐藏（显隐规则见 styles/style.css）。
+     再次点击退出，回到常规讲解视图。
+   - 每个复习章节内的「前往对应内容」按钮：退出复习模式、滚动到对应模块，
+     并给 <body> 加上 review-return 类，常驻显示「返回复习模式」浮动按钮。
+   - 点击浮动按钮：重新进入复习模式并滚动回复习模块。
    ============================================================ */
-import { createMindTree } from '../../../../shared/components/mindTree/mindTree'
-import { prefersReducedMotion } from '../utils/dom'
 import { App } from '../state'
-import { lessonData } from '../data/lessonData'
 
-export function initReviewTree(): void {
-  const box = document.getElementById('review-tree')
-  const modeBtn = document.querySelector('[data-widget="review-mode"]')
-  if (!box || !modeBtn || !lessonData.review) return;
+/** 平滑滚动到指定锚点；jsdom 未实现 scrollIntoView 时静默跳过 */
+function scrollToAnchor(selector: string): void {
+  const target = document.querySelector(selector)
+  if (target && typeof target.scrollIntoView === 'function') {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
-  box.classList.remove('panel--hint');
-  box.innerHTML = '';
+export function initReviewMode(): void {
+  const modeBtn = document.querySelector<HTMLElement>('[data-widget="review-mode"]');
+  const returnBtn = document.getElementById('review-return');
+  const body = document.body;
 
-  createMindTree(box, lessonData.review.nodes, {
-    initialDepth: 1,
-    maxNodeWidth: 240,
-    colGap: 44,
-    onLink: (link) => {
-      const target = document.querySelector(link);
-      if (target) {
-        target.scrollIntoView({
-          behavior: prefersReducedMotion ? 'auto' : 'smooth',
-          block: 'start'
-        });
-      }
-    }
+  function enterReview(scroll: boolean): void {
+    body.classList.remove('review-return');
+    body.classList.add('review-mode');
+    App.reviewMode = true;
+    if (modeBtn) modeBtn.textContent = '退出复习模式';
+    if (scroll) scrollToAnchor('#review');
+  }
+
+  function exitReview(): void {
+    body.classList.remove('review-mode');
+    App.reviewMode = false;
+    if (modeBtn) modeBtn.textContent = '进入复习模式';
+  }
+
+  if (modeBtn) {
+    modeBtn.addEventListener('click', () => {
+      if (body.classList.contains('review-mode')) exitReview();
+      else enterReview(true);
+    });
+  }
+
+  // 章节跳转：离开复习模式，跳到对应模块内容，并常驻「返回复习模式」按钮
+  document.querySelectorAll<HTMLElement>('[data-review-jump]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.reviewJump || '';
+      exitReview();
+      body.classList.add('review-return');
+      if (target) scrollToAnchor(target);
+    });
   });
 
-  modeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('review-mode');
-    App.reviewMode = document.body.classList.contains('review-mode');
-    modeBtn.textContent = App.reviewMode ? '退出复习模式' : '进入复习模式';
-  });
+  if (returnBtn) {
+    returnBtn.addEventListener('click', () => enterReview(true));
+  }
 }

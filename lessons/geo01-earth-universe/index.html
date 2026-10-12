@@ -33,8 +33,9 @@
         <a href="#planets" data-target="planets">行星</a>
         <a href="#earth" data-target="earth">地球</a>
         <a href="#life" data-target="life">生命</a>
-        <a href="#review" data-target="review">复习</a>
+        <a href="#summary" data-target="summary">总结</a>
         <a href="#quiz-custom" data-target="quiz-custom">练习</a>
+        <a href="#review" data-target="review">复习</a>
       </nav>
       <!-- 全屏切换按钮：点击进入/退出全屏（JS 由 src/modules/fullscreen.ts 驱动） -->
       <button type="button" class="topnav__fs" id="fs-toggle" aria-label="进入全屏" title="进入全屏">
@@ -1280,46 +1281,29 @@
       <p class="section__footer"><span class="section__footer-en">MODULE 08 · LIFE ON EARTH</span></p>
     </section>
 
-    <!-- ============ M9 复习与总结 ============ -->
-    <section id="review" class="section" data-nav="复习">
+    <!-- ============ M9 知识总结（思维导图） ============ -->
+    <section id="summary" class="section" data-nav="总结">
       <div class="section__head">
         <div class="section__head-text">
           <span class="section__tag">
             <span class="section__tag-label">模块</span>
             <span class="section__tag-num">09</span>
           </span>
-          <h2 class="section__title">复习与总结</h2>
-          <p class="section__desc">收束全课知识结构。以填空方式自查（点击空格显示答案）；进入复习模式后，讲解文字会被隐藏，方便自主复习巩固。</p>
-        </div>
-        <div class="section__head-actions">
-          <button type="button" class="extend-btn" data-section="M9" aria-haspopup="dialog">
-            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
-            <span>拓展</span>
-          </button>
-          <button type="button" class="practice-btn" data-practice="M9" aria-haspopup="dialog">
-            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
-            <span>练习</span>
-          </button>
+          <h2 class="section__title">知识总结</h2>
+          <p class="section__desc">以单向树状思维导图收束全课知识结构：宇宙 → 天体与天体系统 → 太阳系 → 地球。节点可点击展开 / 收起，带下划线的节点可跳转到对应模块。</p>
         </div>
       </div>
-      <div class="section__body" data-module="review">
-        <!-- 知识结构树（JS 启用时替换为可折叠的结构树；无 JS 时静态展示） -->
-        <div id="review-tree" class="panel panel--hint" data-widget="review-tree">
+      <div class="section__body" data-module="summary">
+        <!-- 思维导图（JS 启用时渲染为可折叠结构树；无 JS 时静态展示） -->
+        <div id="summary-tree" class="panel panel--hint" data-widget="summary-tree">
           <p class="panel__placeholder">知识结构树<br>宇宙 → 天体（类型：自然天体 星云/恒星/行星/卫星/流星体/彗星 · 人造天体 人造卫星/载人飞船/空间站；判别三条件）<br>与 天体系统（概念：相互吸引、相互绕转；层级：可观测宇宙 → 银河系 → 太阳系 → 地月系）<br>→ 太阳系（八大行星顺序与分类 · 小行星带 · 运动三性）<br>→ 地球（普通性与特殊性 · 存在生命的条件：外部 + 自身）</p>
-        </div>
-        <!-- 复习文档：严格按知识点清单、从左到右阅读式挖空（JS 启用时渲染；无 JS 时静态展示） -->
-        <div id="review-cards" class="review-doc" data-widget="review-cards">
-          <p class="review-doc__placeholder">复习知识点：天体的类型 · 天体的判别（三个标准 + 判断练习）· 天体系统 · 太阳系与八大行星 · 地球的普通性和特殊性 · 地球存在生命的条件<br>点击空格查看答案（选中复制时不会带出答案）；判断题点击单项查看结果。</p>
-        </div>
-        <div class="section__actions">
-          <button type="button" class="btn btn--ghost" data-widget="review-mode">进入复习模式</button>
         </div>
       </div>
       <!-- 模块结尾：分隔线 + 模块英文名 -->
-      <p class="section__footer"><span class="section__footer-en">MODULE 09 · REVIEW &amp; SUMMARY</span></p>
+      <p class="section__footer"><span class="section__footer-en">MODULE 09 · SUMMARY</span></p>
     </section>
 
-    <!-- ============ M10 自定义练习 ============ -->
+    <!-- ============ M10 练习 ============ -->
     <section id="quiz-custom" class="section" data-nav="练习">
       <div class="section__head">
         <div class="section__head-text">
@@ -1327,7 +1311,7 @@
             <span class="section__tag-label">模块</span>
             <span class="section__tag-num">10</span>
           </span>
-          <h2 class="section__title">自定义练习</h2>
+          <h2 class="section__title">练习</h2>
           <p class="section__desc">教师可按学情自行增删题目（选择题 / 综合题，支持表格与图片）。题目内容与答案解析来自外置的 custom-quiz.js，分发后无需重新构建即可替换。</p>
         </div>
         <div class="section__head-actions">
@@ -1346,6 +1330,44 @@
       </div>
       <!-- 模块结尾：分隔线 + 模块英文名 -->
       <p class="section__footer"><span class="section__footer-en">MODULE 10 · CUSTOM PRACTICE</span></p>
+    </section>
+
+    <!-- ============ M11 复习（复习模式） ============ -->
+    <section id="review" class="section" data-nav="复习">
+      <div class="section__head">
+        <div class="section__head-text">
+          <span class="section__tag">
+            <span class="section__tag-label">模块</span>
+            <span class="section__tag-num">11</span>
+          </span>
+          <h2 class="section__title">复习</h2>
+          <p class="section__desc">默认只保留复习入口。点击「进入复习模式」后，页面切换为纯复习题自查视图（点击空格显示答案）；再次点击即可退出。</p>
+        </div>
+        <!-- 模块操作（拓展 / 练习）：保留于 DOM 以维持结构清单契约，复习模块默认不展示 -->
+        <div class="section__head-actions">
+          <button type="button" class="extend-btn" data-section="M9" aria-haspopup="dialog">
+            <svg class="extend-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            <span>拓展</span>
+          </button>
+          <button type="button" class="practice-btn" data-practice="M9" aria-haspopup="dialog">
+            <svg class="practice-btn__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.2l.55-2.4L10.8 3.55a1.35 1.35 0 0 1 1.9 1.9L5.45 12.7 3 13.2z"/><path d="M9.9 4.55l1.55 1.55"/></svg>
+            <span>练习</span>
+          </button>
+        </div>
+      </div>
+      <div class="section__body" data-module="review">
+        <!-- 默认仅展示「进入复习模式」入口按钮 -->
+        <div class="review-entry">
+          <button type="button" class="btn btn--primary" data-widget="review-mode">进入复习模式</button>
+        </div>
+        <!-- 复习文档：严格按知识点清单、从左到右阅读式挖空（JS 启用时渲染；无 JS 时静态展示）。
+             默认隐藏，仅在复习模式下展示。 -->
+        <div id="review-cards" class="review-doc" data-widget="review-cards">
+          <p class="review-doc__placeholder">复习知识点：天体的类型 · 天体的判别（三个标准 + 判断练习）· 天体系统 · 太阳系与八大行星 · 地球的普通性和特殊性 · 地球存在生命的条件<br>点击空格查看答案（选中复制时不会带出答案）；判断题点击单项查看结果。</p>
+        </div>
+      </div>
+      <!-- 模块结尾：分隔线 + 模块英文名 -->
+      <p class="section__footer"><span class="section__footer-en">MODULE 11 · REVIEW</span></p>
     </section>
   </main>
 
@@ -1379,6 +1401,13 @@
       你的浏览器未启用 JavaScript。页签式天体卡组仍可正常切换，各模块静态讲解文字可阅读；但拖拽分类、动画演示等其余交互不可用。
     </div>
   </noscript>
+
+  <!-- 复习模式：点击复习章节的「前往对应内容」后，常驻显示此按钮以便一键返回复习模式
+       （仅当 body.review-return 时显示，由 src/modules/review.ts 控制） -->
+  <button type="button" class="review-return" id="review-return">
+    <svg class="review-return__icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 3.5 3 8l4.5 4.5"/><path d="M3 8h9"/></svg>
+    <span>返回复习模式</span>
+  </button>
 
   <!-- 构建入口：Three.js 等依赖改为 npm 引入（见 src/modules/solar.ts）；
        WebGL 不可用时自动降级为 2D 示意 -->

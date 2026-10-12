@@ -14,12 +14,12 @@ describe('课程结构清单抽取（lesson-manifest）', () => {
     title: '地球的宇宙环境'
   })
 
-  it('抽取 9 个随堂练习模块 + 1 个课后练习', () => {
+  it('抽取 9 个随堂练习模块 + 1 个课后练习（M7/M8 已补回练习按钮）', () => {
     expect(manifest.modules).toHaveLength(9)
     expect(manifest.postLesson?.id).toBe('quiz-custom')
   })
 
-  it('模块键与段 id 一一对应（M1..M9 → universe..review）', () => {
+  it('模块键与段 id 一一对应（M1..M9 → universe..life、review）', () => {
     expect(manifest.modules.map((m) => m.key)).toEqual([
       'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9'
     ])
@@ -35,7 +35,8 @@ describe('课程结构清单抽取（lesson-manifest）', () => {
 
   it('记录模块序号与导航名', () => {
     expect(manifest.modules[0]).toMatchObject({ no: '01', nav: '宇宙' })
-    expect(manifest.modules[8]).toMatchObject({ no: '09', nav: '复习' })
+    expect(manifest.modules[6]).toMatchObject({ no: '07', nav: '地球' })
+    expect(manifest.modules[8]).toMatchObject({ no: '11', nav: '复习' })
   })
 
   it('M3 识别为拖拽题型，其余默认为选择题型', () => {

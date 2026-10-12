@@ -518,6 +518,8 @@ function validateQuizData(raw: unknown): { data: CqData | null; issues: string[]
     issues.push('缺少 sections 数组')
     return { data: null, issues }
   }
+  // sections 为空是"尚未配置题目"的正常状态（而非数据损坏）→ 走友好空态
+  if (source.sections.length === 0) return { data: null, issues }
 
   const sections: CqSection[] = []
   source.sections.forEach((section, si) => {

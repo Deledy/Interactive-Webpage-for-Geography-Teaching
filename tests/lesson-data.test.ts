@@ -104,21 +104,7 @@ describe('lessonData 数据完整性', () => {
     }
   })
 
-  it('随堂练习：9 个模块入口，M3 为拖拽型，其余选择题答案下标合法', () => {
-    const keys = Object.keys(lessonData.practices)
-    expect(keys).toEqual(['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9'])
-    for (const key of keys) {
-      const item = lessonData.practices[key]
-      expect(item.title).toBeTruthy()
-      if (item.type === 'drag') {
-        expect(key).toBe('M3')
-      } else {
-        item.questions.forEach(q => {
-          expect(q.answer).toBeGreaterThanOrEqual(0)
-          expect(q.answer).toBeLessThan(q.options.length)
-          expect(q.q && q.explain).toBeTruthy()
-        })
-      }
-    }
+  it('随堂练习：题目已全部清空（保留各模块「练习」入口按钮）', () => {
+    expect(Object.keys(lessonData.practices)).toEqual([])
   })
 })
