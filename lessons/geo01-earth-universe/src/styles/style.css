@@ -5569,52 +5569,153 @@ body.review-mode #review { padding-top: 40px; }
   text-shadow: 0 0 12px rgba(90, 170, 255, 0.45);
 }
 
+/* 转折标题「然而」：金色宋体 + 左右四角星与渐隐细线对称装饰 */
 .earth-turn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
   margin: 0;
-  text-align: center;
-  font-size: var(--fs-body);
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--gold);
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 8px;
+  color: #F2CB62;
+  text-shadow:
+    0 0 18px rgba(240, 200, 90, 0.42),
+    0 0 4px rgba(255, 232, 160, 0.55);
+}
+.earth-turn::before,
+.earth-turn::after {
+  content: "";
+  flex: 1 1 auto;
+  max-width: 200px;
+  height: 18px;
+}
+.earth-turn::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 Q13.2 9 24 12 Q13.2 15 12 24 Q10.8 15 0 12 Q10.8 9 12 0 Z' fill='%23F3D070'/%3E%3C/svg%3E") right center / 15px 15px no-repeat,
+    linear-gradient(90deg, rgba(240, 200, 90, 0), rgba(240, 200, 90, 0.6) 92%) left center / calc(100% - 22px) 1px no-repeat;
+}
+.earth-turn::after {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 Q13.2 9 24 12 Q13.2 15 12 24 Q10.8 15 0 12 Q10.8 9 12 0 Z' fill='%23F3D070'/%3E%3C/svg%3E") left center / 15px 15px no-repeat,
+    linear-gradient(270deg, rgba(240, 200, 90, 0), rgba(240, 200, 90, 0.6) 92%) right center / calc(100% - 22px) 1px no-repeat;
 }
 
+/* ---------- 特殊性卡片：金色渐变描边 + 右侧地球与金环背景图（复刻参考图） ---------- */
 .earth-verdict--special {
-  background: linear-gradient(150deg, rgba(255, 213, 79, 0.85), rgba(200, 150, 40, 0.45) 50%, rgba(160, 115, 30, 0.55));
+  border-radius: 20px;
+  background: linear-gradient(135deg, #F7DB86 0%, rgba(214, 168, 62, 0.78) 45%, rgba(150, 106, 26, 0.92) 100%);
   box-shadow:
-    0 0 18px rgba(200, 160, 60, 0.26),
-    0 10px 26px rgba(0, 0, 0, 0.35);
+    0 0 26px rgba(228, 180, 70, 0.28),
+    0 16px 38px rgba(0, 0, 0, 0.45);
 }
+/* 背景为 AI 生成的深空星野 + 右侧地球与金环（见 docs/06_资源引用.md 第 37 项）；
+   左侧叠加由深到透的暗色遮罩（--sp-veil），保证白字对比度，同时让右侧地球/金环透出。 */
 .earth-verdict--special .earth-verdict__inner {
-  padding: 20px 24px 18px;
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(120, 95, 25, 0.30), transparent 65%),
-    linear-gradient(180deg, #0F2233, #0A1726);
+  --sp-reserve: clamp(200px, 26vw, 296px);  /* 文本右侧预留：避开右侧地球与金环 */
+  --sp-veil: linear-gradient(90deg, rgba(7, 14, 26, 0.94) 0%, rgba(7, 14, 26, 0.80) 30%, rgba(7, 14, 26, 0.32) 56%, rgba(7, 14, 26, 0) 78%);
+  position: relative;
+  overflow: hidden;     /* 背景图被圆角裁切 */
+  border-radius: 19px;
+  padding: 22px var(--sp-reserve) 20px 26px;
+  background-color: #0A1626;
+  background-image:
+    var(--sp-veil),
+    url('../../assets/images/earth-verdict-special-bg.jpg');
+  background-repeat: no-repeat, no-repeat;
+  background-position: left center, right center;
+  background-size: cover, cover;
 }
+/* 徽章「特殊性」：金色胶囊 + 左侧圆形四角星标 */
 .earth-verdict__badge {
-  display: inline-block;
-  margin-bottom: 14px;
-  padding: 4px 14px;
-  border-radius: 999px;
-  font-size: var(--fs-note);
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--gold);
-  background: rgba(255, 213, 79, 0.16);
-}
-.earth-verdict__statement { margin: 0 0 14px; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-main); }
-.earth-verdict__conclusion {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   margin: 0 0 16px;
-  font-size: var(--fs-body);
+  padding: 6px 18px 6px 46px;
+  border-radius: 999px;
+  font-size: 17px;
   font-weight: 700;
-  line-height: var(--lh-body);
-  color: var(--gold);
+  letter-spacing: 2px;
+  color: #FBE7A8;
+  background: linear-gradient(90deg, rgba(255, 213, 79, 0.26) 0%, rgba(255, 213, 79, 0.10) 55%, rgba(255, 213, 79, 0.03) 100%);
+  border: 1px solid rgba(246, 215, 116, 0.55);
+  box-shadow:
+    0 0 14px rgba(240, 200, 90, 0.22),
+    inset 0 0 10px rgba(255, 213, 79, 0.10);
+  text-shadow: 0 0 10px rgba(255, 213, 79, 0.35);
 }
+.earth-verdict__badge::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background-color: #17130A;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 Q13.2 9 24 12 Q13.2 15 12 24 Q10.8 15 0 12 Q10.8 9 12 0 Z' fill='%23F3D070'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px;
+  border: 1px solid rgba(246, 215, 116, 0.8);
+  box-shadow:
+    0 0 10px rgba(240, 200, 90, 0.45),
+    inset 0 0 7px rgba(255, 213, 79, 0.28);
+}
+.earth-verdict__statement {
+  margin: 0 0 15px;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+  color: #E9EFFB;
+}
+/* 金色结论：宋体粗体 + 金属渐变字 + 柔光 */
+.earth-verdict__conclusion {
+  margin: 0 0 18px;
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #FCEBAB 0%, #F3CE68 46%, #D9A93F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgba(240, 200, 90, 0.30));
+}
+/* 桥接行：圆形灯泡图标 + 灰色引导文字 */
 .earth-verdict__bridge {
+  display: flex;
+  align-items: center;
+  gap: 11px;
   margin: 0;
-  padding-top: 14px;
-  border-top: 1px dashed var(--glass-border);
-  font-size: var(--fs-note);
-  color: var(--text-dim);
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 15px;
+  letter-spacing: 0.4px;
+  color: rgba(196, 210, 232, 0.62);
+}
+.earth-verdict__bridge::before {
+  content: "";
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: rgba(18, 38, 68, 0.9);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8D8FF' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.8a5.8 5.8 0 0 0-3.3 10.6c.6.4.9 1 .9 1.7v.9h4.8v-.9c0-.7.3-1.3.9-1.7A5.8 5.8 0 0 0 12 2.8Z'/%3E%3Cpath d='M9.8 19.2h4.4'/%3E%3Cpath d='M10.6 21.2h2.8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 18px;
+  border: 1px solid rgba(120, 190, 255, 0.55);
+  box-shadow:
+    0 0 12px rgba(80, 160, 255, 0.35),
+    inset 0 0 8px rgba(90, 170, 255, 0.2);
 }
 
 /* 窄屏：证据卡两列降为单列 */
@@ -5627,6 +5728,15 @@ body.review-mode #review { padding-top: 40px; }
   .planet-deck__card--wide { flex: 1.3 1 108px; min-width: 108px; }
   .planet-deck__scene { height: 72px; }
   .planet-deck__quote { margin: 18px 0 2px; }
+  /* 特殊性卡片：窄屏收窄文本右侧预留并收紧转折标题 */
+  .earth-verdict--special .earth-verdict__inner {
+    --sp-reserve: clamp(150px, 27vw, 220px);
+    padding: 20px var(--sp-reserve) 18px 22px;
+  }
+  .earth-turn { font-size: 28px; letter-spacing: 6px; gap: 16px; }
+  .earth-turn::before,
+  .earth-turn::after { max-width: 130px; }
+  .earth-verdict__conclusion { font-size: 21px; }
 }
 @media (max-width: 640px) {
   .earth-viz { gap: 22px; }
@@ -5647,4 +5757,21 @@ body.review-mode #review { padding-top: 40px; }
   .earth-evidence__deco { display: none; }
   .earth-verdict--ordinary .earth-verdict__inner { padding: 14px 18px; }
   .earth-verdict__text { font-size: 18px; }
+  /* 特殊性卡片：移动端进一步收窄右侧预留，并加强暗色遮罩保证白字可读 */
+  .earth-verdict--special { border-radius: 16px; }
+  .earth-verdict--special .earth-verdict__inner {
+    --sp-reserve: 118px;
+    --sp-veil: linear-gradient(90deg, rgba(7, 14, 26, 0.96) 0%, rgba(7, 14, 26, 0.86) 40%, rgba(7, 14, 26, 0.44) 66%, rgba(7, 14, 26, 0.10) 100%);
+    border-radius: 15px;
+    padding: 16px var(--sp-reserve) 14px 16px;
+  }
+  .earth-verdict__badge { margin-bottom: 12px; padding: 5px 14px 5px 40px; font-size: 15px; letter-spacing: 1.5px; }
+  .earth-verdict__badge::before { left: 4px; width: 24px; height: 24px; background-size: 12px 12px; }
+  .earth-verdict__statement { margin-bottom: 12px; font-size: 18px; line-height: 1.65; }
+  .earth-verdict__conclusion { margin-bottom: 14px; font-size: 19px; }
+  .earth-verdict__bridge { gap: 8px; padding-top: 12px; font-size: 13px; }
+  .earth-verdict__bridge::before { width: 28px; height: 28px; background-size: 15px 15px; }
+  .earth-turn { gap: 12px; font-size: 24px; letter-spacing: 4px; }
+  .earth-turn::before,
+  .earth-turn::after { max-width: 64px; height: 14px; }
 }

@@ -204,6 +204,101 @@ export interface PracticeQuiz {
 
 export type PracticeItem = PracticeDrag | PracticeQuiz
 
+/* ============================================================
+   统一练习题 schema
+   —— 模块随堂练习（M1–M9）与课后练习（M10）共用同一套题型，
+      运行时渲染器与可视化编辑器只维护一套（详见 shared/custom-quiz-editor/docs 开发文档第二部分）。
+   上方的 PracticeQuestion / PracticeItem 为「源码内置」旧模型，迁移后仅作运行时回退（fallback）。
+   ============================================================ */
+
+/** 选择题解析后的知识归纳要点 */
+export interface CqKnowledge {
+  title?: string
+  items?: string[]
+}
+
+/** 选择题选项 */
+export interface CqOption {
+  key: string
+  text: string
+}
+
+/** 选择题（单选 / 多选） */
+export interface CqChoice {
+  id?: string
+  type: 'choice'
+  /** 单选（默认）/ 多选 */
+  mode?: 'single' | 'multiple'
+  /** 题源标注，可空 */
+  source?: string
+  /** 材料（富文本） */
+  material?: string
+  /** 题干 */
+  stem: string
+  options: CqOption[]
+  /** 单选为 'A'，多选为 ['A','C'] */
+  answer: string | string[]
+  /** 解析（富文本） */
+  analysis?: string
+  knowledge?: CqKnowledge
+}
+
+/** 综合题 */
+export interface CqEssay {
+  id?: string
+  type: 'essay'
+  source?: string
+  material?: string
+  /** 设问，可多条 */
+  stems?: string | string[]
+  /** 参考答案 */
+  referenceAnswer?: string
+  analysis?: string
+  /** 评分标准 */
+  criteria?: string[]
+}
+
+export type CqQuestion = CqChoice | CqEssay
+
+/** 题目分组（如「一、选择题」） */
+export interface CqSection {
+  id?: string
+  title?: string
+  questions?: CqQuestion[]
+}
+
+/** 题库数据（课后练习沿用此结构，对应 window.__CUSTOM_QUIZ__ / postLesson） */
+export interface CqData {
+  version?: number
+  /** 数据最后更新时间（ISO 字符串，编辑器导出时写入） */
+  updatedAt?: string
+  lesson?: string
+  title?: string
+  subtitle?: string
+  sections?: CqSection[]
+}
+
+/** 单个模块的随堂练习；kind:'drag' 表示特殊题型（M3），内容仍由源码 dragCards 提供 */
+export interface PracticeModule {
+  title?: string
+  intro?: string
+  kind?: 'choice' | 'drag'
+  questions?: CqQuestion[]
+}
+
+/**
+ * 全课随堂练习数据（window.__PRACTICE_DATA__，对应 public/practice-data.js）。
+ * modules 的键 = lesson-manifest 的模块 id（稳定主键，如 'universe'）；
+ * postLesson = 课后练习，沿用 CqData 的 title / subtitle / sections 结构。
+ */
+export interface PracticeData {
+  version?: number
+  lesson?: string
+  updatedAt?: string
+  modules?: Record<string, PracticeModule>
+  postLesson?: Pick<CqData, 'title' | 'subtitle' | 'sections'>
+}
+
 /** 全课教学数据对象 */
 export interface LessonData {
   meta: Meta

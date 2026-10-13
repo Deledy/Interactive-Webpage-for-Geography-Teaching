@@ -12,6 +12,7 @@
     "assemble": "node scripts/assemble.mjs",
     "deploy": "node scripts/deploy.mjs",
     "check": "node scripts/check.mjs",
+    "migrate:practice": "node scripts/migrate-practice.mjs",
     "fonts": "node scripts/subset-fonts.mjs",
     "typecheck": "tsc --noEmit",
     "typecheck:lesson": "node scripts/typecheck.mjs --lesson",

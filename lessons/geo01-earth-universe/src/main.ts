@@ -20,8 +20,12 @@ import { initNebulaTilt } from './modules/nebulaTilt'
 import { initBodyDeckTabs } from './modules/bodyDeckTabs'
 import { initLightbox } from './modules/lightbox'
 import { initCustomQuiz } from './modules/customQuiz'
+import { loadPracticeData } from './modules/practiceStore'
 
 export function init(): void {
+  // 预加载统一练习题数据文件（practice-data.js），供随堂练习与课后练习读取；
+  // 刻意不 await：加载失败/缺失时各模块自行回退内置题目，不阻塞首屏渲染。
+  void loadPracticeData();
   initStarfield();
   initNav();
   initFullscreen();

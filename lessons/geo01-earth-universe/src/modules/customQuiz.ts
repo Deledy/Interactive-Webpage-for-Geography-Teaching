@@ -11,67 +11,18 @@
 
    内容格式：
    - 支持 Markdown 子集（**加粗**、![图](路径)、GFM 表格、有序/无序列表），
-     模块内自研渲染，不引入第三方库（贴合项目「优先原生」约定）。
+     由 src/utils/markdown.ts 统一渲染（与随堂练习共用，不引入第三方库）。
    - 教师可用仓库 shared/custom-quiz-editor/index.html 可视化生成该数据文件。
+
+   数据源优先级（详见 shared/custom-quiz-editor/docs 开发文档 §19）：
+   - 优先读取统一数据文件 practice-data.js 的 postLesson（可编辑真源）；
+   - 旧 custom-quiz.js（window.__CUSTOM_QUIZ__）作为兼容回退保留一个版本。
    ============================================================ */
 
-interface CqKnowledge {
-  title?: string
-  items?: string[]
-}
-
-interface CqOption {
-  key: string
-  text: string
-}
-
-interface CqChoice {
-  id?: string
-  type: 'choice'
-  /** 单选（默认）/ 多选 */
-  mode?: 'single' | 'multiple'
-  source?: string
-  material?: string
-  stem: string
-  options: CqOption[]
-  /** 单选为 'A'，多选为 ['A','C'] */
-  answer: string | string[]
-  analysis?: string
-  knowledge?: CqKnowledge
-}
-
-interface CqEssay {
-  id?: string
-  type: 'essay'
-  source?: string
-  material?: string
-  /** 设问，可多条 */
-  stems?: string | string[]
-  referenceAnswer?: string
-  analysis?: string
-  criteria?: string[]
-}
-
-type CqQuestion = CqChoice | CqEssay
-
-interface CqSection {
-  id?: string
-  title?: string
-  questions?: CqQuestion[]
-}
-
-interface CqData {
-  version?: number
-  /** 数据最后更新时间（ISO 字符串，编辑器导出时写入） */
-  updatedAt?: string
-  lesson?: string
-  title?: string
-  subtitle?: string
-  sections?: CqSection[]
-}
-
-/** 当前运行时支持的数据版本；数据 version 高于此值只提示、不阻断 */
-const DATA_VERSION = 1
+/* 题型与数据结构统一在 src/types.ts 定义（模块随堂练习与课后练习共用一套 schema） */
+import type { CqChoice, CqData, CqEssay, CqQuestion } from '../types'
+import { escapeHtml, inlineMarkdown, renderMarkdown } from '../utils/markdown'
+import { getPracticeData, loadPracticeData, validateQuizData } from './practiceStore'
 
 /** 每题的作答状态：选择题记录已选项与是否已提交；综合题记录是否已展开答案 */
 interface CqItemState {
@@ -90,130 +41,6 @@ let data: CqData | null = null
 let states = new Map<string, CqItemState>()
 /** 最近一次数据校验产生的问题（非空时表示数据被裁剪或忽略） */
 let dataIssues: string[] = []
-
-/* ---------------- Markdown 子集渲染 ---------------- */
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-/** 行内语法：图片 → 链接 → 加粗 → 斜体 → 行内代码 */
-function inlineMarkdown(value: string): string {
-  let text = escapeHtml(value)
-  text = text.replace(
-    /!\[([^\]]*)\]\(([^)\s]+)\)/g,
-    (_m, alt: string, src: string) =>
-      `<img class="cq-img" src="${src}" alt="${alt}" loading="lazy" decoding="async" />`
-  )
-  text = text.replace(
-    /\[([^\]]+)\]\(([^)\s]+)\)/g,
-    (_m, label: string, href: string) =>
-      `<a class="cq-link" href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`
-  )
-  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-  text = text.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
-  text = text.replace(/`([^`]+)`/g, '<code class="cq-code">$1</code>')
-  return text
-}
-
-function isTableRow(line: string): boolean {
-  return /^\s*\|.*\|\s*$/.test(line)
-}
-
-function isTableSep(line: string): boolean {
-  return /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/.test(line) && line.includes('|')
-}
-
-function splitRow(line: string): string[] {
-  return line
-    .trim()
-    .replace(/^\|/, '')
-    .replace(/\|$/, '')
-    .split('|')
-    .map((cell) => cell.trim())
-}
-
-function isBullet(line: string): boolean {
-  return /^\s*[-*]\s+/.test(line)
-}
-
-function isOrdered(line: string): boolean {
-  return /^\s*\d+[.、]\s+/.test(line)
-}
-
-/** 块级解析：表格 / 列表 / 段落，逐行扫描 */
-function renderMarkdown(source?: string): string {
-  if (!source) return ''
-  const lines = source.replace(/\r\n?/g, '\n').split('\n')
-  const blocks: string[] = []
-  let i = 0
-
-  while (i < lines.length) {
-    const line = lines[i]
-    if (!line.trim()) {
-      i++
-      continue
-    }
-
-    // 表格：当前行 + 下一行是分隔行
-    if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
-      const header = splitRow(line)
-      let j = i + 2
-      const rows: string[][] = []
-      while (j < lines.length && isTableRow(lines[j])) {
-        rows.push(splitRow(lines[j]))
-        j++
-      }
-      blocks.push(
-        `<div class="cq-table-wrap"><table class="cq-table"><thead><tr>${header
-          .map((cell) => `<th>${inlineMarkdown(cell)}</th>`)
-          .join('')}</tr></thead><tbody>${rows
-          .map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell)}</td>`).join('')}</tr>`)
-          .join('')}</tbody></table></div>`
-      )
-      i = j
-      continue
-    }
-
-    if (isBullet(line)) {
-      const items: string[] = []
-      while (i < lines.length && isBullet(lines[i])) {
-        items.push(lines[i].replace(/^\s*[-*]\s+/, ''))
-        i++
-      }
-      blocks.push(`<ul class="cq-list">${items.map((t) => `<li>${inlineMarkdown(t)}</li>`).join('')}</ul>`)
-      continue
-    }
-
-    if (isOrdered(line)) {
-      const items: string[] = []
-      while (i < lines.length && isOrdered(lines[i])) {
-        items.push(lines[i].replace(/^\s*\d+[.、]\s+/, ''))
-        i++
-      }
-      blocks.push(
-        `<ol class="cq-list cq-list--ordered">${items.map((t) => `<li>${inlineMarkdown(t)}</li>`).join('')}</ol>`
-      )
-      continue
-    }
-
-    // 段落：连续的非空、非表格、非列表行，行内换行用 <br>
-    const para: string[] = []
-    while (
-      i < lines.length &&
-      lines[i].trim() &&
-      !isTableRow(lines[i]) &&
-      !isBullet(lines[i]) &&
-      !isOrdered(lines[i])
-    ) {
-      para.push(lines[i])
-      i++
-    }
-    blocks.push(`<p class="cq-p">${para.map(inlineMarkdown).join('<br>')}</p>`)
-  }
-
-  return blocks.join('')
-}
 
 /* ---------------- 状态 ---------------- */
 
@@ -499,86 +326,11 @@ function onHostClick(event: Event): void {
   }
 }
 
-/* ---------------- 数据校验 ---------------- */
-
-/**
- * 结构校验：把外置数据收敛为可安全渲染的 CqData。
- * - 丢弃字段不完整的题目，并记录问题（issues）；
- * - 无任何有效题目时返回 data = null（触发空态而非白屏）。
- */
-function validateQuizData(raw: unknown): { data: CqData | null; issues: string[] } {
-  const issues: string[] = []
-  if (!raw || typeof raw !== 'object') return { data: null, issues }
-
-  const source = raw as CqData
-  if (typeof source.version === 'number' && source.version > DATA_VERSION) {
-    issues.push(`数据版本 v${source.version} 高于当前支持的 v${DATA_VERSION}，可能有未识别字段`)
-  }
-  if (!Array.isArray(source.sections)) {
-    issues.push('缺少 sections 数组')
-    return { data: null, issues }
-  }
-  // sections 为空是"尚未配置题目"的正常状态（而非数据损坏）→ 走友好空态
-  if (source.sections.length === 0) return { data: null, issues }
-
-  const sections: CqSection[] = []
-  source.sections.forEach((section, si) => {
-    const secLabel = `第 ${si + 1} 节`
-    if (!section || !Array.isArray(section.questions)) {
-      issues.push(`${secLabel}缺少 questions 数组，已跳过`)
-      return
-    }
-    const questions: CqQuestion[] = []
-    section.questions.forEach((question, qi) => {
-      const label = `${secLabel}第 ${qi + 1} 题`
-      if (!question || (question.type !== 'choice' && question.type !== 'essay')) {
-        issues.push(`${label} 题型缺失或非法，已跳过`)
-        return
-      }
-      if (question.type === 'choice') {
-        const options = (question.options ?? []).filter((option) => option && option.key)
-        const keys = new Set(options.map((option) => option.key))
-        const answers = (Array.isArray(question.answer) ? question.answer : [question.answer]).filter(
-          (key) => typeof key === 'string' && keys.has(key)
-        )
-        if (!question.stem || options.length < 2 || !answers.length) {
-          issues.push(`${label}（选择题）题干 / 选项 / 答案不完整，已跳过`)
-          return
-        }
-        questions.push({
-          ...question,
-          options,
-          answer: Array.isArray(question.answer) ? answers : answers[0]
-        })
-        return
-      }
-      const stems = Array.isArray(question.stems)
-        ? question.stems.filter((stem) => typeof stem === 'string' && stem.trim())
-        : question.stems
-          ? [question.stems]
-          : []
-      if (!stems.length && !question.referenceAnswer) {
-        issues.push(`${label}（综合题）缺少设问与参考答案，已跳过`)
-        return
-      }
-      questions.push({ ...question, stems })
-    })
-    if (questions.length) sections.push({ ...section, questions })
-    else issues.push(`${secLabel}无有效题目，已忽略`)
-  })
-
-  if (!sections.length) {
-    if (!issues.length) issues.push('没有可用的题目')
-    return { data: null, issues }
-  }
-  return { data: { ...source, sections }, issues }
-}
-
 /* ---------------- 启动 ---------------- */
 
-function loadData(): Promise<CqData | null> {
+/** 兼容回退：注入旧 custom-quiz.js（内容挂到 window.__CUSTOM_QUIZ__）。 */
+function loadLegacyViaScript(): Promise<CqData | null> {
   const globalWindow = window as unknown as { __CUSTOM_QUIZ__?: CqData }
-  if (globalWindow.__CUSTOM_QUIZ__) return Promise.resolve(globalWindow.__CUSTOM_QUIZ__)
   return new Promise((resolve) => {
     const script = document.createElement('script')
     script.src = './custom-quiz.js'
@@ -587,6 +339,24 @@ function loadData(): Promise<CqData | null> {
     script.onerror = () => resolve(null)
     document.head.appendChild(script)
   })
+}
+
+/**
+ * 解析课后练习数据（优先级见文件头注释）：
+ * 1) 统一数据文件 practice-data.js 的 postLesson（可编辑真源）；
+ * 2) 旧 custom-quiz.js 注入的 window.__CUSTOM_QUIZ__（兼容回退）。
+ * 刻意先同步检查已有数据，避免在无脚本环境的测试中 await 挂起。
+ */
+async function resolveData(): Promise<CqData | null> {
+  const ready = getPracticeData()
+  if (ready) return ready.postLesson ?? null
+
+  const globalWindow = window as unknown as { __CUSTOM_QUIZ__?: CqData }
+  if (globalWindow.__CUSTOM_QUIZ__ !== undefined) return globalWindow.__CUSTOM_QUIZ__
+
+  const store = await loadPracticeData()
+  if (store) return store.postLesson ?? null
+  return loadLegacyViaScript()
 }
 
 export function initCustomQuiz(): void {
@@ -600,7 +370,7 @@ export function initCustomQuiz(): void {
 
   host.addEventListener('click', onHostClick)
 
-  void loadData().then((loaded) => {
+  void resolveData().then((loaded) => {
     const result = validateQuizData(loaded)
     data = result.data
     dataIssues = result.issues
