@@ -1,0 +1,31 @@
+/* ============================================================
+   PracticeWindow · 默认主题令牌（--pw-*）
+   ------------------------------------------------------------
+   令牌默认值映射到课程已有令牌（缺失时回退到内置值），因此：
+   - 已按项目令牌体系设计的课程：无需额外配置即自动适配；
+   - 风格差异大的课程：只需在 .pw 作用域覆盖若干 --pw-* 即可换肤，不改组件代码。
+   ============================================================ */
+.pw {
+  --pw-surface:      var(--glass-bg, rgba(255, 255, 255, 0.06));
+  --pw-border:       var(--glass-border, rgba(255, 255, 255, 0.14));
+  --pw-accent:       var(--gold, #ffd54f);            /* 正确答案 / 当前题 / 重点 */
+  --pw-accent-2:     var(--cyan, #4fc3f7);            /* 材料 / 关键词高亮 / 链接 */
+  --pw-accent-text:  var(--cyan-text, #bfe9ff);
+  --pw-blue:         var(--blue, #64b5f6);
+  --pw-blue-soft:    var(--blue-soft, rgba(100, 181, 246, 0.14));
+  --pw-blue-border:  var(--blue-border, rgba(100, 181, 246, 0.45));
+  --pw-success:      var(--success, #66bb6a);         /* 判定正确 */
+  --pw-error:        var(--error, #ef5350);           /* 判定错误 */
+  --pw-warn:         var(--warn, #ffb74d);
+  --pw-text:         var(--text-main, #e8eaf6);
+  --pw-text-dim:     var(--text-dim, rgba(232, 234, 246, 0.7));
+  --pw-radius-card:  var(--radius-card, 16px);
+  --pw-radius-btn:   var(--radius-btn, 10px);
+  --pw-font:         var(--font-sans, "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif);
+  --pw-fs-body:      var(--fs-body, 20px);
+  --pw-fs-note:      var(--fs-note, 16px);
+  --pw-fs-h3:        var(--fs-h3, 24px);
+  --pw-dur:          var(--dur, 0.35s);
+  --pw-ease:         var(--ease, cubic-bezier(0.25, 0.8, 0.35, 1));
+  --pw-material-bg:  rgba(11, 16, 38, 0.55);
+}

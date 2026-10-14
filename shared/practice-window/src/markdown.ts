@@ -1,17 +1,18 @@
 /* ============================================================
-   Markdown 子集渲染（模块随堂练习与课后练习共用）
+   PracticeWindow · Markdown 子集渲染（含 ==关键词高亮==）
    ------------------------------------------------------------
    支持：**加粗**、*斜体*、`行内代码`、![图](路径)、[链接](url)、
-        GFM 表格、有序 / 无序列表、段落内换行（<br>）。
+        ==关键词== → <mark class="pw-hl">、GFM 表格、有序 / 无序列表、
+        段落内换行（<br>）。
    自研实现，不引入第三方库（贴合项目「优先原生」约定）。
-   样式类 cq-* 由 customQuiz.css 统一提供（全局加载，浮层内同样生效）。
+   实现要点：先 HTML 转义，再做行内替换；高亮在行内阶段处理，且不匹配跨行。
    ============================================================ */
 
 export function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-/** 行内语法：图片 → 链接 → 加粗 → 斜体 → 行内代码 */
+/** 行内语法：图片 → 链接 → 加粗 → 斜体 → 行内代码 → 关键词高亮 */
 export function inlineMarkdown(value: string): string {
   let text = escapeHtml(value)
   text = text.replace(
@@ -27,6 +28,8 @@ export function inlineMarkdown(value: string): string {
   text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   text = text.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
   text = text.replace(/`([^`]+)`/g, '<code class="cq-code">$1</code>')
+  // ==关键词高亮==：仅行内、不跨行；未闭合的 == 按普通文本原样输出
+  text = text.replace(/==([^=\n]+)==/g, '<mark class="pw-hl">$1</mark>')
   return text
 }
 
@@ -69,7 +72,6 @@ export function renderMarkdown(source?: string): string {
       continue
     }
 
-    // 表格：当前行 + 下一行是分隔行
     if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
       const header = splitRow(line)
       let j = i + 2
@@ -111,7 +113,6 @@ export function renderMarkdown(source?: string): string {
       continue
     }
 
-    // 段落：连续的非空、非表格、非列表行，行内换行用 <br>
     const para: string[] = []
     while (
       i < lines.length &&

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>自定义练习编辑器 · 地理教学网页</title>
+<title>练习编辑器 · 地理教学网页</title>
 <style>
   :root {
     --bg: #0b1026;
@@ -37,8 +37,9 @@
     border-bottom: 1px solid var(--line);
     backdrop-filter: blur(8px);
   }
-  header.bar h1 { margin: 0 16px 0 0; font-size: 18px; letter-spacing: 1px; }
+  header.bar h1 { margin: 0 8px 0 0; font-size: 18px; letter-spacing: 1px; }
   header.bar .grow { flex: 1; }
+  .badge { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--dim); }
   .btn {
     padding: 8px 16px; border-radius: 8px; cursor: pointer;
     border: 1px solid var(--blue); background: rgba(100,181,246,0.14);
@@ -52,10 +53,33 @@
   .btn--danger { border-color: var(--error); color: var(--error); background: rgba(239,83,80,0.1); }
   .btn--sm { padding: 5px 10px; font-size: 13px; }
 
-  main { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; min-height: calc(100vh - 60px); }
-  .col { padding: 20px; overflow: auto; }
+  main { display: grid; grid-template-columns: 232px minmax(0,1fr) minmax(0,1fr); gap: 0; min-height: calc(100vh - 60px); }
+  .col { padding: 18px 20px; overflow: auto; }
+  .col--tree { border-right: 1px solid var(--line); background: var(--panel-2); padding: 14px 12px; }
   .col--edit { border-right: 1px solid var(--line); }
   .col--preview { background: var(--panel-2); }
+  .col--tree.is-drop { outline: 2px dashed var(--blue); outline-offset: -6px; }
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; }
+    .col--tree, .col--edit { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+
+  /* 左侧模块树 */
+  .rail__title { margin: 0 0 10px; font-size: 12px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
+  .tree__item {
+    display: block; width: 100%; text-align: left; padding: 8px 10px; margin-bottom: 4px;
+    border: 1px solid transparent; border-radius: 8px; background: transparent;
+    color: var(--text); font-family: inherit; font-size: 13px; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .tree__item:hover { background: rgba(100,181,246,.1); }
+  .tree__item.is-active { background: rgba(100,181,246,.18); border-color: var(--blue); }
+  .tree__item.is-dim { opacity: .62; }
+  .tree__line { display: flex; gap: 6px; align-items: baseline; }
+  .tree__no { color: var(--dim); flex: 0 0 auto; }
+  .tree__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tree__meta { display: block; margin-top: 2px; font-size: 12px; color: var(--dim); }
+  .tree__meta.is-empty { color: var(--gold); }
 
   .meta-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px 12px; margin-bottom: 18px; }
   .meta-grid label { align-self: center; color: var(--dim); font-size: 14px; }
@@ -67,9 +91,19 @@
   textarea { resize: vertical; min-height: 60px; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
 
+  .panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .panel-head .pno {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,213,79,.15); color: var(--gold); font-weight: 700; font-size: 13px;
+  }
+  .panel-head h2 { margin: 0; font-size: 16px; }
+
   .sec { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; background: var(--panel); }
   .sec__head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
   .sec__head input { flex: 1; font-weight: 700; }
+  .subhead { margin: 16px 0 10px; font-size: 14px; color: var(--dim); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 
   .q { border: 1px dashed var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; background: rgba(255,255,255,0.02); }
   .q__head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -93,6 +127,7 @@
   .hint--ok { color: var(--success); }
   .hint--warn { color: var(--gold); }
   #validate-status { margin-top: -8px; }
+  #tree-status { margin: 12px 2px 0; font-size: 12px; }
 
   /* 预览区 */
   .preview { font-size: 15px; }
@@ -127,46 +162,46 @@
     font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 99;
   }
   .toast.show { opacity: 1; }
-  details.export { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+  details.export { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 14px; }
   details.export summary { cursor: pointer; color: var(--cyan); }
 </style>
 </head>
 <body>
 <header class="bar">
-  <h1>自定义练习编辑器</h1>
-  <button class="btn btn--ghost btn--sm" data-act="add-section">+ 分节</button>
-  <button class="btn btn--ghost btn--sm" data-act="reset">清空重来</button>
+  <h1>练习编辑器</h1>
+  <span class="badge" id="lesson-badge"></span>
   <button class="btn btn--ghost btn--sm" data-act="validate">校验</button>
   <span class="grow"></span>
+  <button class="btn btn--ghost btn--sm" data-act="load-html">载入课程结构</button>
+  <input type="file" id="manifest-file" accept=".html,text/html" hidden>
   <label class="btn btn--ghost btn--sm" style="margin:0">
     导入
     <input type="file" id="import-file" accept=".js,.json,application/json,text/javascript" hidden>
   </label>
   <button class="btn btn--ghost btn--sm" data-act="load-file">载入同目录文件</button>
   <button class="btn btn--primary btn--sm" data-act="save-file">保存到本文件</button>
-  <button class="btn btn--ghost btn--sm" data-act="download">导出 custom-quiz.js</button>
+  <button class="btn btn--ghost btn--sm" data-act="download">导出 practice-data.js</button>
   <button class="btn btn--ghost btn--sm" data-act="copy">复制</button>
 </header>
 
 <main>
-  <section class="col col--edit">
-    <p class="hint">提示：内容支持 <b>**加粗**</b>、<code>![说明](图片)</code>、Markdown 表格、<code>- </code>/<code>1. </code> 列表；每个文本框下方可「插入图片（自动转 base64）」与「插入表格」。打开时会自动预填同目录的 <code>custom-quiz.js</code>，改完点「保存到本文件」就近写回（不支持时回退为下载）；编辑结果同时保存在本机浏览器。</p>
-    <p class="hint" id="validate-status" aria-live="polite"></p>
-    <div class="meta-grid">
-      <label>课程标识 lesson</label><input type="text" data-path="lesson" placeholder="geo01-earth-universe">
-      <label>标题 title</label><input type="text" data-path="title" placeholder="自定义练习">
-      <label>副标题 subtitle</label><input type="text" data-path="subtitle" placeholder="教师可按学情增删题目">
-    </div>
-    <div id="sections"></div>
+  <aside class="col col--tree">
+    <h2 class="rail__title">模块</h2>
+    <div id="tree"></div>
+    <p class="hint" id="tree-status"></p>
+  </aside>
 
-    <details class="export">
-      <summary>导出内容预览 / 手动复制</summary>
-      <textarea class="out" id="output" readonly></textarea>
-    </details>
+  <section class="col col--edit">
+    <p class="hint" id="validate-status" aria-live="polite"></p>
+    <div id="editor"></div>
   </section>
 
   <section class="col col--preview">
     <div class="preview" id="preview"></div>
+    <details class="export">
+      <summary>导出内容预览 / 手动复制</summary>
+      <textarea class="out" id="output" readonly></textarea>
+    </details>
   </section>
 </main>
 
@@ -174,18 +209,36 @@
 
 <script>
 /* ============================================================
-   自定义练习编辑器（离线单文件，无任何外部依赖）
-   数据模型与 lessons/<课>/public/custom-quiz.js 中的 window.__CUSTOM_QUIZ__ 一致。
+   练习编辑器（离线单文件，无任何外部依赖）
+   ------------------------------------------------------------
+   - 结构来源：lesson-manifest.js（window.__LESSON_MANIFEST__，构建期生成的只读契约）；
+   - 内容来源：practice-data.js（window.__PRACTICE_DATA__，教师可编辑真源）；
+   - 左侧模块树（M1…M9 + 课后练习）→ 逐模块编辑（choice / essay）→ 右侧实时预览；
+   - 导出统一 practice-data.js（写入 version / updatedAt）。
+   数据模型见 shared/custom-quiz-editor/docs/自定义练习题模块_开发文档.md 第二部分。
    ============================================================ */
 (function () {
   'use strict';
-  var STORE_KEY = 'custom-quiz-editor-state-v1';
+  var STORE_KEY = 'practice-editor-state-v1';
+  var MANIFEST_FILE = './lesson-manifest.js';
+  var DATA_FILE = './practice-data.js';
+
+  var FILE_HEADER =
+    '/* ============================================================\n' +
+    ' * 随堂练习 · 数据文件（教师可按学情自行编辑）\n' +
+    ' * ------------------------------------------------------------\n' +
+    ' * 由「练习编辑器」生成：modules = 各模块随堂练习，postLesson = 课后练习。\n' +
+    ' * 分发后直接替换本文件即可更新练习，无需重新构建、无需联网。\n' +
+    ' * modules 的键 = lesson-manifest 的模块 id（稳定主键，如 universe）；\n' +
+    ' * kind 为 "drag" 的模块为拖拽题占位，内容仍由源码提供，编辑器只读。\n' +
+    ' * ============================================================ */\n';
 
   /* ---------- Markdown 子集渲染（与运行时模块保持一致） ---------- */
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
+  function attr(s) { return esc(s).replace(/"/g, '&quot;'); }
   function inline(s) {
     var t = esc(s);
     t = t.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (m, alt, src) {
@@ -243,7 +296,7 @@
     return out.join('');
   }
 
-  /* ---------- 状态读写 ---------- */
+  /* ---------- 通用工具 ---------- */
   function el(sel, root) { return (root || document).querySelector(sel); }
   function els(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
   function getPath(obj, path) {
@@ -256,6 +309,12 @@
     for (var i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
     cur[parts[parts.length - 1]] = value;
   }
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+
+  /* ---------- 数据模型 ---------- */
+  var manifest = window.__LESSON_MANIFEST__ || null;
+  var state = null;
+  var selectedId = '';
 
   function newChoice() {
     return {
@@ -270,24 +329,90 @@
       referenceAnswer: '', analysis: '', criteria: ['']
     };
   }
-  var state = {
-    version: 1, lesson: '', title: '自定义练习', subtitle: '',
-    sections: [
-      { id: 'part-choice', title: '一、选择题', questions: [newChoice()] },
-      { id: 'part-essay', title: '二、综合题', questions: [newEssay()] }
-    ]
-  };
+  function emptyState() {
+    return {
+      version: 1,
+      lesson: (manifest && manifest.lesson) || '',
+      updatedAt: '',
+      modules: {},
+      postLesson: {
+        title: (manifest && manifest.postLesson && manifest.postLesson.title) || '自定义练习',
+        subtitle: '',
+        sections: []
+      }
+    };
+  }
 
+  /* ---------- 模块树 ---------- */
+  function treeItems() {
+    var items = [];
+    if (manifest && manifest.modules) {
+      manifest.modules.forEach(function (m) {
+        // 编辑器只处理通用题型（choice / essay）；特殊题型（如 kind:"drag"）由课程侧自行硬编码，不在此呈现
+        if (m.kind && m.kind !== 'choice') return;
+        items.push({ kind: 'module', id: m.id, no: m.no, title: m.title, nav: m.nav });
+      });
+    }
+    if (manifest && manifest.postLesson) {
+      items.push({ kind: 'postLesson', id: manifest.postLesson.id || 'quiz-custom', no: manifest.postLesson.no, title: manifest.postLesson.title, nav: manifest.postLesson.nav });
+    }
+    // 数据里出现、但清单中没有的模块 → 孤儿题目
+    var known = {};
+    items.forEach(function (it) { known[it.id] = true; });
+    Object.keys((state && state.modules) || {}).forEach(function (id) {
+      if (known[id]) return;
+      var mod = state.modules[id];
+      if (mod && mod.questions && mod.questions.length) {
+        items.push({ kind: 'module', id: id, no: '', title: mod.title || id, nav: '', orphan: true });
+      }
+    });
+    return items;
+  }
+  function findItem(id) {
+    var items = treeItems();
+    for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i];
+    return null;
+  }
+  function selectedItem() {
+    var it = findItem(selectedId);
+    if (it) return it;
+    var all = treeItems();
+    return all[0] || null;
+  }
+  function ensureSelected() {
+    var all = treeItems();
+    if (!all.length) { selectedId = ''; return; }
+    if (!findItem(selectedId)) selectedId = all[0].id;
+  }
+  function ensureModule(it) {
+    if (!state.modules) state.modules = {};
+    if (!state.modules[it.id]) {
+      state.modules[it.id] = { title: '', intro: '', questions: [] };
+    }
+    return state.modules[it.id];
+  }
+  function moduleCount(id) {
+    var mod = state.modules && state.modules[id];
+    return mod && mod.questions ? mod.questions.length : 0;
+  }
+  function postLessonCount() {
+    var secs = (state.postLesson && state.postLesson.sections) || [];
+    return secs.reduce(function (n, s) { return n + ((s.questions && s.questions.length) || 0); }, 0);
+  }
+
+  /* ---------- 本机草稿 ---------- */
+  var saveTimer = null;
   function load() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
-      if (raw) { var parsed = JSON.parse(raw); if (parsed && parsed.sections) { state = parsed; return true; } }
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && (parsed.modules || parsed.postLesson)) { state = parsed; return true; }
+      }
     } catch (e) { /* 忽略损坏数据 */ }
     return false;
   }
-  var saveTimer = null;
   function save() {
-    renderValidate();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
       try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
@@ -296,12 +421,13 @@
 
   function toast(msg) {
     var t = el('#toast');
+    if (!t) return;
     t.textContent = msg; t.classList.add('show');
     clearTimeout(t._timer);
-    t._timer = setTimeout(function () { t.classList.remove('show'); }, 1600);
+    t._timer = setTimeout(function () { t.classList.remove('show'); }, 1800);
   }
 
-  /* ---------- 表单渲染 ---------- */
+  /* ---------- 表单片段 ---------- */
   function toolsHtml() {
     return '<div class="tools">' +
       '<button class="btn btn--ghost btn--sm" data-insert-image>插入图片</button>' +
@@ -310,100 +436,180 @@
   }
   function areaHtml(label, path, value, rows) {
     return '<div class="field"><span class="lbl">' + label + '</span>' +
-      '<textarea rows="' + (rows || 2) + '" data-path="' + path + '">' + esc(value || '') + '</textarea>' +
+      '<textarea rows="' + (rows || 2) + '" data-path="' + attr(path) + '">' + esc(value || '') + '</textarea>' +
       toolsHtml() + '</div>';
   }
   function inputHtml(label, path, value) {
     return '<div class="field"><span class="lbl">' + label + '</span>' +
-      '<input type="text" data-path="' + path + '" value="' + esc(value || '') + '"></div>';
+      '<input type="text" data-path="' + attr(path) + '" value="' + attr(value || '') + '"></div>';
   }
 
-  function optionHtml(si, qi, oi, opt) {
+  function optionHtml(base, oi, opt) {
     return '<div class="opt">' +
-      '<input type="text" class="key" data-path="sections.' + si + '.questions.' + qi + '.options.' + oi + '.key" value="' + esc(opt.key) + '">' +
-      '<input type="text" data-path="sections.' + si + '.questions.' + qi + '.options.' + oi + '.text" value="' + esc(opt.text) + '" placeholder="选项内容">' +
-      '<button class="btn btn--danger btn--sm" data-act="del-option" data-si="' + si + '" data-qi="' + qi + '" data-oi="' + oi + '">删</button>' +
+      '<input type="text" class="key" data-path="' + attr(base) + '.options.' + oi + '.key" value="' + attr(opt.key) + '">' +
+      '<input type="text" data-path="' + attr(base) + '.options.' + oi + '.text" value="' + attr(opt.text) + '" placeholder="选项内容">' +
+      '<button class="btn btn--danger btn--sm" data-act="del-option" data-base="' + attr(base) + '" data-oi="' + oi + '">删</button>' +
       '</div>';
   }
-
-  function answerHtml(si, qi, q) {
+  function answerHtml(base, q) {
     var isMulti = q.mode === 'multiple';
     var selected = Array.isArray(q.answer) ? q.answer : [q.answer];
     return '<div class="field"><span class="lbl">正确答案（' + (isMulti ? '多选，勾选所有正确项' : '单选') + '）</span>' +
       '<div class="answer-row">' + (q.options || []).map(function (opt) {
         var on = selected.indexOf(opt.key) >= 0;
-        return '<label><input type="' + (isMulti ? 'checkbox' : 'radio') + '" name="ans-' + si + '-' + qi + '"' +
-          ' data-answer="sections.' + si + '.questions.' + qi + '" data-multi="' + isMulti + '" value="' + esc(opt.key) + '"' + (on ? ' checked' : '') + '>' +
+        return '<label><input type="' + (isMulti ? 'checkbox' : 'radio') + '" name="ans-' + attr(base) + '"' +
+          ' data-answer="' + attr(base) + '" data-multi="' + isMulti + '" value="' + attr(opt.key) + '"' + (on ? ' checked' : '') + '>' +
           esc(opt.key) + '</label>';
       }).join('') + '</div></div>';
   }
-
-  function choiceFormHtml(si, qi, q) {
+  function choiceFormHtml(base, q) {
     var isMulti = q.mode === 'multiple';
-    return '' +
-      '<div class="row2">' +
-      '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="sections.' + si + '.questions.' + qi + '.source" value="' + esc(q.source) + '"></div>' +
-      '<div class="field"><span class="lbl">题型</span><select data-mode-path="sections.' + si + '.questions.' + qi + '.mode">' +
-      '<option value="single"' + (!isMulti ? ' selected' : '') + '>单选题</option>' +
-      '<option value="multiple"' + (isMulti ? ' selected' : '') + '>多选题</option></select></div>' +
+    return '<div class="row2">' +
+        '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="' + attr(base) + '.source" value="' + attr(q.source) + '"></div>' +
+        '<div class="field"><span class="lbl">题型</span><select data-mode-path="' + attr(base) + '.mode">' +
+          '<option value="single"' + (!isMulti ? ' selected' : '') + '>单选题</option>' +
+          '<option value="multiple"' + (isMulti ? ' selected' : '') + '>多选题</option></select></div>' +
       '</div>' +
-      areaHtml('材料 material（可空）', 'sections.' + si + '.questions.' + qi + '.material', q.material, 3) +
-      areaHtml('题干 stem', 'sections.' + si + '.questions.' + qi + '.stem', q.stem, 2) +
-      '<div class="field"><span class="lbl">选项</span>' + (q.options || []).map(function (opt, oi) { return optionHtml(si, qi, oi, opt); }).join('') +
-      '<button class="btn btn--ghost btn--sm" data-act="add-option" data-si="' + si + '" data-qi="' + qi + '">+ 选项</button></div>' +
-      answerHtml(si, qi, q) +
-      areaHtml('解析 analysis', 'sections.' + si + '.questions.' + qi + '.analysis', q.analysis, 3) +
-      inputHtml('知识归纳标题（可空）', 'sections.' + si + '.questions.' + qi + '.knowledge.title', q.knowledge && q.knowledge.title) +
-      areaHtml('知识归纳要点（每行一条）', 'sections.' + si + '.questions.' + qi + '.knowledge.items', ((q.knowledge && q.knowledge.items) || []).join('\n'), 3);
+      areaHtml('材料 material（可空）', base + '.material', q.material, 3) +
+      areaHtml('题干 stem', base + '.stem', q.stem, 2) +
+      '<div class="field"><span class="lbl">选项</span>' +
+        (q.options || []).map(function (opt, oi) { return optionHtml(base, oi, opt); }).join('') +
+        '<button class="btn btn--ghost btn--sm" data-act="add-option" data-base="' + attr(base) + '">+ 选项</button></div>' +
+      answerHtml(base, q) +
+      areaHtml('解析 analysis', base + '.analysis', q.analysis, 3) +
+      inputHtml('知识归纳标题（可空）', base + '.knowledge.title', q.knowledge && q.knowledge.title) +
+      areaHtml('知识归纳要点（每行一条）', base + '.knowledge.items', ((q.knowledge && q.knowledge.items) || []).join('\n'), 3);
   }
-
-  function essayFormHtml(si, qi, q) {
+  function essayFormHtml(base, q) {
     var stems = Array.isArray(q.stems) ? q.stems.join('\n') : (q.stems || '');
     return '' +
-      '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="sections.' + si + '.questions.' + qi + '.source" value="' + esc(q.source) + '"></div>' +
-      areaHtml('材料 material', 'sections.' + si + '.questions.' + qi + '.material', q.material, 4) +
-      areaHtml('设问 stems（每行一问）', 'sections.' + si + '.questions.' + qi + '.stems', stems, 3) +
-      areaHtml('参考答案 referenceAnswer', 'sections.' + si + '.questions.' + qi + '.referenceAnswer', q.referenceAnswer, 4) +
-      areaHtml('解析 analysis（可空）', 'sections.' + si + '.questions.' + qi + '.analysis', q.analysis, 3) +
-      areaHtml('评分标准 criteria（每行一条）', 'sections.' + si + '.questions.' + qi + '.criteria', (q.criteria || []).join('\n'), 3);
+      '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="' + attr(base) + '.source" value="' + attr(q.source) + '"></div>' +
+      areaHtml('材料 material', base + '.material', q.material, 4) +
+      areaHtml('设问 stems（每行一问）', base + '.stems', stems, 3) +
+      areaHtml('参考答案 referenceAnswer', base + '.referenceAnswer', q.referenceAnswer, 4) +
+      areaHtml('解析 analysis（可空）', base + '.analysis', q.analysis, 3) +
+      areaHtml('评分标准 criteria（每行一条）', base + '.criteria', (q.criteria || []).join('\n'), 3);
   }
-
-  function questionHtml(si, qi, q) {
+  function questionFormHtml(qbase, qi, q) {
+    var base = qbase + '.' + qi;
     return '<div class="q">' +
       '<div class="q__head">' +
-      '<span class="q__badge ' + (q.type === 'essay' ? 'essay' : 'choice') + '">' + (q.type === 'essay' ? '综合题' : '选择题') + '</span>' +
-      '<span class="grow"></span>' +
-      '<button class="btn btn--ghost btn--sm" data-act="up-q" data-si="' + si + '" data-qi="' + qi + '">↑</button>' +
-      '<button class="btn btn--ghost btn--sm" data-act="down-q" data-si="' + si + '" data-qi="' + qi + '">↓</button>' +
-      '<button class="btn btn--ghost btn--sm" data-act="dup-q" data-si="' + si + '" data-qi="' + qi + '">复制</button>' +
-      '<button class="btn btn--danger btn--sm" data-act="del-q" data-si="' + si + '" data-qi="' + qi + '">删除</button>' +
+        '<span class="q__badge ' + (q.type === 'essay' ? 'essay' : 'choice') + '">' + (q.type === 'essay' ? '综合题' : '选择题') + '</span>' +
+        '<span class="grow"></span>' +
+        '<button class="btn btn--ghost btn--sm" data-act="up-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">↑</button>' +
+        '<button class="btn btn--ghost btn--sm" data-act="down-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">↓</button>' +
+        '<button class="btn btn--ghost btn--sm" data-act="dup-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">复制</button>' +
+        '<button class="btn btn--danger btn--sm" data-act="del-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">删除</button>' +
       '</div>' +
-      (q.type === 'essay' ? essayFormHtml(si, qi, q) : choiceFormHtml(si, qi, q)) +
+      (q.type === 'essay' ? essayFormHtml(base, q) : choiceFormHtml(base, q)) +
       '</div>';
   }
 
-  function sectionsHtml() {
-    return state.sections.map(function (sec, si) {
-      return '<div class="sec">' +
-        '<div class="sec__head">' +
-        '<input type="text" data-path="sections.' + si + '.title" value="' + esc(sec.title) + '" placeholder="分节标题，如：一、选择题">' +
-        '<button class="btn btn--danger btn--sm" data-act="del-section" data-si="' + si + '">删分节</button>' +
-        '</div>' +
-        (sec.questions || []).map(function (q, qi) { return questionHtml(si, qi, q); }).join('') +
-        '<button class="btn btn--ghost btn--sm" data-act="add-choice" data-si="' + si + '">+ 选择题</button> ' +
-        '<button class="btn btn--ghost btn--sm" data-act="add-essay" data-si="' + si + '">+ 综合题</button>' +
-        '</div>';
-    }).join('');
+  /* ---------- 编辑区渲染 ---------- */
+  function moduleEditorHtml(it) {
+    var mod = ensureModule(it);
+    var head = '<div class="panel-head"><span class="pno">' + esc(it.no || '') + '</span><h2>' +
+      esc((it.orphan ? '孤儿模块 · ' : '') + (it.title || it.id)) + '</h2></div>';
+    var qbase = 'modules.' + it.id + '.questions';
+    var qs = mod.questions || [];
+    return head + '<div class="sec">' +
+      inputHtml('模块标题（练习弹窗标题，可空）', 'modules.' + it.id + '.title', mod.title) +
+      areaHtml('引导语 intro（可空）', 'modules.' + it.id + '.intro', mod.intro, 2) +
+      '<h4 class="subhead">题目（' + qs.length + '）</h4>' +
+      qs.map(function (q, qi) { return questionFormHtml(qbase, qi, q); }).join('') +
+      '<div class="btn-row">' +
+        '<button class="btn btn--ghost btn--sm" data-act="add-choice" data-qbase="' + attr(qbase) + '">+ 选择题</button>' +
+        '<button class="btn btn--ghost btn--sm" data-act="add-essay" data-qbase="' + attr(qbase) + '">+ 综合题</button>' +
+      '</div></div>';
   }
 
-  function renderForm() {
-    el('#sections').innerHTML = sectionsHtml();
-    renderMeta();
+  function postLessonEditorHtml(it) {
+    if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
+    var pl = state.postLesson;
+    if (!pl.sections) pl.sections = [];
+    var sbase = 'postLesson.sections';
+    return '<div class="panel-head"><span class="pno">' + esc(it.no || '') + '</span><h2>' +
+      esc(it.title || pl.title || '课后练习') + '</h2></div>' +
+      '<div class="sec">' +
+        inputHtml('标题 title', 'postLesson.title', pl.title) +
+        inputHtml('副标题 subtitle（支持行内 Markdown）', 'postLesson.subtitle', pl.subtitle) +
+      '</div>' +
+      pl.sections.map(function (sec, si) {
+        var qbase = sbase + '.' + si + '.questions';
+        return '<div class="sec">' +
+          '<div class="sec__head">' +
+            '<input type="text" data-path="' + sbase + '.' + si + '.title" value="' + attr(sec.title) + '" placeholder="分节标题，如：一、选择题">' +
+            '<button class="btn btn--danger btn--sm" data-act="del-section" data-sbase="' + attr(sbase) + '" data-si="' + si + '">删分节</button>' +
+          '</div>' +
+          (sec.questions || []).map(function (q, qi) { return questionFormHtml(qbase, qi, q); }).join('') +
+          '<div class="btn-row">' +
+            '<button class="btn btn--ghost btn--sm" data-act="add-choice" data-qbase="' + attr(qbase) + '">+ 选择题</button>' +
+            '<button class="btn btn--ghost btn--sm" data-act="add-essay" data-qbase="' + attr(qbase) + '">+ 综合题</button>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+      '<button class="btn btn--ghost btn--sm" data-act="add-section">+ 分节</button>';
   }
-  function renderMeta() {
-    els('[data-path="lesson"]').forEach(function (i) { i.value = state.lesson || ''; });
-    els('[data-path="title"]').forEach(function (i) { i.value = state.title || ''; });
-    els('[data-path="subtitle"]').forEach(function (i) { i.value = state.subtitle || ''; });
+
+  function renderEditor() {
+    var node = el('#editor');
+    if (!node) return;
+    if (!manifest && treeItems().length === 0) {
+      node.innerHTML = '<div class="sec"><h3 class="sec__title">未加载课程结构</h3>' +
+        '<p class="hint">未找到 <code>lesson-manifest.js</code>（课程结构清单）。可点顶部「载入课程结构」选择课程的 ' +
+        '<code>index.html</code>（或将其拖入左侧模块栏），编辑器会用同一套规则现场解析出模块结构；' +
+        '也可将本编辑器放在课程分发包的 <code>dist/</code> 目录（与 <code>index.html</code>、' +
+        '<code>lesson-manifest.js</code>、<code>practice-data.js</code> 同级）后使用。</p></div>';
+      return;
+    }
+    var it = selectedItem();
+    if (!it) { node.innerHTML = '<p class="hint">请选择左侧模块</p>'; return; }
+    node.innerHTML = it.kind === 'postLesson' ? postLessonEditorHtml(it) : moduleEditorHtml(it);
+  }
+
+  /* ---------- 模块树渲染 ---------- */
+  function renderTree() {
+    var items = treeItems();
+    var html = items.map(function (it) {
+      var meta, empty = false;
+      if (it.kind === 'module') { var n = moduleCount(it.id); meta = n + ' 题'; empty = n === 0; }
+      else { var n2 = postLessonCount(); meta = n2 + ' 题'; empty = n2 === 0; }
+      var cls = 'tree__item' + (it.id === selectedId ? ' is-active' : '') + (it.orphan ? ' is-dim' : '');
+      return '<button class="' + cls + '" data-select="' + attr(it.id) + '">' +
+        '<span class="tree__line"><span class="tree__no">' + esc(it.no || '') + '</span>' +
+        '<span class="tree__name">' + esc(it.title || it.id) + '</span></span>' +
+        '<span class="tree__meta' + (empty ? ' is-empty' : '') + '">' + meta + '</span>' +
+        '</button>';
+    }).join('');
+    el('#tree').innerHTML = html || '<p class="hint">未找到课程结构</p>';
+
+    var b = el('#lesson-badge');
+    if (b) b.textContent = manifest ? (manifest.lesson || '') : '';
+    var st = el('#tree-status');
+    if (st) {
+      var notes = treeSummary();
+      st.textContent = manifest
+        ? (notes.length ? notes.join('；') : '结构已就绪')
+        : '未找到 lesson-manifest.js（可载入 index.html）';
+      st.className = 'hint' + (manifest && notes.length ? ' hint--warn' : '');
+    }
+  }
+  function treeSummary() {
+    var notes = [];
+    var unedited = [];
+    treeItems().forEach(function (it) {
+      if (it.kind !== 'module' || it.orphan) return;
+      if (!moduleCount(it.id)) unedited.push(it.id);
+    });
+    var known = {};
+    (manifest && manifest.modules ? manifest.modules : []).forEach(function (m) { known[m.id] = true; });
+    var orphans = Object.keys((state && state.modules) || {}).filter(function (id) {
+      var mod = state.modules[id];
+      return !known[id] && mod && mod.questions && mod.questions.length;
+    });
+    if (unedited.length) notes.push(unedited.length + ' 个模块未编辑（运行时回退内置题目）');
+    if (orphans.length) notes.push(orphans.length + ' 个孤儿模块');
+    return notes;
   }
 
   /* ---------- 预览渲染 ---------- */
@@ -438,109 +644,190 @@
   }
 
   function renderPreview() {
-    var no = 1;
-    var html = (state.sections || []).map(function (sec) {
-      return '<div class="sec"><h3 class="sec__title">' + esc(sec.title || '') + '</h3>' +
-        (sec.questions || []).map(function (q) { return previewQuestionHtml(q, no++); }).join('') + '</div>';
-    }).join('');
-    el('#preview').innerHTML = html || '<p class="empty">暂无内容</p>';
+    var node = el('#preview');
+    if (!node) return;
+    var it = selectedItem();
+    var no = 1, html = '';
+    if (!it) {
+      node.innerHTML = '<p class="empty">请选择左侧模块</p>';
+      renderOutput();
+      return;
+    }
+    if (it.kind === 'module') {
+      var mod = (state.modules && state.modules[it.id]) || {};
+      html = '<div class="sec"><h3 class="sec__title">' + esc(mod.title || it.title) + '</h3>' +
+        (mod.intro ? '<p class="p">' + inline(mod.intro) + '</p>' : '') +
+        (mod.questions || []).map(function (q) { return previewQuestionHtml(q, no++); }).join('') +
+        '</div>';
+      if (!(mod.questions || []).length) html += '<p class="empty">该模块暂无题目</p>';
+    } else {
+      var pl = state.postLesson || {};
+      html = (pl.sections || []).map(function (sec) {
+        return '<div class="sec"><h3 class="sec__title">' + esc(sec.title || '') + '</h3>' +
+          (sec.questions || []).map(function (q) { return previewQuestionHtml(q, no++); }).join('') + '</div>';
+      }).join('');
+      if (!html) html = '<p class="empty">课后练习暂无内容</p>';
+    }
+    node.innerHTML = html;
     renderOutput();
   }
 
+  /* ---------- 导出 ---------- */
   function generated() {
-    var payload = {};
-    for (var k in state) { if (Object.prototype.hasOwnProperty.call(state, k)) payload[k] = state[k]; }
-    payload.version = state.version || 1;
-    payload.updatedAt = new Date().toISOString();
-    return '/* 自定义练习数据 · 由编辑器生成 · 教师可继续手工微调 */\n' +
-      'window.__CUSTOM_QUIZ__ = ' + JSON.stringify(payload, null, 2) + ';\n';
+    var modules = {};
+    Object.keys((state && state.modules) || {}).forEach(function (id) {
+      var mod = state.modules[id];
+      if (!mod) return;
+      if (!mod.questions || !mod.questions.length) return;
+      var out = {};
+      if (mod.title) out.title = mod.title;
+      if (mod.intro) out.intro = mod.intro;
+      out.questions = mod.questions;
+      modules[id] = out;
+    });
+    var payload = {
+      version: state.version || 1,
+      lesson: state.lesson || (manifest && manifest.lesson) || '',
+      updatedAt: new Date().toISOString(),
+      modules: modules
+    };
+    if (state.postLesson) payload.postLesson = state.postLesson;
+    return FILE_HEADER + 'window.__PRACTICE_DATA__ = ' + JSON.stringify(payload, null, 2) + ';\n';
   }
-  function renderOutput() { el('#output').value = generated(); }
+  function renderOutput() { var o = el('#output'); if (o) o.value = generated(); }
 
-  /* ---------- 结构校验（校验并预览） ---------- */
+  /* ---------- 校验 ---------- */
+  function validateQuestion(q, label, issues) {
+    if (q.type === 'essay') {
+      var stems = (Array.isArray(q.stems) ? q.stems : [q.stems]).filter(function (s) { return s && String(s).trim(); });
+      if (!stems.length) issues.push(label + '（综合题）：缺少设问');
+      if (!q.referenceAnswer) issues.push(label + '（综合题）：缺少参考答案');
+      return;
+    }
+    if (!q.stem) issues.push(label + '：缺少题干');
+    var filled = (q.options || []).filter(function (o) { return o && String(o.text).trim(); });
+    if (filled.length < 2) issues.push(label + '：至少需要两个有内容的选项');
+    var keys = (q.options || []).map(function (o) { return o.key; });
+    var answers = (Array.isArray(q.answer) ? q.answer : [q.answer]).filter(function (a) { return keys.indexOf(a) >= 0; });
+    if (!answers.length) issues.push(label + '：未设置有效答案');
+  }
   function validateState() {
     var issues = [];
-    if (!state.sections || !state.sections.length) { issues.push('至少需要一个分节'); return issues; }
-    state.sections.forEach(function (sec, si) {
-      var label = '第 ' + (si + 1) + ' 节';
-      if (!sec.questions || !sec.questions.length) { issues.push(label + '：没有题目'); return; }
-      sec.questions.forEach(function (q, qi) {
-        var t = label + '第 ' + (qi + 1) + ' 题';
-        if (q.type === 'essay') {
-          var stems = (Array.isArray(q.stems) ? q.stems : [q.stems]).filter(function (s) { return s && String(s).trim(); });
-          if (!stems.length) issues.push(t + '（综合题）：缺少设问');
-          if (!q.referenceAnswer) issues.push(t + '（综合题）：缺少参考答案');
-          return;
-        }
-        if (!q.stem) issues.push(t + '：缺少题干');
-        var filled = (q.options || []).filter(function (o) { return o && String(o.text).trim(); });
-        if (filled.length < 2) issues.push(t + '：至少需要两个有内容的选项');
-        var keys = (q.options || []).map(function (o) { return o.key; });
-        var answers = (Array.isArray(q.answer) ? q.answer : [q.answer]).filter(function (a) { return keys.indexOf(a) >= 0; });
-        if (!answers.length) issues.push(t + '：未设置有效答案');
-      });
+    if (!manifest) issues.push('未加载 lesson-manifest.js，无法校验模块映射');
+    if (!state.modules || !Object.keys(state.modules).length) {
+      if (postLessonCount() === 0) issues.push('尚无任何题目（所有模块与课后练习均为空）');
+    }
+    // 逐模块逐题校验
+    Object.keys((state && state.modules) || {}).forEach(function (id) {
+      var mod = state.modules[id];
+      if (!mod) return;
+      var it = findItem(id);
+      var label = it ? ((it.no ? it.no + ' ' : '') + (it.title || id)) : id;
+      (mod.questions || []).forEach(function (q, qi) { validateQuestion(q, label + ' 第 ' + (qi + 1) + ' 题', issues); });
     });
+    // 课后练习校验
+    var pl = state.postLesson;
+    if (pl && pl.sections) {
+      pl.sections.forEach(function (sec, si) {
+        (sec.questions || []).forEach(function (q, qi) {
+          validateQuestion(q, '课后练习 第 ' + (si + 1) + ' 节 第 ' + (qi + 1) + ' 题', issues);
+        });
+      });
+    }
     return issues;
   }
-
   function renderValidate() {
-    var node = el('#validate-status');
     var issues = validateState();
+    var notes = treeSummary();
+    var node = el('#validate-status');
     if (node) {
-      if (!issues.length) {
-        node.textContent = '校验通过：结构完整，可导出。';
-        node.className = 'hint hint--ok';
-      } else {
-        node.textContent = '校验发现 ' + issues.length + ' 处待完善：' + issues.slice(0, 3).join('；') +
-          (issues.length > 3 ? ' 等' : '');
-        node.className = 'hint hint--warn';
-      }
+      var head = issues.length
+        ? '校验发现 ' + issues.length + ' 处待完善：' + issues.slice(0, 2).join('；') + (issues.length > 2 ? ' 等' : '')
+        : '校验通过：结构完整，可导出。';
+      node.textContent = notes.length ? head + '  ·  ' + notes.join('；') : head;
+      node.className = 'hint' + (issues.length || notes.length ? ' hint--warn' : ' hint--ok');
     }
     return issues;
   }
 
-  /* ---------- 事件 ---------- */
+  /* ---------- 全量渲染 ---------- */
+  function renderAll() {
+    ensureSelected();
+    renderTree();
+    renderEditor();
+    renderPreview();
+    renderValidate();
+  }
+
+  /* ---------- 结构操作 ---------- */
   function renumberOptions(q) {
     q.options.forEach(function (o, i) { o.key = String.fromCharCode(65 + i); });
   }
-
   function handleStruct(act, t) {
-    var si = Number(t.dataset.si), qi = Number(t.dataset.qi), oi = Number(t.dataset.oi);
-    var sec = state.sections[si];
-    var q = sec && sec.questions[qi];
+    var qbase = t.dataset.qbase, qi = Number(t.dataset.qi);
+    var base = t.dataset.base, oi = Number(t.dataset.oi);
+    var sbase = t.dataset.sbase, si = Number(t.dataset.si);
+    var arr, q;
     switch (act) {
       case 'add-section':
-        state.sections.push({ id: 'part-' + (state.sections.length + 1), title: '', questions: [] });
+        if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
+        if (!state.postLesson.sections) state.postLesson.sections = [];
+        state.postLesson.sections.push({ id: 'part-' + (state.postLesson.sections.length + 1), title: '', questions: [] });
         break;
       case 'del-section':
-        if (state.sections.length <= 1) { toast('至少保留一个分节'); return; }
+        arr = getPath(state, sbase);
+        if (!arr || arr.length <= 1) { toast('至少保留一个分节'); return; }
         if (!confirm('删除该分节及其全部题目？')) return;
-        state.sections.splice(si, 1); break;
+        arr.splice(si, 1); break;
       case 'add-choice':
-        sec.questions.push(newChoice()); break;
+        arr = getPath(state, qbase);
+        if (arr) arr.push(newChoice());
+        break;
       case 'add-essay':
-        sec.questions.push(newEssay()); break;
+        arr = getPath(state, qbase);
+        if (arr) arr.push(newEssay());
+        break;
       case 'del-q':
+        arr = getPath(state, qbase);
+        if (!arr) return;
         if (!confirm('删除该题？')) return;
-        sec.questions.splice(qi, 1); break;
+        arr.splice(qi, 1); break;
       case 'dup-q':
-        sec.questions.splice(qi + 1, 0, JSON.parse(JSON.stringify(q))); break;
+        arr = getPath(state, qbase);
+        if (arr) arr.splice(qi + 1, 0, clone(arr[qi]));
+        break;
       case 'up-q':
-        if (qi > 0) { sec.questions.splice(qi - 1, 0, sec.questions.splice(qi, 1)[0]); } break;
+        arr = getPath(state, qbase);
+        if (arr && qi > 0) arr.splice(qi - 1, 0, arr.splice(qi, 1)[0]);
+        break;
       case 'down-q':
-        if (qi < sec.questions.length - 1) { sec.questions.splice(qi + 1, 0, sec.questions.splice(qi, 1)[0]); } break;
+        arr = getPath(state, qbase);
+        if (arr && qi < arr.length - 1) arr.splice(qi + 1, 0, arr.splice(qi, 1)[0]);
+        break;
       case 'add-option':
-        q.options.push({ key: String.fromCharCode(65 + q.options.length), text: '' }); break;
+        q = getPath(state, base);
+        if (q && q.options) q.options.push({ key: String.fromCharCode(65 + q.options.length), text: '' });
+        break;
       case 'del-option':
+        q = getPath(state, base);
+        if (!q || !q.options) return;
         if (q.options.length <= 2) { toast('至少保留两个选项'); return; }
         q.options.splice(oi, 1); renumberOptions(q);
         if (!Array.isArray(q.answer) && q.options.every(function (o) { return o.key !== q.answer; })) q.answer = q.options[0].key;
         break;
       default: return;
     }
-    save(); renderForm(); renderPreview();
+    save(); renderAll();
   }
 
+  function selectItem(id) {
+    selectedId = id;
+    var it = findItem(id);
+    if (it && it.kind === 'module') ensureModule(it);
+    renderAll();
+  }
+
+  /* ---------- 富文本插入 ---------- */
   function insertAt(textarea, text) {
     var start = textarea.selectionStart || 0, end = textarea.selectionEnd || 0;
     var value = textarea.value;
@@ -550,7 +837,6 @@
     textarea.focus();
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
-
   function pickImage(textarea) {
     var input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*';
@@ -566,7 +852,6 @@
     };
     input.click();
   }
-
   function pickTable(textarea) {
     var cols = parseInt(prompt('表格列数（1-6）：', '3'), 10);
     if (!cols || cols < 1 || cols > 6) return;
@@ -583,90 +868,15 @@
     insertAt(textarea, table);
   }
 
-  document.addEventListener('input', function (e) {
-    var t = e.target;
-    if (t.matches && t.matches('[data-path]')) {
-      var path = t.dataset.path;
-      if (path === 'lesson' || path === 'title' || path === 'subtitle') {
-        state[path] = t.value; save(); renderPreview(); return;
-      }
-      setPath(state, path, t.value);
-      if (/\.criteria$/.test(path)) {
-        setPath(state, path, t.value.split('\n'));
-      } else if (/\.stems$/.test(path)) {
-        setPath(state, path, t.value.split('\n'));
-      } else if (/\.knowledge\.items$/.test(path)) {
-        setPath(state, path, t.value.split('\n'));
-      }
-      save(); renderPreview();
-    }
-  });
-
-  document.addEventListener('change', function (e) {
-    var t = e.target;
-    if (t.matches && t.matches('[data-answer]')) {
-      var path = t.dataset.answer;
-      if (t.dataset.multi === 'true') {
-        var checked = els('[data-answer="' + path + '"]').filter(function (i) { return i.checked; }).map(function (i) { return i.value; });
-        setPath(state, path, checked);
-      } else {
-        setPath(state, path, t.value);
-        axRenderAnswer(path);
-      }
-      save(); renderPreview(); return;
-    }
-    if (t.matches && t.matches('[data-mode-path]')) {
-      var mp = t.dataset.modePath;
-      var q = getPath(state, mp.replace(/\.mode$/, ''));
-      q.mode = t.value;
-      if (t.value === 'single') q.answer = Array.isArray(q.answer) ? (q.answer[0] || 'A') : q.answer;
-      save(); renderForm(); renderPreview(); return;
-    }
-    if (t.id === 'import-file' && t.files && t.files[0]) {
-      importFile(t.files[0]);
-    }
-  });
-
-  function axRenderAnswer(path) { /* 单选：仅刷新预览即可，表单无需重排 */ }
-
-  document.addEventListener('click', function (e) {
-    var t = e.target.closest ? e.target.closest('button') : null;
-    if (!t) return;
-    if (t.hasAttribute('data-insert-image')) { var ta = t.parentElement.parentElement.querySelector('textarea'); if (ta) pickImage(ta); return; }
-    if (t.hasAttribute('data-insert-table')) { var ta2 = t.parentElement.parentElement.querySelector('textarea'); if (ta2) pickTable(ta2); return; }
-    var act = t.dataset.act;
-    if (!act) return;
-    if (act === 'reset') {
-      if (!confirm('清空当前编辑内容（本机保存也会重置）？')) return;
-      state = { version: 1, lesson: '', title: '自定义练习', subtitle: '', sections: [{ id: 'part-1', title: '一、选择题', questions: [newChoice()] }] };
-      save(); renderForm(); renderPreview(); return;
-    }
-    if (act === 'download') { download(); return; }
-    if (act === 'copy') { copyOut(); return; }
-    if (act === 'validate') {
-      var vissues = renderValidate();
-      toast(vissues.length ? '校验发现 ' + vissues.length + ' 处待完善' : '校验通过');
-      return;
-    }
-    if (act === 'save-file') { saveToFile(); return; }
-    if (act === 'load-file') {
-      loadFromFile().then(function (data) {
-        if (adopt(data)) toast('已载入同目录 custom-quiz.js');
-        else toast('未找到同目录 custom-quiz.js');
-      });
-      return;
-    }
-    handleStruct(act, t);
-  });
-
+  /* ---------- 导出 / 复制 / 导入 ---------- */
   function download() {
     var blob = new Blob([generated()], { type: 'text/javascript;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = 'custom-quiz.js';
+    a.href = url; a.download = 'practice-data.js';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    toast('已导出 custom-quiz.js');
+    toast('已导出 practice-data.js');
   }
   function copyOut() {
     var text = generated();
@@ -680,7 +890,6 @@
     ta.value = text; ta.select();
     try { document.execCommand('copy'); done(); } catch (e) { toast('请手动复制下方文本'); }
   }
-
   function importFile(file) {
     var reader = new FileReader();
     reader.onload = function () {
@@ -688,46 +897,109 @@
         var raw = String(reader.result);
         var m = raw.match(/\{[\s\S]*\}/);
         var parsed = JSON.parse(m ? m[0] : raw);
-        if (!parsed || !parsed.sections) throw new Error('缺少 sections');
-        state = parsed;
-        save(); renderForm(); renderPreview();
-        toast('导入成功');
+        if (adopt(parsed)) { save(); ensureSelected(); renderAll(); toast('导入成功'); }
+        else throw new Error('无法识别的数据结构');
       } catch (err) { toast('导入失败：' + err.message); }
     };
     reader.readAsText(file);
   }
 
   /* ---------- 同目录文件读写（就近预填 / 写回） ----------
-     数据文件与主页面 index.html 同级，名为 custom-quiz.js。
-     file:// 下 fetch 会被 CORS 拦截，故读用经典 <script> 注入读 window.__CUSTOM_QUIZ__；
+     结构与数据文件与主页面 index.html 同级：lesson-manifest.js（只读结构）、practice-data.js（可编辑内容）。
+     file:// 下 fetch 会被 CORS 拦截，故读用经典 <script> 注入读取全局变量；
      写优先用 File System Access API 就近覆盖，不可用时回退为下载。 */
-  var DATA_FILE = './custom-quiz.js';
-
-  function loadFromFile() {
+  function loadScript(src) {
     return new Promise(function (resolve) {
       var s = document.createElement('script');
-      s.src = DATA_FILE;
-      s.onload = function () {
-        if (s.parentNode) s.parentNode.removeChild(s);
-        resolve(window.__CUSTOM_QUIZ__ || null);
-      };
-      s.onerror = function () { resolve(null); };
+      s.src = src;
+      s.onload = function () { if (s.parentNode) s.parentNode.removeChild(s); resolve(true); };
+      s.onerror = function () { resolve(false); };
       document.head.appendChild(s);
     });
   }
-
-  function adopt(data) {
-    if (!data || !data.sections) return false;
-    state = data;
-    save(); renderForm(); renderPreview();
-    return true;
+  function loadManifest() {
+    if (window.__LESSON_MANIFEST__) return Promise.resolve(window.__LESSON_MANIFEST__);
+    return loadScript(MANIFEST_FILE).then(function () { return window.__LESSON_MANIFEST__ || null; });
   }
 
+  /* S5：清单缺失时回退——用 DOMParser 跑与构建期（scripts/manifest.mjs）同一套抽取规则。
+     仅取顶层模块 section（class 含 section），标题/序号取 .section__title / .section__tag-num，
+     练习键与形态取 .practice-btn 的 data-practice / data-practice-kind，末个无练习按钮的 section 为课后练习。 */
+  function extractManifestFromDoc(doc) {
+    var modules = [], postLesson = null;
+    var sections = doc.querySelectorAll('section.section');
+    Array.prototype.forEach.call(sections, function (sec) {
+      var id = sec.id || '';
+      if (!id) return;
+      var nav = sec.getAttribute('data-nav') || '';
+      var noEl = sec.querySelector('.section__tag-num');
+      var titleEl = sec.querySelector('.section__title');
+      var btn = sec.querySelector('.practice-btn[data-practice]');
+      var no = noEl ? noEl.textContent.replace(/\s+/g, ' ').trim() : '';
+      var title = titleEl ? titleEl.textContent.replace(/\s+/g, ' ').trim() : '';
+      if (!btn) { postLesson = { id: id, no: no, nav: nav, title: title }; return; }
+      modules.push({
+        key: btn.getAttribute('data-practice') || '', id: id, no: no, nav: nav, title: title,
+        practice: true, kind: btn.getAttribute('data-practice-kind') || 'choice'
+      });
+    });
+    return {
+      contract: 'lesson-manifest', version: 1, lesson: '', title: doc.title || '',
+      generatedAt: new Date().toISOString(), modules: modules, postLesson: postLesson
+    };
+  }
+  function applyManifest(m) {
+    if (!m) return false;
+    manifest = m;
+    if (!state) state = emptyState();
+    state.lesson = state.lesson || manifest.lesson || '';
+    if (!state.postLesson) state.postLesson = emptyState().postLesson;
+    ensureSelected();
+    renderAll();
+    return true;
+  }
+  function loadManifestFromHtmlFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var doc = new DOMParser().parseFromString(String(reader.result), 'text/html');
+        var m = extractManifestFromDoc(doc);
+        if (!m.modules.length && !m.postLesson) throw new Error('未找到模块（需含 section.section 与 practice-btn[data-practice]）');
+        applyManifest(m);
+        toast('已从 index.html 解析课程结构（模块 ' + m.modules.length + '）');
+      } catch (err) { toast('解析失败：' + err.message); }
+    };
+    reader.readAsText(file);
+  }
+  function loadDataFile() {
+    if (window.__PRACTICE_DATA__) return Promise.resolve(window.__PRACTICE_DATA__);
+    return loadScript(DATA_FILE).then(function () { return window.__PRACTICE_DATA__ || null; });
+  }
+  function adopt(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (data.modules || data.postLesson) {
+      state = {
+        version: data.version || 1,
+        lesson: data.lesson || (manifest && manifest.lesson) || '',
+        updatedAt: data.updatedAt || '',
+        modules: data.modules ? clone(data.modules) : {},
+        postLesson: data.postLesson ? clone(data.postLesson) : { title: '练习', subtitle: '', sections: [] }
+      };
+      return true;
+    }
+    // 兼容旧 custom-quiz.js（仅 sections）→ 并入课后练习
+    if (data.sections) {
+      state = emptyState();
+      state.postLesson = { title: data.title || '练习', subtitle: data.subtitle || '', sections: data.sections };
+      return true;
+    }
+    return false;
+  }
   function saveToFile() {
     var text = generated();
     if (!window.showSaveFilePicker) { download(); return; }
     window.showSaveFilePicker({
-      suggestedName: 'custom-quiz.js',
+      suggestedName: 'practice-data.js',
       types: [{ description: 'JavaScript 数据文件', accept: { 'text/javascript': ['.js'] } }]
     }).then(function (handle) {
       return handle.createWritable().then(function (w) {
@@ -741,16 +1013,108 @@
       });
   }
 
+  /* ---------- 事件绑定 ---------- */
+  function bindGlobal() {
+    document.addEventListener('input', function (e) {
+      var t = e.target;
+      if (!(t.matches && t.matches('[data-path]'))) return;
+      var path = t.dataset.path;
+      if (/\.criteria$/.test(path) || /\.stems$/.test(path) || /\.knowledge\.items$/.test(path)) {
+        setPath(state, path, t.value.split('\n'));
+      } else {
+        setPath(state, path, t.value);
+      }
+      save(); renderPreview(); renderTree(); renderValidate();
+    });
+
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.matches && t.matches('[data-answer]')) {
+        var path = t.dataset.answer;
+        if (t.dataset.multi === 'true') {
+          var checked = els('[data-answer="' + path + '"]').filter(function (i) { return i.checked; }).map(function (i) { return i.value; });
+          setPath(state, path, checked);
+        } else {
+          setPath(state, path, t.value);
+        }
+        save(); renderPreview(); renderValidate(); return;
+      }
+      if (t.matches && t.matches('[data-mode-path]')) {
+        var q = getPath(state, t.dataset.modePath.replace(/\.mode$/, ''));
+        if (q) {
+          q.mode = t.value;
+          if (t.value === 'single') q.answer = Array.isArray(q.answer) ? (q.answer[0] || 'A') : q.answer;
+        }
+        save(); renderEditor(); renderPreview(); renderTree(); renderValidate(); return;
+      }
+      if (t.id === 'manifest-file' && t.files && t.files[0]) { loadManifestFromHtmlFile(t.files[0]); t.value = ''; return; }
+      if (t.id === 'import-file' && t.files && t.files[0]) importFile(t.files[0]);
+    });
+
+    document.addEventListener('click', function (e) {
+      var pick = e.target.closest ? e.target.closest('[data-select]') : null;
+      if (pick) { selectItem(pick.dataset.select); return; }
+      var t = e.target.closest ? e.target.closest('button') : null;
+      if (!t) return;
+      if (t.hasAttribute('data-insert-image')) { var f = t.closest('.field'); var ta = f && f.querySelector('textarea'); if (ta) pickImage(ta); return; }
+      if (t.hasAttribute('data-insert-table')) { var f2 = t.closest('.field'); var ta2 = f2 && f2.querySelector('textarea'); if (ta2) pickTable(ta2); return; }
+      var act = t.dataset.act;
+      if (!act) return;
+      if (act === 'validate') { var v = renderValidate(); toast(v.length ? '校验发现 ' + v.length + ' 处待完善' : '校验通过'); return; }
+      if (act === 'download') { download(); return; }
+      if (act === 'copy') { copyOut(); return; }
+      if (act === 'save-file') { saveToFile(); return; }
+      if (act === 'load-html') { var mf = el('#manifest-file'); if (mf) mf.click(); return; }
+      if (act === 'load-file') {
+        loadDataFile().then(function (data) {
+          if (adopt(data)) { ensureSelected(); renderAll(); toast('已载入同目录 practice-data.js'); }
+          else toast('未找到同目录 practice-data.js');
+        });
+        return;
+      }
+      handleStruct(act, t);
+    });
+
+    // S5：把课程的 index.html 直接拖入左侧模块栏即可载入结构（清单缺失时的回退）
+    var treeCol = document.querySelector('.col--tree');
+    if (treeCol) {
+      treeCol.addEventListener('dragover', function (e) { e.preventDefault(); treeCol.classList.add('is-drop'); });
+      treeCol.addEventListener('dragleave', function () { treeCol.classList.remove('is-drop'); });
+      treeCol.addEventListener('drop', function (e) {
+        e.preventDefault(); treeCol.classList.remove('is-drop');
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) loadManifestFromHtmlFile(f);
+      });
+    }
+  }
+
   /* ---------- 启动 ---------- */
-  var hadDraft = load();
-  renderForm();
-  renderPreview();
-  renderValidate();
-  // 自动预填：本机无草稿时采用同目录 custom-quiz.js；有草稿则保留，避免覆盖未导出的编辑
-  loadFromFile().then(function (data) {
-    if (hadDraft) { if (data) toast('已载入本机草稿；如改用同目录文件请点「载入同目录文件」'); return; }
-    if (adopt(data)) toast('已载入同目录 custom-quiz.js');
-  });
+  function init() {
+    state = emptyState();
+    var hadDraft = load();
+    bindGlobal();
+    renderAll();
+
+    loadManifest().then(function (m) {
+      if (m) manifest = m;
+      if (manifest) {
+        state.lesson = state.lesson || manifest.lesson || '';
+        if (!state.postLesson) state.postLesson = emptyState().postLesson;
+      }
+      renderAll();
+      return loadDataFile();
+    }).then(function (data) {
+      if (hadDraft) {
+        if (data) toast('已载入本机草稿；如需同目录文件请点「载入同目录文件」');
+        return;
+      }
+      if (adopt(data)) { ensureSelected(); renderAll(); toast('已载入同目录 practice-data.js'); }
+    }).catch(function (err) {
+      console.error('[练习编辑器] 初始化失败', err);
+    });
+  }
+
+  init();
 })();
 </script>
 </body>

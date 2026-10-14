@@ -16,7 +16,7 @@ import { initEarth } from '../lessons/geo01-earth-universe/src/modules/earth'
 import { initSummaryTree } from '../lessons/geo01-earth-universe/src/modules/summary'
 import { initReviewMode } from '../lessons/geo01-earth-universe/src/modules/review'
 import { initReviewCards } from '../lessons/geo01-earth-universe/src/modules/reviewCards'
-import { initPracticeModal } from '../lessons/geo01-earth-universe/src/modules/practiceModal'
+import { initPracticeEntry } from '../lessons/geo01-earth-universe/src/modules/practiceEntry'
 import { initExtendModal } from '../lessons/geo01-earth-universe/src/modules/extendModal'
 import { initSolarSystem } from '../lessons/geo01-earth-universe/src/modules/solar'
 
@@ -351,22 +351,22 @@ describe('M11 复习（复习模式切换）', () => {
 
 describe('随堂练习浮层', () => {
   it('题目已全部清空：点开任一模块练习浮层均为空态占位', () => {
-    initPracticeModal()
+    initPracticeEntry()
     const content = document.getElementById('practice-content')!
 
     ;(document.querySelector('[data-practice="M1"]') as HTMLElement).click()
     const modal = document.getElementById('practice-modal')!
     expect(modal.hidden).toBe(false)
     expect(document.querySelectorAll('.practice-q')).toHaveLength(0)
-    expect(content.textContent).toContain('敬请期待')
+    expect(content.querySelector('.cq-empty')).not.toBeNull()
 
     // 地球 / 生命模块同样保留练习入口，但内容为空
     ;(document.querySelector('[data-practice="M7"]') as HTMLElement).click()
     expect(document.querySelectorAll('.practice-q')).toHaveLength(0)
-    expect(content.textContent).toContain('敬请期待')
+    expect(content.querySelector('.cq-empty')).not.toBeNull()
 
     ;(document.querySelector('[data-practice="M8"]') as HTMLElement).click()
-    expect(content.textContent).toContain('敬请期待')
+    expect(content.querySelector('.cq-empty')).not.toBeNull()
   })
 })
 
