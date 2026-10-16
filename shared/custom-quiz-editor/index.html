@@ -3,242 +3,980 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>练习编辑器 · 地理教学网页</title>
+<title>内容编辑器</title>
 <style>
-  :root {
-    --bg: #0b1026;
-    --panel: #121a38;
-    --panel-2: #0e1430;
-    --line: rgba(148,163,184,0.28);
-    --gold: #ffd54f;
-    --cyan: #4fc3f7;
-    --blue: #64b5f6;
-    --success: #66bb6a;
-    --error: #ef5350;
-    --text: #e8eaf6;
-    --dim: rgba(232,234,246,0.66);
-    --radius: 10px;
-    --font: "Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,sans-serif;
+/* ============================================================
+   内容编辑器（Content Editor）· 通用型结构化内容编辑器
+   ------------------------------------------------------------
+   - 零依赖、离线单文件；浅/深双主题；中性设计语言，无业务属性；
+   - 全部业务名词、数据源、结构抽取规则均由配置注入（见 §配置）；
+   - 令牌前缀 --ce-，类名前缀 ce-，状态类统一 is-*；
+   - 视觉层级：字号 / 字重 / 间距 / 描边 / 阴影 承担信息层级，装饰仅作点缀。
+   ============================================================ */
+
+/* ---------- 设计令牌 ---------- */
+.ce-app {
+  /* 间距 */
+  --ce-space-1: 4px;  --ce-space-2: 8px;  --ce-space-3: 12px; --ce-space-4: 16px;
+  --ce-space-5: 20px; --ce-space-6: 24px; --ce-space-7: 32px; --ce-space-8: 40px;
+  /* 圆角 */
+  --ce-radius-sm: 6px; --ce-radius-md: 9px; --ce-radius-lg: 14px; --ce-radius-full: 999px;
+  /* 字号 */
+  --ce-fs-2xs: 11px; --ce-fs-xs: 12px; --ce-fs-sm: 13px; --ce-fs-md: 14px;
+  --ce-fs-lg: 15px; --ce-fs-xl: 18px; --ce-fs-2xl: 22px;
+  /* 行高 / 字距 */
+  --ce-lh-tight: 1.3; --ce-lh-base: 1.6; --ce-tracking: .06em;
+  /* 阴影 */
+  --ce-shadow-xs: 0 1px 2px rgba(18, 22, 33, .05);
+  --ce-shadow-sm: 0 1px 3px rgba(18, 22, 33, .07), 0 1px 2px rgba(18, 22, 33, .04);
+  --ce-shadow-md: 0 8px 24px rgba(18, 22, 33, .10), 0 2px 6px rgba(18, 22, 33, .05);
+  /* 动效 */
+  --ce-dur-fast: 120ms; --ce-dur-base: 200ms;
+  --ce-ease: cubic-bezier(.4, 0, .2, 1);
+  /* 字体 */
+  --ce-font: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+  --ce-font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
+
+  /* 颜色（浅色） */
+  --ce-bg: #f4f5f8;
+  --ce-surface: #ffffff;
+  --ce-surface-2: #f1f2f6;
+  --ce-surface-3: #e7e9ef;
+  --ce-surface-sunken: #eef0f4;
+  --ce-border: #e3e6ed;
+  --ce-border-strong: #ccd2dc;
+  --ce-text: #17181c;
+  --ce-text-muted: #5b6270;
+  --ce-text-subtle: #8b919d;
+  --ce-accent: #5b5bd6;
+  --ce-accent-hover: #4f4fc7;
+  --ce-accent-active: #4646b5;
+  --ce-accent-soft: rgba(91, 91, 214, .09);
+  --ce-accent-border: rgba(91, 91, 214, .38);
+  --ce-on-accent: #ffffff;
+  --ce-success: #157f4a;  --ce-success-soft: rgba(21, 127, 74, .11);
+  --ce-warning: #a15c00;  --ce-warning-soft: rgba(161, 92, 0, .11);
+  --ce-danger: #d92d20;   --ce-danger-soft: rgba(217, 45, 32, .09);
+  --ce-on-solid: #ffffff;  /* 实底状态色上的文字（浅色主题状态色偏深 → 白字） */
+  --ce-code-bg: #f5f6f9;
+  --ce-ring: rgba(91, 91, 214, .30);
+  --ce-overlay: rgba(20, 22, 28, .45);
+
+  /* 尺寸 */
+  --ce-control-h: 38px;
+  --ce-control-h-sm: 30px;
+  --ce-hit: 40px;
+  --ce-panel-pad: var(--ce-space-6);
+  --ce-card-pad: var(--ce-space-5);
+  --ce-row-gap: 14px;
+  --ce-nav-w: 264px;
+}
+
+.ce-app[data-theme="dark"] {
+  --ce-bg: #131418;
+  --ce-surface: #1b1d23;
+  --ce-surface-2: #212329;
+  --ce-surface-3: #2a2d34;
+  --ce-surface-sunken: #17191e;
+  --ce-border: #2c2f37;
+  --ce-border-strong: #3d414b;
+  --ce-text: #eceef2;
+  --ce-text-muted: #a6acb8;
+  --ce-text-subtle: #7c8290;
+  --ce-accent: #9b9bf5;
+  --ce-accent-hover: #adadf9;
+  --ce-accent-active: #bcbcfa;
+  --ce-accent-soft: rgba(155, 155, 245, .15);
+  --ce-accent-border: rgba(155, 155, 245, .42);
+  --ce-on-accent: #16171d;
+  --ce-success: #4ade80;  --ce-success-soft: rgba(74, 222, 128, .15);
+  --ce-warning: #fbbf24;  --ce-warning-soft: rgba(251, 191, 36, .15);
+  --ce-danger: #f87171;   --ce-danger-soft: rgba(248, 113, 113, .15);
+  --ce-on-solid: #0f1116;  /* 深色主题状态色偏亮 → 深字 */
+  --ce-code-bg: #101216;
+  --ce-ring: rgba(155, 155, 245, .32);
+  --ce-overlay: rgba(4, 5, 8, .62);
+  --ce-shadow-xs: 0 1px 2px rgba(0, 0, 0, .30);
+  --ce-shadow-sm: 0 1px 3px rgba(0, 0, 0, .38);
+  --ce-shadow-md: 0 10px 28px rgba(0, 0, 0, .48);
+}
+
+/* 紧凑密度：仅改令牌，不改组件结构 */
+.ce-app[data-density="compact"] {
+  --ce-control-h: 32px;
+  --ce-control-h-sm: 28px;
+  --ce-hit: 34px;
+  --ce-panel-pad: var(--ce-space-4);
+  --ce-card-pad: var(--ce-space-4);
+  --ce-row-gap: 10px;
+  --ce-nav-w: 232px;
+}
+
+/* ---------- 基础 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body.ce-app {
+  margin: 0;
+  background: var(--ce-bg);
+  color: var(--ce-text);
+  font-family: var(--ce-font);
+  font-size: var(--ce-fs-md);
+  line-height: var(--ce-lh-base);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:where(.ce-app) :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ce-ring);
+  border-color: var(--ce-accent-border);
+}
+
+/* 触屏设备放大命中区域 */
+@media (pointer: coarse) {
+  .ce-app { --ce-control-h: 44px; --ce-control-h-sm: 38px; --ce-hit: 46px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-app *, .ce-app *::before, .ce-app *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 15px;
-    line-height: 1.6;
-  }
-  header.bar {
-    position: sticky; top: 0; z-index: 10;
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    padding: 14px 20px;
-    background: rgba(11,16,38,0.92);
-    border-bottom: 1px solid var(--line);
-    backdrop-filter: blur(8px);
-  }
-  header.bar h1 { margin: 0 8px 0 0; font-size: 18px; letter-spacing: 1px; }
-  header.bar .grow { flex: 1; }
-  .badge { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--dim); }
-  .btn {
-    padding: 8px 16px; border-radius: 8px; cursor: pointer;
-    border: 1px solid var(--blue); background: rgba(100,181,246,0.14);
-    color: var(--blue); font-size: 14px; font-family: inherit;
-    transition: background .2s, transform .1s;
-  }
-  .btn:hover { background: rgba(100,181,246,0.26); }
-  .btn:active { transform: scale(.98); }
-  .btn--primary { background: var(--blue); color: #06122b; font-weight: 700; }
-  .btn--ghost { border-color: var(--line); background: transparent; color: var(--text); }
-  .btn--danger { border-color: var(--error); color: var(--error); background: rgba(239,83,80,0.1); }
-  .btn--sm { padding: 5px 10px; font-size: 13px; }
+}
 
-  main { display: grid; grid-template-columns: 232px minmax(0,1fr) minmax(0,1fr); gap: 0; min-height: calc(100vh - 60px); }
-  .col { padding: 18px 20px; overflow: auto; }
-  .col--tree { border-right: 1px solid var(--line); background: var(--panel-2); padding: 14px 12px; }
-  .col--edit { border-right: 1px solid var(--line); }
-  .col--preview { background: var(--panel-2); }
-  .col--tree.is-drop { outline: 2px dashed var(--blue); outline-offset: -6px; }
-  @media (max-width: 1100px) {
-    main { grid-template-columns: 1fr; }
-    .col--tree, .col--edit { border-right: none; border-bottom: 1px solid var(--line); }
-  }
+/* ---------- 顶栏 ---------- */
+.ce-header {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: var(--ce-space-4); flex-wrap: wrap;
+  padding: var(--ce-space-4) var(--ce-space-6);
+  background: var(--ce-surface);
+  border-bottom: 1px solid var(--ce-border);
+}
+.ce-header__brand { display: flex; align-items: center; gap: var(--ce-space-3); min-width: 0; }
+.ce-header__logo {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex: 0 0 auto;
+  border-radius: var(--ce-radius-md);
+  background: var(--ce-accent); color: var(--ce-on-accent);
+  box-shadow: var(--ce-shadow-xs);
+}
+.ce-header__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ce-header__title {
+  margin: 0; font-size: var(--ce-fs-xl); font-weight: 650;
+  line-height: var(--ce-lh-tight); letter-spacing: -.01em; white-space: nowrap;
+}
+.ce-header__subtitle { font-size: var(--ce-fs-xs); color: var(--ce-text-subtle); white-space: nowrap; }
+.ce-header__grow { flex: 1 1 auto; }
+.ce-header__actions { display: flex; align-items: center; gap: var(--ce-space-2); flex-wrap: wrap; }
+.ce-header__divider { width: 1px; height: 24px; background: var(--ce-border); }
 
-  /* 左侧模块树 */
-  .rail__title { margin: 0 0 10px; font-size: 12px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
-  .tree__item {
-    display: block; width: 100%; text-align: left; padding: 8px 10px; margin-bottom: 4px;
-    border: 1px solid transparent; border-radius: 8px; background: transparent;
-    color: var(--text); font-family: inherit; font-size: 13px; cursor: pointer;
-    transition: background .15s, border-color .15s;
-  }
-  .tree__item:hover { background: rgba(100,181,246,.1); }
-  .tree__item.is-active { background: rgba(100,181,246,.18); border-color: var(--blue); }
-  .tree__item.is-dim { opacity: .62; }
-  .tree__line { display: flex; gap: 6px; align-items: baseline; }
-  .tree__no { color: var(--dim); flex: 0 0 auto; }
-  .tree__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tree__meta { display: block; margin-top: 2px; font-size: 12px; color: var(--dim); }
-  .tree__meta.is-empty { color: var(--gold); }
+.ce-actiongroup { display: flex; align-items: center; gap: var(--ce-space-2); }
 
-  .meta-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px 12px; margin-bottom: 18px; }
-  .meta-grid label { align-self: center; color: var(--dim); font-size: 14px; }
-  input[type=text], input[type=url], select, textarea {
-    width: 100%; padding: 8px 10px; border-radius: 8px;
-    border: 1px solid var(--line); background: rgba(255,255,255,0.04);
-    color: var(--text); font-family: inherit; font-size: 14px; line-height: 1.6;
-  }
-  textarea { resize: vertical; min-height: 60px; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+/* ---------- 上手引导条 ---------- */
+.ce-guide {
+  display: flex; align-items: center; gap: var(--ce-space-4); flex-wrap: wrap;
+  padding: var(--ce-space-3) var(--ce-space-6);
+  background: var(--ce-accent-soft);
+  border-bottom: 1px solid var(--ce-border);
+}
+.ce-guide[hidden] { display: none; }
+.ce-guide__main { display: flex; align-items: center; gap: var(--ce-space-3); flex-wrap: wrap; flex: 1 1 420px; }
+.ce-guide__label {
+  font-size: var(--ce-fs-xs); font-weight: 600; color: var(--ce-accent);
+  letter-spacing: var(--ce-tracking); white-space: nowrap;
+}
+.ce-guide__steps { display: flex; align-items: center; gap: var(--ce-space-2); flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.ce-guide__step {
+  display: inline-flex; align-items: center; gap: var(--ce-space-2);
+  padding: 3px var(--ce-space-3) 3px 3px;
+  border-radius: var(--ce-radius-full);
+  font-size: var(--ce-fs-xs); color: var(--ce-text-muted);
+}
+.ce-guide__step.is-current { background: var(--ce-surface); color: var(--ce-text); font-weight: 600; box-shadow: var(--ce-shadow-xs); }
+.ce-guide__step.is-done { color: var(--ce-success); }
+.ce-guide__dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; flex: 0 0 auto;
+  border-radius: 50%; background: var(--ce-surface-3); color: var(--ce-text-muted);
+  font-size: var(--ce-fs-2xs); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.ce-guide__step.is-current .ce-guide__dot { background: var(--ce-accent); color: var(--ce-on-accent); }
+.ce-guide__step.is-done .ce-guide__dot { background: var(--ce-success-soft); color: var(--ce-success); }
+.ce-guide__sep { color: var(--ce-text-subtle); font-size: var(--ce-fs-xs); }
+.ce-guide__actions { display: flex; align-items: center; gap: var(--ce-space-2); flex: 0 0 auto; }
 
-  .panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-  .panel-head .pno {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(255,213,79,.15); color: var(--gold); font-weight: 700; font-size: 13px;
-  }
-  .panel-head h2 { margin: 0; font-size: 16px; }
+/* ---------- 工具条 ---------- */
+.ce-toolbar {
+  display: flex; align-items: center; gap: var(--ce-space-3); flex-wrap: wrap;
+  padding: var(--ce-space-2) var(--ce-space-6);
+  background: var(--ce-surface-2);
+  border-bottom: 1px solid var(--ce-border);
+}
+.ce-toolbar__grow { flex: 1 1 auto; }
+.ce-toolbar__group { display: flex; align-items: center; gap: var(--ce-space-2); }
 
-  .sec { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; background: var(--panel); }
-  .sec__head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
-  .sec__head input { flex: 1; font-weight: 700; }
-  .subhead { margin: 16px 0 10px; font-size: 14px; color: var(--dim); }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.ce-status { margin: 0; font-size: var(--ce-fs-xs); color: var(--ce-text-muted); }
+.ce-status--ok { color: var(--ce-success); }
+.ce-status--warn { color: var(--ce-warning); }
+.ce-status--error { color: var(--ce-danger); }
+.ce-linkbtn {
+  border: 0; padding: 0 2px; background: none; cursor: pointer;
+  color: var(--ce-accent); font: inherit; text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ce-note { margin: var(--ce-space-3) 2px 0; font-size: var(--ce-fs-xs); color: var(--ce-text-subtle); }
 
-  .q { border: 1px dashed var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; background: rgba(255,255,255,0.02); }
-  .q__head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-  .q__badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); color: var(--dim); }
-  .q__badge.choice { color: var(--blue); border-color: rgba(100,181,246,.5); }
-  .q__badge.essay { color: var(--gold); border-color: rgba(255,213,79,.5); }
-  .q__head .grow { flex: 1; }
+/* ---------- 按钮 ---------- */
+.ce-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ce-space-2);
+  min-height: var(--ce-control-h); padding: 0 var(--ce-space-4);
+  border: 1px solid var(--ce-border-strong); border-radius: var(--ce-radius-md);
+  background: var(--ce-surface); color: var(--ce-text);
+  font-family: inherit; font-size: var(--ce-fs-sm); font-weight: 550;
+  cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: background var(--ce-dur-fast) var(--ce-ease),
+              border-color var(--ce-dur-fast) var(--ce-ease),
+              color var(--ce-dur-fast) var(--ce-ease),
+              box-shadow var(--ce-dur-fast) var(--ce-ease),
+              transform var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-btn:hover { background: var(--ce-surface-3); border-color: var(--ce-text-subtle); }
+.ce-btn:active { transform: translateY(1px); }
+.ce-btn[disabled], .ce-btn.is-disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.ce-btn.is-loading { color: transparent !important; pointer-events: none; }
+.ce-btn.is-loading::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid currentColor; border-color: var(--ce-text-subtle);
+  border-top-color: transparent; animation: ce-spin .7s linear infinite;
+}
+@keyframes ce-spin { to { transform: rotate(360deg); } }
 
-  .field { margin-bottom: 10px; }
-  .field > .lbl { display: block; margin-bottom: 5px; color: var(--dim); font-size: 13px; }
-  .field .tools { display: flex; gap: 6px; margin-top: 6px; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ce-btn--primary {
+  background: var(--ce-accent); border-color: var(--ce-accent);
+  color: var(--ce-on-accent); font-weight: 650;
+  box-shadow: 0 1px 2px rgba(91, 91, 214, .28);
+}
+.ce-btn--primary:hover { background: var(--ce-accent-hover); border-color: var(--ce-accent-hover); }
+.ce-btn--primary:active { background: var(--ce-accent-active); border-color: var(--ce-accent-active); }
+.ce-btn--primary.is-loading::after { border-color: var(--ce-on-accent); border-top-color: transparent; }
 
-  .opt { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
-  .opt input[type=text].key { text-align: center; }
+.ce-btn--ghost { background: transparent; border-color: transparent; color: var(--ce-text-muted); }
+.ce-btn--ghost:hover { background: var(--ce-surface-3); border-color: transparent; color: var(--ce-text); }
 
-  .answer-row { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
-  .answer-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.ce-btn--danger { background: transparent; border-color: var(--ce-danger); color: var(--ce-danger); }
+.ce-btn--danger:hover { background: var(--ce-danger-soft); border-color: var(--ce-danger); }
 
-  .hint { color: var(--dim); font-size: 13px; margin: -4px 0 14px; }
-  .hint--ok { color: var(--success); }
-  .hint--warn { color: var(--gold); }
-  #validate-status { margin-top: -8px; }
-  #tree-status { margin: 12px 2px 0; font-size: 12px; }
+.ce-btn--sm { min-height: var(--ce-control-h-sm); padding: 0 var(--ce-space-3); font-size: var(--ce-fs-xs); }
 
-  /* 预览区 */
-  .preview { font-size: 15px; }
-  .preview .sec { background: transparent; border: none; padding: 0; margin-bottom: 26px; }
-  .preview .sec__title { color: var(--gold); font-size: 17px; margin: 0 0 12px; padding-left: 10px; border-left: 3px solid var(--gold); }
-  .preview .q { border: 1px solid var(--line); border-style: solid; background: rgba(255,255,255,0.03); }
-  .preview .no { display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px; border-radius:50%; background: rgba(255,213,79,.15); color: var(--gold); font-weight:700; margin-right:8px; font-size: 13px; }
-  .preview .material { padding: 12px 14px; background: rgba(11,16,38,.6); border-left: 3px solid var(--cyan); margin-bottom: 10px; }
-  .preview .stem { font-weight: 700; margin: 0 0 12px; }
-  .preview .options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .preview .opt-btn { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.03); }
-  .preview .opt-btn.correct { border-color: var(--success); background: rgba(102,187,106,.15); }
-  .preview .stems { margin: 0 0 12px; padding-left: 20px; }
-  .preview .answer { margin-top: 10px; padding: 12px 14px; border: 1px solid rgba(255,213,79,.4); background: rgba(255,213,79,.06); border-radius: 8px; }
-  .preview .answer h5 { margin: 0 0 6px; color: var(--gold); font-size: 14px; }
-  .preview table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
-  .preview th, .preview td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
-  .preview th { background: rgba(79,195,247,.12); color: #bfe9ff; }
-  .preview img { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); margin: 8px 0; }
-  .preview code { background: rgba(255,255,255,.1); padding: 1px 5px; border-radius: 4px; }
-  .preview .p { margin: 0 0 8px; }
-  .preview .empty { color: var(--dim); }
+.ce-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--ce-hit); height: var(--ce-hit); flex: 0 0 auto;
+  border: 1px solid var(--ce-border-strong); border-radius: var(--ce-radius-md);
+  background: var(--ce-surface); color: var(--ce-text-muted); cursor: pointer;
+  transition: background var(--ce-dur-fast) var(--ce-ease), color var(--ce-dur-fast) var(--ce-ease),
+              border-color var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-iconbtn:hover { background: var(--ce-surface-3); color: var(--ce-text); border-color: var(--ce-text-subtle); }
+.ce-iconbtn--plain { border-color: transparent; background: transparent; width: var(--ce-control-h-sm); height: var(--ce-control-h-sm); }
+.ce-iconbtn--plain:hover { background: var(--ce-surface-3); }
 
-  .out {
-    width: 100%; min-height: 160px; margin-top: 10px;
-    font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
-    background: #060b1e;
-  }
-  .toast {
-    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
-    padding: 10px 20px; border-radius: 8px; background: var(--blue); color: #06122b;
-    font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 99;
-  }
-  .toast.show { opacity: 1; }
-  details.export { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 14px; }
-  details.export summary { cursor: pointer; color: var(--cyan); }
+/* 计数徽标 */
+.ce-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--ce-radius-full);
+  background: var(--ce-danger); color: var(--ce-on-solid);
+  font-size: var(--ce-fs-2xs); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.ce-badge[hidden] { display: none; }
+
+/* ---------- 下拉菜单 ---------- */
+.ce-menu { position: relative; }
+.ce-menu__panel {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;
+  min-width: 190px; padding: var(--ce-space-1);
+  background: var(--ce-surface); border: 1px solid var(--ce-border);
+  border-radius: var(--ce-radius-md); box-shadow: var(--ce-shadow-md);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.ce-menu__panel[hidden] { display: none; }
+.ce-menu__item {
+  display: block; width: 100%; text-align: left;
+  min-height: var(--ce-control-h-sm); padding: 0 var(--ce-space-3);
+  border: 0; border-radius: var(--ce-radius-sm); background: transparent;
+  color: var(--ce-text); font-family: inherit; font-size: var(--ce-fs-sm);
+  cursor: pointer;
+  transition: background var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-menu__item:hover { background: var(--ce-surface-3); }
+
+/* ---------- 分段控件 ---------- */
+.ce-segment {
+  display: inline-flex; padding: 2px; gap: 2px;
+  background: var(--ce-surface-3); border-radius: var(--ce-radius-md);
+}
+.ce-segment__btn {
+  min-height: calc(var(--ce-control-h) - 6px); padding: 0 var(--ce-space-3);
+  border: none; border-radius: var(--ce-radius-sm); background: transparent;
+  color: var(--ce-text-muted); font-family: inherit; font-size: var(--ce-fs-xs);
+  cursor: pointer; transition: background var(--ce-dur-fast) var(--ce-ease), color var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-segment__btn:hover { color: var(--ce-text); }
+.ce-segment__btn[aria-pressed="true"] { background: var(--ce-surface); color: var(--ce-text); font-weight: 600; box-shadow: var(--ce-shadow-xs); }
+
+/* ---------- 标签 ---------- */
+.ce-tag {
+  display: inline-flex; align-items: center;
+  padding: 1px var(--ce-space-2); border-radius: var(--ce-radius-full);
+  border: 1px solid var(--ce-border-strong); background: var(--ce-surface-2);
+  color: var(--ce-text-muted); font-size: var(--ce-fs-2xs); line-height: 1.7;
+  white-space: nowrap;
+}
+.ce-tag--info { background: var(--ce-accent-soft); border-color: var(--ce-accent-border); color: var(--ce-accent); }
+.ce-tag--ok { background: var(--ce-success-soft); border-color: var(--ce-success); color: var(--ce-success); }
+.ce-tag--warn { background: var(--ce-warning-soft); border-color: var(--ce-warning); color: var(--ce-warning); }
+.ce-tag--danger { background: var(--ce-danger-soft); border-color: var(--ce-danger); color: var(--ce-danger); }
+
+/* ---------- 布局外壳 ---------- */
+.ce-shell { display: flex; flex-wrap: wrap; align-items: flex-start; min-height: 60vh; }
+
+.ce-panel {
+  padding: var(--ce-panel-pad);
+  min-width: 0;
+  border-right: 1px solid var(--ce-border);
+}
+.ce-panel:last-child { border-right: none; }
+.ce-panel--nav { flex: 0 0 var(--ce-nav-w); max-width: var(--ce-nav-w); background: var(--ce-surface-2); }
+.ce-panel--editor { flex: 1 1 480px; background: var(--ce-bg); }
+.ce-panel--preview { flex: 1 1 480px; background: var(--ce-surface); }
+
+/* 面板显隐（配置或用户切换） */
+.ce-app[data-nav="off"] .ce-panel--nav { display: none; }
+.ce-app[data-preview="off"] .ce-panel--preview { display: none; }
+
+/* 预览折叠（previewCollapsible 开启时生效） */
+.ce-app[data-preview-collapsed="on"] .ce-preview,
+.ce-app[data-preview-collapsed="on"] .ce-drawer { display: none; }
+
+.ce-app[data-preview-placement="bottom"] .ce-panel--preview {
+  flex-basis: 100%; max-width: none;
+  border-right: none; border-top: 1px solid var(--ce-border);
+}
+
+.ce-panel__head {
+  display: flex; align-items: center; gap: var(--ce-space-2);
+  margin-bottom: var(--ce-space-4);
+}
+.ce-panel__title {
+  margin: 0; font-size: var(--ce-fs-xs); font-weight: 600;
+  letter-spacing: var(--ce-tracking); color: var(--ce-text-subtle);
+}
+.ce-panel__grow { flex: 1 1 auto; }
+
+/* ---------- 分组导航 ---------- */
+.ce-nav { display: flex; flex-direction: column; gap: var(--ce-space-1); }
+.ce-nav.is-dragover {
+  outline: 2px dashed var(--ce-accent); outline-offset: 6px;
+  border-radius: var(--ce-radius-md);
+}
+.ce-nav__item {
+  display: block; width: 100%; text-align: left; min-height: 48px;
+  padding: var(--ce-space-2) var(--ce-space-3);
+  border: 1px solid transparent; border-left: 3px solid transparent;
+  border-radius: var(--ce-radius-md); background: transparent;
+  color: var(--ce-text); font-family: inherit; font-size: var(--ce-fs-sm);
+  cursor: pointer;
+  transition: background var(--ce-dur-fast) var(--ce-ease), border-color var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-nav__item:hover { background: var(--ce-surface-3); }
+.ce-nav__item.is-active {
+  background: var(--ce-accent-soft);
+  border-color: var(--ce-accent-border);
+  border-left-color: var(--ce-accent);
+}
+.ce-nav__item--dim { opacity: .6; }
+.ce-nav__line { display: flex; gap: var(--ce-space-2); align-items: center; }
+.ce-nav__name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; }
+.ce-nav__meta { display: block; margin-top: 3px; font-size: var(--ce-fs-2xs); color: var(--ce-text-subtle); }
+.ce-nav__meta.is-empty { font-style: italic; }
+
+.ce-index {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 21px; padding: 0 6px; flex: 0 0 auto;
+  border-radius: var(--ce-radius-sm);
+  background: var(--ce-surface-3); color: var(--ce-text-muted);
+  font-family: var(--ce-font-mono); font-size: var(--ce-fs-xs); font-weight: 600;
+}
+
+/* ---------- 表单 ---------- */
+.ce-field { display: block; margin-bottom: var(--ce-row-gap); }
+.ce-field__label {
+  display: flex; align-items: baseline; gap: var(--ce-space-2);
+  margin-bottom: 6px; color: var(--ce-text-muted); font-size: var(--ce-fs-xs); font-weight: 550;
+}
+.ce-field__hint { color: var(--ce-text-subtle); font-size: var(--ce-fs-2xs); font-weight: 400; }
+.ce-field__tools { display: flex; gap: var(--ce-space-2); margin-top: var(--ce-space-2); }
+
+.ce-input, .ce-textarea, .ce-select {
+  width: 100%; min-height: var(--ce-control-h); padding: 8px var(--ce-space-3);
+  border: 1px solid var(--ce-border-strong); border-radius: var(--ce-radius-md);
+  background: var(--ce-surface); color: var(--ce-text);
+  font-family: inherit; font-size: var(--ce-fs-sm); line-height: var(--ce-lh-base);
+  transition: border-color var(--ce-dur-fast) var(--ce-ease), box-shadow var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-input:hover, .ce-textarea:hover, .ce-select:hover { border-color: var(--ce-text-subtle); }
+.ce-textarea { resize: vertical; min-height: 72px; padding-top: 9px; }
+.ce-input::placeholder, .ce-textarea::placeholder { color: var(--ce-text-subtle); }
+.ce-input.is-invalid, .ce-textarea.is-invalid, .ce-select.is-invalid {
+  border-color: var(--ce-danger); background: var(--ce-danger-soft);
+}
+
+.ce-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ce-space-4); }
+
+.ce-choicegroup {
+  display: flex; flex-wrap: wrap; gap: var(--ce-space-2) var(--ce-space-5);
+  padding: var(--ce-space-3); min-height: var(--ce-control-h);
+  border: 1px solid var(--ce-border-strong); border-radius: var(--ce-radius-md);
+  background: var(--ce-surface);
+}
+.ce-choice { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--ce-fs-sm); }
+.ce-choice input { accent-color: var(--ce-accent); width: 15px; height: 15px; }
+
+.ce-row-3 { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto; gap: var(--ce-space-2); align-items: center; margin-bottom: var(--ce-space-2); }
+.ce-row-3 .ce-input.is-key { text-align: center; font-family: var(--ce-font-mono); }
+
+/* ---------- 卡片 ---------- */
+.ce-card {
+  border: 1px solid var(--ce-border); border-radius: var(--ce-radius-lg);
+  background: var(--ce-surface); padding: var(--ce-card-pad);
+  margin-bottom: var(--ce-space-5); box-shadow: var(--ce-shadow-sm);
+}
+.ce-card__head { display: flex; align-items: center; gap: var(--ce-space-2); margin-bottom: var(--ce-space-4); }
+.ce-card__head .ce-input { flex: 1 1 auto; font-weight: 600; }
+.ce-card--item { margin-bottom: var(--ce-space-4); box-shadow: var(--ce-shadow-xs); transition: box-shadow var(--ce-dur-base) var(--ce-ease), border-color var(--ce-dur-base) var(--ce-ease); }
+.ce-card--item:hover { box-shadow: var(--ce-shadow-sm); border-color: var(--ce-border-strong); }
+.ce-card--item.is-invalid { border-color: var(--ce-danger); }
+.ce-card__actions { display: flex; gap: var(--ce-space-1); flex-wrap: wrap; }
+
+.ce-headline { display: flex; align-items: center; gap: var(--ce-space-3); margin: 0 0 var(--ce-space-5); }
+.ce-headline__title { margin: 0; font-size: var(--ce-fs-2xl); font-weight: 650; line-height: var(--ce-lh-tight); letter-spacing: -.01em; }
+
+.ce-subhead {
+  display: flex; align-items: center; gap: var(--ce-space-2);
+  margin: var(--ce-space-6) 0 var(--ce-space-3);
+  padding-top: var(--ce-space-4); border-top: 1px solid var(--ce-border);
+  font-size: var(--ce-fs-sm); font-weight: 650; color: var(--ce-text);
+}
+.ce-subhead__count { font-weight: 500; color: var(--ce-text-subtle); font-size: var(--ce-fs-xs); }
+.ce-btn-row { display: flex; gap: var(--ce-space-2); flex-wrap: wrap; margin-top: var(--ce-space-3); }
+
+/* ---------- 分组内引导卡 ---------- */
+.ce-hintcard {
+  display: flex; align-items: center; gap: var(--ce-space-4); flex-wrap: wrap;
+  padding: var(--ce-space-4); margin: var(--ce-space-2) 0 var(--ce-space-3);
+  border: 1px dashed var(--ce-border-strong); border-radius: var(--ce-radius-md);
+  background: var(--ce-surface-2);
+}
+.ce-hintcard__text { flex: 1 1 260px; }
+.ce-hintcard__title { margin: 0 0 2px; font-size: var(--ce-fs-sm); font-weight: 650; }
+.ce-hintcard__desc { margin: 0; font-size: var(--ce-fs-xs); color: var(--ce-text-muted); }
+
+/* ---------- 空态 ---------- */
+.ce-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--ce-space-3); padding: var(--ce-space-8) var(--ce-space-5);
+  border: 1px dashed var(--ce-border-strong); border-radius: var(--ce-radius-lg);
+  background: var(--ce-surface); color: var(--ce-text-muted); text-align: center;
+}
+.ce-empty__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: var(--ce-radius-lg);
+  background: var(--ce-accent-soft); color: var(--ce-accent);
+}
+.ce-empty__title { margin: 0; font-size: var(--ce-fs-lg); font-weight: 650; color: var(--ce-text); }
+.ce-empty__text { margin: 0; max-width: 52ch; font-size: var(--ce-fs-sm); color: var(--ce-text-muted); }
+.ce-empty__steps { margin: 0; padding: 0; list-style: none; text-align: left; display: flex; flex-direction: column; gap: var(--ce-space-2); }
+.ce-empty__step { display: flex; gap: var(--ce-space-2); align-items: flex-start; font-size: var(--ce-fs-sm); }
+.ce-empty__actions { display: flex; gap: var(--ce-space-2); flex-wrap: wrap; justify-content: center; margin-top: var(--ce-space-2); }
+
+/* ---------- 折叠抽屉 ---------- */
+.ce-drawer { margin-top: var(--ce-space-6); border-top: 1px solid var(--ce-border); padding-top: var(--ce-space-4); }
+.ce-drawer > summary { cursor: pointer; font-size: var(--ce-fs-sm); color: var(--ce-accent); font-weight: 550; }
+.ce-code {
+  width: 100%; min-height: 180px; margin-top: var(--ce-space-3);
+  font-family: var(--ce-font-mono); font-size: var(--ce-fs-xs);
+  background: var(--ce-code-bg);
+}
+
+/* ---------- 预览 ---------- */
+.ce-preview { font-size: var(--ce-fs-md); }
+.ce-preview__group { margin-bottom: var(--ce-space-7); }
+.ce-preview__title {
+  margin: 0 0 var(--ce-space-4);
+  font-size: var(--ce-fs-xl); font-weight: 650; line-height: var(--ce-lh-tight);
+  color: var(--ce-text);
+}
+.ce-preview__item {
+  border: 1px solid var(--ce-border); border-radius: var(--ce-radius-lg);
+  background: var(--ce-surface); padding: var(--ce-card-pad);
+  margin-bottom: var(--ce-space-4); box-shadow: var(--ce-shadow-xs);
+}
+.ce-preview__head { display: flex; align-items: center; gap: var(--ce-space-2); margin-bottom: var(--ce-space-3); }
+.ce-preview__stem { margin: 0 0 var(--ce-space-3); font-weight: 600; }
+.ce-preview__options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ce-space-2); }
+.ce-preview__option {
+  padding: var(--ce-space-3); border: 1px solid var(--ce-border);
+  border-radius: var(--ce-radius-md); background: var(--ce-surface-2);
+}
+.ce-preview__option--correct { border-color: var(--ce-success); background: var(--ce-success-soft); }
+.ce-preview__list { margin: 0 0 var(--ce-space-3); padding-left: var(--ce-space-5); }
+
+.ce-callout {
+  padding: var(--ce-space-3) var(--ce-space-4); margin-bottom: var(--ce-space-3);
+  background: var(--ce-surface-2); border: 1px solid var(--ce-border);
+  border-radius: var(--ce-radius-md); color: var(--ce-text-muted);
+}
+.ce-callout > :last-child { margin-bottom: 0; }
+
+.ce-answer {
+  margin-top: var(--ce-space-4); padding: var(--ce-space-4);
+  background: var(--ce-surface-2); border: 1px solid var(--ce-border);
+  border-radius: var(--ce-radius-md);
+}
+.ce-answer__title { margin: var(--ce-space-3) 0 var(--ce-space-1); font-size: var(--ce-fs-sm); font-weight: 650; color: var(--ce-accent); }
+.ce-answer__title:first-child { margin-top: 0; }
+
+.ce-preview table { width: 100%; border-collapse: collapse; margin: var(--ce-space-2) 0; font-size: var(--ce-fs-sm); }
+.ce-preview th, .ce-preview td { border: 1px solid var(--ce-border); padding: 7px var(--ce-space-3); text-align: left; }
+.ce-preview th { background: var(--ce-surface-3); font-weight: 650; }
+.ce-preview img { max-width: 100%; border-radius: var(--ce-radius-md); border: 1px solid var(--ce-border); margin: var(--ce-space-2) 0; }
+.ce-preview code { background: var(--ce-surface-3); padding: 1px 5px; border-radius: var(--ce-radius-sm); font-family: var(--ce-font-mono); font-size: .92em; }
+.ce-preview p { margin: 0 0 var(--ce-space-2); }
+.ce-preview a { color: var(--ce-accent); }
+.ce-preview__empty { color: var(--ce-text-subtle); font-style: italic; }
+
+/* ---------- 吐司 ---------- */
+.ce-toast {
+  position: fixed; left: 50%; bottom: var(--ce-space-6); transform: translateX(-50%) translateY(8px);
+  display: flex; align-items: center; gap: var(--ce-space-2);
+  max-width: min(90vw, 560px);
+  padding: var(--ce-space-3) var(--ce-space-4); border-radius: var(--ce-radius-md);
+  background: var(--ce-text); color: var(--ce-bg);
+  font-size: var(--ce-fs-sm); box-shadow: var(--ce-shadow-md);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--ce-dur-base) var(--ce-ease), transform var(--ce-dur-base) var(--ce-ease);
+  z-index: 60;
+}
+.ce-toast.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.ce-toast--ok { background: var(--ce-success); color: var(--ce-on-solid); }
+.ce-toast--warn { background: var(--ce-warning); color: var(--ce-on-solid); }
+.ce-toast--error { background: var(--ce-danger); color: var(--ce-on-solid); }
+
+/* ---------- 对话框 ---------- */
+.ce-dialog {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--ce-space-4);
+}
+.ce-dialog[hidden] { display: none; }
+.ce-dialog__mask { position: absolute; inset: 0; background: var(--ce-overlay); }
+.ce-dialog__panel {
+  position: relative; width: min(460px, 100%);
+  background: var(--ce-surface); border: 1px solid var(--ce-border);
+  border-radius: var(--ce-radius-lg); box-shadow: var(--ce-shadow-md);
+  padding: var(--ce-space-6);
+}
+.ce-dialog__title { margin: 0 0 var(--ce-space-3); font-size: var(--ce-fs-xl); font-weight: 650; }
+.ce-dialog__body { font-size: var(--ce-fs-sm); color: var(--ce-text-muted); }
+.ce-dialog__text { margin: 0; line-height: var(--ce-lh-base); }
+.ce-dialog__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ce-space-4); }
+.ce-dialog__foot { display: flex; justify-content: flex-end; gap: var(--ce-space-2); margin-top: var(--ce-space-6); }
+
+/* ---------- 适配 ---------- */
+@media (max-width: 1279px) {
+  .ce-app { --ce-nav-w: 216px; }
+}
+@media (max-width: 1023px) {
+  .ce-panel--preview { flex-basis: 100%; max-width: none; border-right: none; border-top: 1px solid var(--ce-border); }
+}
+@media (max-width: 767px) {
+  .ce-app { --ce-panel-pad: var(--ce-space-4); }
+  .ce-header, .ce-toolbar, .ce-guide { padding-left: var(--ce-space-4); padding-right: var(--ce-space-4); }
+  .ce-panel { border-right: none; border-bottom: 1px solid var(--ce-border); }
+  .ce-panel--nav { flex-basis: 100%; max-width: none; }
+  .ce-nav { flex-direction: row; overflow-x: auto; padding-bottom: var(--ce-space-2); }
+  .ce-nav__item { min-width: 180px; flex: 0 0 auto; }
+  .ce-preview__options { grid-template-columns: 1fr; }
+  .ce-grid-2, .ce-dialog__grid { grid-template-columns: 1fr; }
+  .ce-headline__title { font-size: var(--ce-fs-xl); }
+}
+
+@media print {
+  .ce-header, .ce-toolbar, .ce-guide, .ce-panel--nav, .ce-panel--editor, .ce-toast, .ce-dialog { display: none !important; }
+  .ce-panel--preview { border: none; padding: 0; }
+}
 </style>
 </head>
-<body>
-<header class="bar">
-  <h1>练习编辑器</h1>
-  <span class="badge" id="lesson-badge"></span>
-  <button class="btn btn--ghost btn--sm" data-act="validate">校验</button>
-  <span class="grow"></span>
-  <button class="btn btn--ghost btn--sm" data-act="load-html">载入课程结构</button>
-  <input type="file" id="manifest-file" accept=".html,text/html" hidden>
-  <label class="btn btn--ghost btn--sm" style="margin:0">
-    导入
-    <input type="file" id="import-file" accept=".js,.json,application/json,text/javascript" hidden>
-  </label>
-  <button class="btn btn--ghost btn--sm" data-act="load-file">载入同目录文件</button>
-  <button class="btn btn--primary btn--sm" data-act="save-file">保存到本文件</button>
-  <button class="btn btn--ghost btn--sm" data-act="download">导出 practice-data.js</button>
-  <button class="btn btn--ghost btn--sm" data-act="copy">复制</button>
+<body class="ce-app" data-theme="light" data-density="comfortable" data-nav="on" data-preview="on" data-preview-placement="side">
+
+<header class="ce-header">
+  <div class="ce-header__brand">
+    <span class="ce-header__logo" aria-hidden="true">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h16M4 12h16M4 18h10"/>
+      </svg>
+    </span>
+    <div class="ce-header__titles">
+      <h1 class="ce-header__title" id="app-title">内容编辑器</h1>
+      <span class="ce-header__subtitle" id="context-badge"></span>
+    </div>
+  </div>
+  <span class="ce-header__grow"></span>
+  <div class="ce-header__actions" id="header-actions"></div>
 </header>
 
-<main>
-  <aside class="col col--tree">
-    <h2 class="rail__title">模块</h2>
-    <div id="tree"></div>
-    <p class="hint" id="tree-status"></p>
+<section class="ce-guide" id="guide" hidden aria-label="上手步骤"></section>
+
+<div class="ce-toolbar">
+  <p class="ce-status" id="status-bar" role="status" aria-live="polite"></p>
+  <span class="ce-toolbar__grow"></span>
+  <button class="ce-iconbtn ce-iconbtn--plain" type="button" data-act="show-guide" id="guide-btn" title="上手步骤" aria-label="上手步骤" hidden>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.3 2.3c-.6.3-.9.8-.9 1.5v.4"/><path d="M12 17h.01"/>
+    </svg>
+  </button>
+  <div class="ce-toolbar__group" id="panel-toggles"></div>
+  <button class="ce-iconbtn" type="button" data-act="toggle-theme" id="theme-btn" title="切换主题" aria-label="切换主题">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/>
+    </svg>
+  </button>
+</div>
+
+<main class="ce-shell">
+  <aside class="ce-panel ce-panel--nav" id="panel-nav">
+    <div class="ce-panel__head"><h2 class="ce-panel__title" id="nav-title">分组</h2></div>
+    <div class="ce-nav" id="tree"></div>
+    <p class="ce-note" id="tree-status"></p>
   </aside>
 
-  <section class="col col--edit">
-    <p class="hint" id="validate-status" aria-live="polite"></p>
+  <section class="ce-panel ce-panel--editor" id="panel-editor">
+    <div class="ce-panel__head"><h2 class="ce-panel__title" id="editor-title">编辑</h2></div>
     <div id="editor"></div>
   </section>
 
-  <section class="col col--preview">
-    <div class="preview" id="preview"></div>
-    <details class="export">
-      <summary>导出内容预览 / 手动复制</summary>
-      <textarea class="out" id="output" readonly></textarea>
+  <section class="ce-panel ce-panel--preview" id="panel-preview">
+    <div class="ce-panel__head">
+      <h2 class="ce-panel__title" id="preview-title">预览</h2>
+      <span class="ce-panel__grow"></span>
+      <button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="collapse-preview" hidden id="preview-collapse-btn">收起</button>
+    </div>
+    <div class="ce-preview" id="preview"></div>
+    <details class="ce-drawer">
+      <summary id="output-summary">输出预览 / 手动复制</summary>
+      <textarea class="ce-textarea ce-code" id="output" readonly aria-label="输出内容"></textarea>
     </details>
   </section>
 </main>
 
-<div class="toast" id="toast"></div>
+<div class="ce-toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="ce-dialog" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+  <div class="ce-dialog__mask" data-act="dialog-cancel"></div>
+  <div class="ce-dialog__panel" role="document">
+    <h3 class="ce-dialog__title" id="dialog-title"></h3>
+    <div class="ce-dialog__body" id="dialog-body"></div>
+    <div class="ce-dialog__foot">
+      <button class="ce-btn" type="button" id="dialog-cancel" data-act="dialog-cancel">取消</button>
+      <button class="ce-btn ce-btn--primary" type="button" id="dialog-confirm" data-act="dialog-confirm">确定</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="structure-file" hidden>
+<input type="file" id="data-file" hidden>
 
 <script>
 /* ============================================================
-   练习编辑器（离线单文件，无任何外部依赖）
+   内容编辑器（通用型）
    ------------------------------------------------------------
-   - 结构来源：lesson-manifest.js（window.__LESSON_MANIFEST__，构建期生成的只读契约）；
-   - 内容来源：practice-data.js（window.__PRACTICE_DATA__，教师可编辑真源）；
-   - 左侧模块树（M1…M9 + 课后练习）→ 逐模块编辑（choice / essay）→ 右侧实时预览；
-   - 导出统一 practice-data.js（写入 version / updatedAt）。
-   数据模型见 shared/custom-quiz-editor/docs/自定义练习题模块_开发文档.md 第二部分。
+   职责：
+   - 读取「结构清单」（声明有哪些分组）与「内容数据」（分组下的条目），
+     以「分组导航 + 逐组编辑 + 实时预览」的方式提供可视化编辑；
+   - 导出统一内容数据文件，支持就近写回与下载回退。
+
+   通用化设计：
+   - 组件本体不含任何业务名词：全部界面文案来自 CONFIG.labels，
+     消费方通过 window.__CONTENT_EDITOR_CONFIG__ 覆盖；
+   - 数据文件名、全局变量名、结构抽取选择器同样由 CONFIG.source 提供；
+   - 视觉为中性设计语言，业务色/装饰一律不内置。
+
+   引导设计（本版新增）：
+   - 顶部「上手步骤」引导条：四步流程 + 当前步高亮 + 情境化下一步按钮；
+   - 空态提供分步说明与主操作按钮；分组为空时给出就地引导卡；
+   - 校验问题可定位并高亮到具体字段。
    ============================================================ */
 (function () {
   'use strict';
-  var STORE_KEY = 'practice-editor-state-v1';
-  var MANIFEST_FILE = './lesson-manifest.js';
-  var DATA_FILE = './practice-data.js';
 
-  var FILE_HEADER =
-    '/* ============================================================\n' +
-    ' * 随堂练习 · 数据文件（教师可按学情自行编辑）\n' +
-    ' * ------------------------------------------------------------\n' +
-    ' * 由「练习编辑器」生成：modules = 各模块随堂练习，postLesson = 课后练习。\n' +
-    ' * 分发后直接替换本文件即可更新练习，无需重新构建、无需联网。\n' +
-    ' * modules 的键 = lesson-manifest 的模块 id（稳定主键，如 universe）；\n' +
-    ' * kind 为 "drag" 的模块为拖拽题占位，内容仍由源码提供，编辑器只读。\n' +
-    ' * ============================================================ */\n';
+  /* ==========================================================
+     一、配置
+     ========================================================== */
+  var DEFAULT_CONFIG = {
+    theme: 'auto',                 // 'auto' | 'light' | 'dark'
+    density: 'comfortable',        // 'comfortable' | 'compact'
 
-  /* ---------- Markdown 子集渲染（与运行时模块保持一致） ---------- */
+    layout: {
+      nav: true,
+      preview: true,
+      previewPlacement: 'side',    // 'side' | 'bottom'
+      previewCollapsible: false,
+      allowPanelToggle: true,
+      acceptStructureDrop: true,
+      guide: true                  // 是否启用上手步骤引导条
+    },
+
+    labels: {
+      appTitle: '内容编辑器',
+      navTitle: '分组',
+      editorTitle: '编辑',
+      previewTitle: '预览',
+      outputSummary: '输出预览 / 手动复制',
+      previewCollapse: '收起预览',
+      previewExpand: '展开预览',
+      emptyNav: '未找到结构',
+      selectionEmpty: '请选择左侧分组',
+      emptyValue: '—',
+      sectionFallback: '分区',
+      notLoadedTitle: '尚未载入结构清单',
+      notLoadedText: '结构清单决定左侧有哪些分组。载入后即可逐组编辑内容，右侧实时预览效果。',
+      dropHint: '也可以把结构文件直接拖到左侧「分组」面板。',
+      groupEmpty: '该分组暂无内容',
+      auxiliaryEmpty: '附加分区暂无内容',
+      auxiliaryFallback: '辅助内容',
+      orphanPrefix: '游离分组 · ',
+      statusReady: '结构已就绪',
+      statusMissing: '未找到结构清单文件',
+      sectionTitlePlaceholder: '分区标题',
+      itemCount: '{n} 条',
+      addItem: '新增{k}',
+      addSection: '新增分区',
+      removeSection: '删除分区',
+      addOption: '新增{f}',
+      insertImage: '插入图片',
+      insertTable: '插入表格',
+      imageNameFallback: '图片',
+
+      actions: {
+        validate: '校验',
+        importStructure: '导入结构文件',
+        importData: '导入数据',
+        loadLocal: '载入同级文件',
+        saveLocal: '保存到同级文件',
+        export: '导出数据文件',
+        copy: '复制',
+        more: '更多操作',
+        moreShort: '更多'
+      },
+
+      guide: {
+        label: '上手步骤',
+        dismiss: '关闭引导',
+        reopen: '上手步骤',
+        steps: ['载入结构', '选择分组', '填写内容', '校验并导出'],
+        hints: [
+          '导入结构文件，确定有哪些分组',
+          '在左侧点选一个分组',
+          '新增条目并填写字段',
+          '通过校验后保存或导出'
+        ],
+        nextImport: '导入结构文件',
+        nextSelect: '选择第一个分组',
+        nextAdd: '新增{k}',
+        nextValidate: '开始校验',
+        nextExport: '导出数据文件'
+      },
+
+      fields: {
+        groupTitle: '分组标题',
+        groupIntro: '分组说明',
+        mode: '模式',
+        source: '来源',
+        material: '背景',
+        stem: '正文',
+        options: '候选项',
+        optionPlaceholder: '候选项内容',
+        answer: '选定项',
+        analysis: '说明',
+        notesTitle: '补充说明标题',
+        notes: '补充说明（每行一条）',
+        stems: '问题（每行一条）',
+        reference: '参考内容',
+        criteria: '评价要点（每行一条）',
+        auxiliaryTitle: '标题',
+        auxiliarySubtitle: '副标题'
+      },
+
+      placeholders: {
+        groupTitle: '可选，用于覆盖结构清单中的分组名',
+        groupIntro: '可选，向读者说明这组内容的用途',
+        material: '可选，为条目补充背景材料',
+        stem: '填写本条目要展示的正文内容',
+        source: '可选，标注内容出处',
+        analysis: '可选，说明判断依据或补充解释',
+        notesTitle: '可选，如「补充说明」',
+        notes: '每行一条，将渲染为列表',
+        stems: '每行一个问题，将渲染为有序列表',
+        reference: '填写参考内容，支持 Markdown',
+        criteria: '每行一条评价要点',
+        sectionTitle: '分区标题'
+      },
+
+      kinds: { choice: '可选项型', essay: '文本型', single: '单选', multiple: '多选' },
+
+      itemActions: { up: '上移', down: '下移', duplicate: '复制', remove: '删除' },
+
+      sectionTitles: {
+        content: '分组设置',
+        items: '条目'
+      },
+
+      hintCard: {
+        title: '该分组还没有内容',
+        desc: '从下方按钮新增第一条内容，右侧会同步预览效果。'
+      },
+
+      validation: {
+        structureMissing: '未加载结构清单，无法校验分组映射',
+        empty: '尚无任何条目',
+        missingField: '{label}：缺少「{field}」',
+        tooFewOptions: '{label}：至少需要两个有内容的「{field}」',
+        invalidAnswer: '{label}：未设置有效的「{field}」',
+        summaryIssues: '校验发现 {n} 处待完善：',
+        summaryOk: '校验通过：结构完整，可以保存或导出。',
+        moreIssues: ' 等',
+        locate: '定位到第一个问题',
+        unedited: '{n} 个分组未填写',
+        orphan: '{n} 个游离分组'
+      },
+
+      toast: {
+        validated: '校验发现 {n} 处待完善，可点「{locate}」跳转',
+        validateOk: '校验通过，可以保存或导出',
+        exported: '已导出 {name}',
+        copied: '已复制到剪贴板',
+        copyManual: '请手动复制下方文本',
+        imported: '导入成功',
+        importFailed: '导入失败：{msg}',
+        structureLoaded: '已从结构文件解析（分组 {n}）',
+        structureFailed: '解析失败：{msg}',
+        localLoaded: '已载入同级数据文件',
+        localMissing: '未找到同级数据文件',
+        saved: '已保存到所选文件',
+        saveFallback: '直接保存不可用，已改为下载',
+        imageInlined: '图片已转 base64 内联',
+        unparsable: '无法识别的数据结构',
+        keepOneSection: '至少保留一个分区',
+        keepTwoOptions: '至少保留两个候选项',
+        draftLoaded: '已载入本机草稿；如需同级文件请点「{label}」'
+      },
+
+      dialog: {
+        title: '确认操作',
+        cancel: '取消',
+        confirm: '确定',
+        removeSection: '删除该分区及其全部条目？此操作不可撤销。',
+        removeItem: '删除该条目？此操作不可撤销。',
+        tableTitle: '插入表格',
+        tableCols: '列数（1–8）',
+        tableRows: '数据行数（0–50）',
+        tableInsert: '插入'
+      }
+    },
+
+    schema: {
+      itemKinds: ['choice', 'essay'],
+      hiddenStructureKinds: ['drag']
+    },
+
+    source: {
+      structureFile: 'lesson-manifest.js',
+      structureGlobal: '__LESSON_MANIFEST__',
+      dataFile: 'practice-data.js',
+      dataGlobal: '__PRACTICE_DATA__',
+      exportFile: 'practice-data.js',
+      exportGlobal: '__PRACTICE_DATA__',
+      draftKey: 'content-editor-draft-v1',
+      acceptStructureExt: ['.html', '.htm'],
+      acceptDataExt: ['.js', '.json'],
+      extract: {
+        section: 'section.section',
+        num: '.section__tag-num',
+        title: '.section__title',
+        practiceBtn: '.practice-btn[data-practice]',
+        practiceKeyAttr: 'data-practice',
+        practiceKindAttr: 'data-practice-kind',
+        navAttr: 'data-nav'
+      }
+    }
+  };
+
+  var CFG = deepMerge(clone(DEFAULT_CONFIG), window.__CONTENT_EDITOR_CONFIG__ || {});
+  var SRC = CFG.source;
+  var EXT = SRC.extract;
+
+  /* ==========================================================
+     二、通用工具
+     ========================================================== */
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+
+  function isPlainObject(v) { return v && typeof v === 'object' && !Array.isArray(v); }
+
+  function deepMerge(base, extra) {
+    if (!isPlainObject(extra)) return base;
+    Object.keys(extra).forEach(function (k) {
+      var v = extra[k];
+      if (isPlainObject(v) && isPlainObject(base[k])) deepMerge(base[k], v);
+      else if (v !== undefined) base[k] = v;
+    });
+    return base;
+  }
+
+  function el(sel, root) { return (root || document).querySelector(sel); }
+  function els(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function getPath(obj, path) {
+    var parts = String(path).split('.'), cur = obj;
+    for (var i = 0; i < parts.length; i++) { if (cur == null) return undefined; cur = cur[parts[i]]; }
+    return cur;
+  }
+  function setPath(obj, path, value) {
+    var parts = String(path).split('.'), cur = obj;
+    for (var i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
+    cur[parts[parts.length - 1]] = value;
+  }
+
+  /** 文案取值与占位符替换：L('fields.stem') / L('itemCount', { n: 3 }) */
+  function L(path, vars) {
+    var v = getPath(CFG.labels, path);
+    if (v == null) return path;
+    return String(v).replace(/\{(\w+)\}/g, function (m, k) {
+      return vars && Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : m;
+    });
+  }
+
+  /* ==========================================================
+     三、Markdown 子集渲染（自研，无依赖）
+     ========================================================== */
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
   function attr(s) { return esc(s).replace(/"/g, '&quot;'); }
+
   function inline(s) {
     var t = esc(s);
     t = t.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (m, alt, src) {
@@ -259,6 +997,7 @@
   }
   function isBullet(l) { return /^\s*[-*]\s+/.test(l); }
   function isOrdered(l) { return /^\s*\d+[.、]\s+/.test(l); }
+
   function md(src) {
     if (!src) return '';
     var lines = String(src).replace(/\r\n?/g, '\n').split('\n');
@@ -291,44 +1030,38 @@
       while (i < lines.length && lines[i].trim() && !isRow(lines[i]) && !isBullet(lines[i]) && !isOrdered(lines[i])) {
         para.push(lines[i]); i++;
       }
-      out.push('<p class="p">' + para.map(inline).join('<br>') + '</p>');
+      out.push('<p>' + para.map(inline).join('<br>') + '</p>');
     }
     return out.join('');
   }
-
-  /* ---------- 通用工具 ---------- */
-  function el(sel, root) { return (root || document).querySelector(sel); }
-  function els(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  function getPath(obj, path) {
-    var parts = String(path).split('.'), cur = obj;
-    for (var i = 0; i < parts.length; i++) { if (cur == null) return undefined; cur = cur[parts[i]]; }
-    return cur;
+  function inlineOrEmpty(s) {
+    return String(s || '').trim() ? inline(s) : '<span class="ce-preview__empty">' + esc(L('emptyValue')) + '</span>';
   }
-  function setPath(obj, path, value) {
-    var parts = String(path).split('.'), cur = obj;
-    for (var i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
-    cur[parts[parts.length - 1]] = value;
-  }
-  function clone(v) { return JSON.parse(JSON.stringify(v)); }
 
-  /* ---------- 数据模型 ---------- */
-  var manifest = window.__LESSON_MANIFEST__ || null;
+  /* ==========================================================
+     四、数据模型（契约保持不变）
+     ========================================================== */
+  var manifest = null;
   var state = null;
   var selectedId = '';
+  var collapsed = {};
+  var guideDismissed = false;
+  var guideForced = false;
 
-  function newChoice() {
+  function newItem(kind) {
+    if (kind === 'essay') {
+      return {
+        id: '', type: 'essay', source: '', material: '', stems: [''],
+        referenceAnswer: '', analysis: '', criteria: ['']
+      };
+    }
     return {
       id: '', type: 'choice', mode: 'single', source: '', material: '', stem: '',
       options: [{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }],
       answer: 'A', analysis: '', knowledge: { title: '', items: [] }
     };
   }
-  function newEssay() {
-    return {
-      id: '', type: 'essay', source: '', material: '', stems: [''],
-      referenceAnswer: '', analysis: '', criteria: ['']
-    };
-  }
+
   function emptyState() {
     return {
       version: 1,
@@ -336,311 +1069,553 @@
       updatedAt: '',
       modules: {},
       postLesson: {
-        title: (manifest && manifest.postLesson && manifest.postLesson.title) || '自定义练习',
+        title: (manifest && manifest.postLesson && manifest.postLesson.title) || L('auxiliaryFallback'),
         subtitle: '',
         sections: []
       }
     };
   }
 
-  /* ---------- 模块树 ---------- */
-  function treeItems() {
+  /* ==========================================================
+     五、本地存储（草稿 / 主题 / 布局 / 引导，失败静默降级）
+     ========================================================== */
+  function storeGet(key) { try { return window.localStorage.getItem(key); } catch (e) { return null; } }
+  function storeSet(key, val) { try { window.localStorage.setItem(key, val); } catch (e) {} }
+
+  var THEME_KEY = SRC.draftKey + ':theme';
+  var LAYOUT_KEY = SRC.draftKey + ':layout';
+  var GUIDE_KEY = SRC.draftKey + ':guide';
+
+  var saveTimer = null;
+  function loadDraft() {
+    var raw = storeGet(SRC.draftKey);
+    if (!raw) return false;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && (parsed.modules || parsed.postLesson)) { state = parsed; return true; }
+    } catch (e) { /* 损坏数据忽略 */ }
+    return false;
+  }
+  function saveDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { storeSet(SRC.draftKey, JSON.stringify(state)); }, 300);
+  }
+
+  /* ==========================================================
+     六、分组导航
+     ========================================================== */
+  function hiddenKinds() { return CFG.schema.hiddenStructureKinds || []; }
+
+  function navItems() {
     var items = [];
     if (manifest && manifest.modules) {
       manifest.modules.forEach(function (m) {
-        // 编辑器只处理通用题型（choice / essay）；特殊题型（如 kind:"drag"）由课程侧自行硬编码，不在此呈现
-        if (m.kind && m.kind !== 'choice') return;
-        items.push({ kind: 'module', id: m.id, no: m.no, title: m.title, nav: m.nav });
+        if (m.kind && hiddenKinds().indexOf(m.kind) >= 0) return;
+        items.push({ kind: 'group', id: m.id, no: m.no, title: m.title, nav: m.nav });
       });
     }
     if (manifest && manifest.postLesson) {
-      items.push({ kind: 'postLesson', id: manifest.postLesson.id || 'quiz-custom', no: manifest.postLesson.no, title: manifest.postLesson.title, nav: manifest.postLesson.nav });
+      items.push({
+        kind: 'auxiliary',
+        id: manifest.postLesson.id || 'auxiliary',
+        no: manifest.postLesson.no,
+        title: manifest.postLesson.title || L('auxiliaryFallback'),
+        nav: manifest.postLesson.nav
+      });
     }
-    // 数据里出现、但清单中没有的模块 → 孤儿题目
     var known = {};
     items.forEach(function (it) { known[it.id] = true; });
     Object.keys((state && state.modules) || {}).forEach(function (id) {
       if (known[id]) return;
       var mod = state.modules[id];
       if (mod && mod.questions && mod.questions.length) {
-        items.push({ kind: 'module', id: id, no: '', title: mod.title || id, nav: '', orphan: true });
+        items.push({ kind: 'group', id: id, no: '', title: mod.title || id, nav: '', orphan: true });
       }
     });
     return items;
   }
   function findItem(id) {
-    var items = treeItems();
+    var items = navItems();
     for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i];
     return null;
   }
   function selectedItem() {
-    var it = findItem(selectedId);
-    if (it) return it;
-    var all = treeItems();
-    return all[0] || null;
+    return findItem(selectedId) || navItems()[0] || null;
   }
   function ensureSelected() {
-    var all = treeItems();
+    var all = navItems();
     if (!all.length) { selectedId = ''; return; }
     if (!findItem(selectedId)) selectedId = all[0].id;
   }
-  function ensureModule(it) {
+  function ensureGroup(it) {
     if (!state.modules) state.modules = {};
-    if (!state.modules[it.id]) {
-      state.modules[it.id] = { title: '', intro: '', questions: [] };
-    }
+    if (!state.modules[it.id]) state.modules[it.id] = { title: '', intro: '', questions: [] };
     return state.modules[it.id];
   }
-  function moduleCount(id) {
+  function groupCount(id) {
     var mod = state.modules && state.modules[id];
     return mod && mod.questions ? mod.questions.length : 0;
   }
-  function postLessonCount() {
+  function auxiliaryCount() {
     var secs = (state.postLesson && state.postLesson.sections) || [];
     return secs.reduce(function (n, s) { return n + ((s.questions && s.questions.length) || 0); }, 0);
   }
-
-  /* ---------- 本机草稿 ---------- */
-  var saveTimer = null;
-  function load() {
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && (parsed.modules || parsed.postLesson)) { state = parsed; return true; }
-      }
-    } catch (e) { /* 忽略损坏数据 */ }
-    return false;
+  function totalItems() {
+    var n = Object.keys((state && state.modules) || {}).reduce(function (acc, id) { return acc + groupCount(id); }, 0);
+    return n + auxiliaryCount();
   }
-  function save() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(function () {
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
-    }, 300);
+  function groupLabel(it) {
+    return it ? ((it.no ? it.no + ' ' : '') + (it.title || it.id)) : '';
   }
 
-  function toast(msg) {
+  /* ==========================================================
+     七、反馈：吐司 / 状态 / 对话框 / 菜单
+     ========================================================== */
+  function toast(msg, variant) {
     var t = el('#toast');
     if (!t) return;
-    t.textContent = msg; t.classList.add('show');
+    t.textContent = msg;
+    t.className = 'ce-toast is-show' + (variant ? ' ce-toast--' + variant : '');
     clearTimeout(t._timer);
-    t._timer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+    t._timer = setTimeout(function () { t.className = 'ce-toast'; }, 2600);
   }
 
-  /* ---------- 表单片段 ---------- */
-  function toolsHtml() {
-    return '<div class="tools">' +
-      '<button class="btn btn--ghost btn--sm" data-insert-image>插入图片</button>' +
-      '<button class="btn btn--ghost btn--sm" data-insert-table>插入表格</button>' +
+  var dialogState = { onConfirm: null, lastFocus: null };
+  var FOCUSABLE = ['button:not([disabled])', '[href]', 'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])', 'textarea:not([disabled])', '[tabindex]:not([tabindex="-1"])'];
+
+  function openDialog(opts) {
+    var dlg = el('#dialog');
+    if (!dlg) return;
+    dialogState.lastFocus = document.activeElement;
+    dialogState.onConfirm = opts.onConfirm || null;
+    el('#dialog-title').textContent = opts.title || L('dialog.title');
+    el('#dialog-body').innerHTML = opts.body || '';
+    var ok = el('#dialog-confirm');
+    ok.textContent = opts.confirmText || L('dialog.confirm');
+    ok.className = 'ce-btn ' + (opts.danger ? 'ce-btn--danger' : 'ce-btn--primary');
+    dlg.hidden = false;
+    var focusTarget = el('#dialog-body [data-autofocus]') || el('#dialog-cancel');
+    if (focusTarget) focusTarget.focus();
+  }
+  function closeDialog() {
+    var dlg = el('#dialog');
+    if (!dlg || dlg.hidden) return;
+    dlg.hidden = true;
+    dialogState.onConfirm = null;
+    var back = dialogState.lastFocus;
+    if (back && back.focus) back.focus();
+  }
+  function confirmDialog(message, onYes) {
+    openDialog({
+      title: L('dialog.title'),
+      body: '<p class="ce-dialog__text">' + esc(message) + '</p>',
+      confirmText: L('dialog.confirm'),
+      danger: true,
+      onConfirm: onYes
+    });
+  }
+  function trapFocus(e) {
+    var dlg = el('#dialog');
+    if (!dlg || dlg.hidden || e.key !== 'Tab') return;
+    var panel = el('#dialog .ce-dialog__panel');
+    if (!panel) return;
+    var nodes = els(FOCUSABLE.join(','), panel);
+    if (!nodes.length) return;
+    var first = nodes[0], last = nodes[nodes.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  function closeMenu() {
+    var panel = el('#more-menu');
+    var btn = el('[data-act="toggle-menu"]');
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+  function toggleMenu() {
+    var panel = el('#more-menu');
+    var btn = el('[data-act="toggle-menu"]');
+    if (!panel || !btn) return;
+    var open = panel.hidden;
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      var first = el('.ce-menu__item', panel);
+      if (first) first.focus();
+    }
+  }
+
+  function setBusy(btn, on) {
+    if (!btn) return;
+    btn.classList.toggle('is-loading', !!on);
+    btn.setAttribute('aria-busy', on ? 'true' : 'false');
+  }
+
+  /* ==========================================================
+     八、上手步骤引导
+     ========================================================== */
+  function guideSteps() {
+    var hasStructure = !!manifest;
+    var hasSelection = !!selectedId && hasStructure;
+    var hasContent = totalItems() > 0;
+    var issues = collectIssues();
+    var clean = hasContent && issues.length === 0;
+    return {
+      done: [hasStructure, hasSelection, hasContent, clean],
+      issues: issues
+    };
+  }
+
+  function renderGuide() {
+    var node = el('#guide');
+    var btn = el('#guide-btn');
+    if (!node) return;
+    var enabled = !!CFG.layout.guide;
+    if (!enabled) {
+      node.hidden = true;
+      if (btn) btn.hidden = true;
+      return;
+    }
+    var g = guideSteps();
+    var complete = g.done.every(Boolean);
+    var visible = !guideDismissed && (!complete || guideForced);
+
+    node.hidden = !visible;
+    if (btn) btn.hidden = visible;
+
+    if (!visible) return;
+
+    var current = g.done.indexOf(false);
+    var steps = CFG.labels.guide.steps || [];
+    var stepsHtml = steps.map(function (s, i) {
+      var cls = 'ce-guide__step' + (g.done[i] ? ' is-done' : (i === current ? ' is-current' : ''));
+      var num = g.done[i] ? '✓' : String(i + 1);
+      return '<li class="' + cls + '" title="' + attr((CFG.labels.guide.hints || [])[i] || '') + '">' +
+        '<span class="ce-guide__dot">' + num + '</span><span>' + esc(s) + '</span></li>';
+    }).join('<li class="ce-guide__sep" aria-hidden="true">›</li>');
+
+    var action = guideAction(current);
+    node.innerHTML =
+      '<div class="ce-guide__main">' +
+        '<span class="ce-guide__label">' + esc(L('guide.label')) + '</span>' +
+        '<ol class="ce-guide__steps">' + stepsHtml + '</ol>' +
+      '</div>' +
+      '<div class="ce-guide__actions">' +
+        (action ? '<button class="ce-btn ce-btn--sm ce-btn--primary" type="button" data-act="' + action.act + '">' + esc(action.label) + '</button>' : '') +
+        '<button class="ce-iconbtn ce-iconbtn--plain" type="button" data-act="dismiss-guide" title="' + attr(L('guide.dismiss')) + '" aria-label="' + attr(L('guide.dismiss')) + '">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+        '</button>' +
       '</div>';
   }
-  function areaHtml(label, path, value, rows) {
-    return '<div class="field"><span class="lbl">' + label + '</span>' +
-      '<textarea rows="' + (rows || 2) + '" data-path="' + attr(path) + '">' + esc(value || '') + '</textarea>' +
-      toolsHtml() + '</div>';
+
+  function guideAction(current) {
+    var kinds = CFG.schema.itemKinds || [];
+    var firstKind = kinds[0] || 'choice';
+    switch (current) {
+      case 0: return { act: 'import-structure', label: L('guide.nextImport') };
+      case 1: return { act: 'guide-select', label: L('guide.nextSelect') };
+      case 2: return { act: 'guide-add', label: L('guide.nextAdd', { k: (getPath(CFG.labels.kinds, firstKind) || firstKind) }) };
+      case 3: return { act: 'validate', label: L('guide.nextValidate') };
+      default: return { act: 'export', label: L('guide.nextExport') };
+    }
   }
-  function inputHtml(label, path, value) {
-    return '<div class="field"><span class="lbl">' + label + '</span>' +
-      '<input type="text" data-path="' + attr(path) + '" value="' + attr(value || '') + '"></div>';
+
+  /* ==========================================================
+     九、编辑区渲染
+     ========================================================== */
+  function ph(key) {
+    var v = getPath(CFG.labels.placeholders, key);
+    return v ? attr(v) : '';
+  }
+  function toolsHtml() {
+    return '<div class="ce-field__tools">' +
+      '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-insert-image>' + esc(L('insertImage')) + '</button>' +
+      '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-insert-table>' + esc(L('insertTable')) + '</button>' +
+      '</div>';
+  }
+  function areaHtml(label, path, value, rows, phKey, hint) {
+    return '<label class="ce-field"><span class="ce-field__label">' + esc(label) +
+      (hint ? '<span class="ce-field__hint">' + esc(hint) + '</span>' : '') + '</span>' +
+      '<textarea class="ce-textarea" rows="' + (rows || 2) + '" data-path="' + attr(path) + '"' +
+      (phKey ? ' placeholder="' + ph(phKey) + '"' : '') + '>' + esc(value || '') + '</textarea>' +
+      toolsHtml() + '</label>';
+  }
+  function inputHtml(label, path, value, phKey, hint) {
+    return '<label class="ce-field"><span class="ce-field__label">' + esc(label) +
+      (hint ? '<span class="ce-field__hint">' + esc(hint) + '</span>' : '') + '</span>' +
+      '<input class="ce-input" type="text" data-path="' + attr(path) + '" value="' + attr(value || '') + '"' +
+      (phKey ? ' placeholder="' + ph(phKey) + '"' : '') + '></label>';
   }
 
   function optionHtml(base, oi, opt) {
-    return '<div class="opt">' +
-      '<input type="text" class="key" data-path="' + attr(base) + '.options.' + oi + '.key" value="' + attr(opt.key) + '">' +
-      '<input type="text" data-path="' + attr(base) + '.options.' + oi + '.text" value="' + attr(opt.text) + '" placeholder="选项内容">' +
-      '<button class="btn btn--danger btn--sm" data-act="del-option" data-base="' + attr(base) + '" data-oi="' + oi + '">删</button>' +
+    return '<div class="ce-row-3">' +
+      '<input class="ce-input is-key" type="text" data-path="' + attr(base) + '.options.' + oi + '.key" value="' + attr(opt.key) + '" aria-label="' + attr(L('fields.options')) + '">' +
+      '<input class="ce-input" type="text" data-path="' + attr(base) + '.options.' + oi + '.text" value="' + attr(opt.text) + '" placeholder="' + ph('optionPlaceholder') + '">' +
+      '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('itemActions.remove')) + '" aria-label="' + attr(L('itemActions.remove')) + '" data-act="del-option" data-base="' + attr(base) + '" data-oi="' + oi + '">×</button>' +
       '</div>';
   }
+
   function answerHtml(base, q) {
     var isMulti = q.mode === 'multiple';
     var selected = Array.isArray(q.answer) ? q.answer : [q.answer];
-    return '<div class="field"><span class="lbl">正确答案（' + (isMulti ? '多选，勾选所有正确项' : '单选') + '）</span>' +
-      '<div class="answer-row">' + (q.options || []).map(function (opt) {
+    var label = L('fields.answer') + '（' + (isMulti ? L('kinds.multiple') : L('kinds.single')) + '）';
+    return '<div class="ce-field"><span class="ce-field__label">' + esc(label) + '</span>' +
+      '<div class="ce-choicegroup">' + (q.options || []).map(function (opt) {
         var on = selected.indexOf(opt.key) >= 0;
-        return '<label><input type="' + (isMulti ? 'checkbox' : 'radio') + '" name="ans-' + attr(base) + '"' +
+        return '<label class="ce-choice"><input type="' + (isMulti ? 'checkbox' : 'radio') + '" name="ans-' + attr(base) + '"' +
           ' data-answer="' + attr(base) + '" data-multi="' + isMulti + '" value="' + attr(opt.key) + '"' + (on ? ' checked' : '') + '>' +
           esc(opt.key) + '</label>';
       }).join('') + '</div></div>';
   }
+
   function choiceFormHtml(base, q) {
     var isMulti = q.mode === 'multiple';
-    return '<div class="row2">' +
-        '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="' + attr(base) + '.source" value="' + attr(q.source) + '"></div>' +
-        '<div class="field"><span class="lbl">题型</span><select data-mode-path="' + attr(base) + '.mode">' +
-          '<option value="single"' + (!isMulti ? ' selected' : '') + '>单选题</option>' +
-          '<option value="multiple"' + (isMulti ? ' selected' : '') + '>多选题</option></select></div>' +
+    return '<div class="ce-grid-2">' +
+        inputHtml(L('fields.source'), base + '.source', q.source, 'source') +
+        '<label class="ce-field"><span class="ce-field__label">' + esc(L('fields.mode')) + '</span>' +
+          '<select class="ce-select" data-mode-path="' + attr(base) + '.mode">' +
+          '<option value="single"' + (!isMulti ? ' selected' : '') + '>' + esc(L('kinds.single')) + '</option>' +
+          '<option value="multiple"' + (isMulti ? ' selected' : '') + '>' + esc(L('kinds.multiple')) + '</option></select></label>' +
       '</div>' +
-      areaHtml('材料 material（可空）', base + '.material', q.material, 3) +
-      areaHtml('题干 stem', base + '.stem', q.stem, 2) +
-      '<div class="field"><span class="lbl">选项</span>' +
+      areaHtml(L('fields.material'), base + '.material', q.material, 3, 'material') +
+      areaHtml(L('fields.stem'), base + '.stem', q.stem, 3, 'stem') +
+      '<div class="ce-field"><span class="ce-field__label">' + esc(L('fields.options')) + '</span>' +
         (q.options || []).map(function (opt, oi) { return optionHtml(base, oi, opt); }).join('') +
-        '<button class="btn btn--ghost btn--sm" data-act="add-option" data-base="' + attr(base) + '">+ 选项</button></div>' +
+        '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="add-option" data-base="' + attr(base) + '">' +
+          esc(L('addOption', { f: L('fields.options') })) + '</button></div>' +
       answerHtml(base, q) +
-      areaHtml('解析 analysis', base + '.analysis', q.analysis, 3) +
-      inputHtml('知识归纳标题（可空）', base + '.knowledge.title', q.knowledge && q.knowledge.title) +
-      areaHtml('知识归纳要点（每行一条）', base + '.knowledge.items', ((q.knowledge && q.knowledge.items) || []).join('\n'), 3);
+      areaHtml(L('fields.analysis'), base + '.analysis', q.analysis, 3, 'analysis') +
+      inputHtml(L('fields.notesTitle'), base + '.knowledge.title', q.knowledge && q.knowledge.title, 'notesTitle') +
+      areaHtml(L('fields.notes'), base + '.knowledge.items', ((q.knowledge && q.knowledge.items) || []).join('\n'), 3, 'notes');
   }
+
   function essayFormHtml(base, q) {
     var stems = Array.isArray(q.stems) ? q.stems.join('\n') : (q.stems || '');
     return '' +
-      '<div class="field"><span class="lbl">来源 source（可空）</span><input type="text" data-path="' + attr(base) + '.source" value="' + attr(q.source) + '"></div>' +
-      areaHtml('材料 material', base + '.material', q.material, 4) +
-      areaHtml('设问 stems（每行一问）', base + '.stems', stems, 3) +
-      areaHtml('参考答案 referenceAnswer', base + '.referenceAnswer', q.referenceAnswer, 4) +
-      areaHtml('解析 analysis（可空）', base + '.analysis', q.analysis, 3) +
-      areaHtml('评分标准 criteria（每行一条）', base + '.criteria', (q.criteria || []).join('\n'), 3);
+      inputHtml(L('fields.source'), base + '.source', q.source, 'source') +
+      areaHtml(L('fields.material'), base + '.material', q.material, 4, 'material') +
+      areaHtml(L('fields.stems'), base + '.stems', stems, 3, 'stems') +
+      areaHtml(L('fields.reference'), base + '.referenceAnswer', q.referenceAnswer, 4, 'reference') +
+      areaHtml(L('fields.analysis'), base + '.analysis', q.analysis, 3, 'analysis') +
+      areaHtml(L('fields.criteria'), base + '.criteria', (q.criteria || []).join('\n'), 3, 'criteria');
   }
-  function questionFormHtml(qbase, qi, q) {
+
+  function itemFormHtml(qbase, qi, q) {
     var base = qbase + '.' + qi;
-    return '<div class="q">' +
-      '<div class="q__head">' +
-        '<span class="q__badge ' + (q.type === 'essay' ? 'essay' : 'choice') + '">' + (q.type === 'essay' ? '综合题' : '选择题') + '</span>' +
-        '<span class="grow"></span>' +
-        '<button class="btn btn--ghost btn--sm" data-act="up-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">↑</button>' +
-        '<button class="btn btn--ghost btn--sm" data-act="down-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">↓</button>' +
-        '<button class="btn btn--ghost btn--sm" data-act="dup-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">复制</button>' +
-        '<button class="btn btn--danger btn--sm" data-act="del-q" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">删除</button>' +
+    var isEssay = q.type === 'essay';
+    var kindLabel = isEssay ? L('kinds.essay') : L('kinds.choice');
+    return '<div class="ce-card ce-card--item" data-base="' + attr(base) + '">' +
+      '<div class="ce-card__head">' +
+        '<span class="ce-index">' + (qi + 1) + '</span>' +
+        '<span class="ce-tag' + (isEssay ? ' ce-tag--info' : '') + '">' + esc(kindLabel) + '</span>' +
+        '<span class="ce-panel__grow"></span>' +
+        '<div class="ce-card__actions">' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('itemActions.up')) + '" aria-label="' + attr(L('itemActions.up')) + '" data-act="up-item" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">↑</button>' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('itemActions.down')) + '" aria-label="' + attr(L('itemActions.down')) + '" data-act="down-item" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">↓</button>' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="dup-item" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">' + esc(L('itemActions.duplicate')) + '</button>' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="del-item" data-qbase="' + attr(qbase) + '" data-qi="' + qi + '">' + esc(L('itemActions.remove')) + '</button>' +
+        '</div>' +
       '</div>' +
-      (q.type === 'essay' ? essayFormHtml(base, q) : choiceFormHtml(base, q)) +
+      (isEssay ? essayFormHtml(base, q) : choiceFormHtml(base, q)) +
       '</div>';
   }
 
-  /* ---------- 编辑区渲染 ---------- */
-  function moduleEditorHtml(it) {
-    var mod = ensureModule(it);
-    var head = '<div class="panel-head"><span class="pno">' + esc(it.no || '') + '</span><h2>' +
-      esc((it.orphan ? '孤儿模块 · ' : '') + (it.title || it.id)) + '</h2></div>';
-    var qbase = 'modules.' + it.id + '.questions';
-    var qs = mod.questions || [];
-    return head + '<div class="sec">' +
-      inputHtml('模块标题（练习弹窗标题，可空）', 'modules.' + it.id + '.title', mod.title) +
-      areaHtml('引导语 intro（可空）', 'modules.' + it.id + '.intro', mod.intro, 2) +
-      '<h4 class="subhead">题目（' + qs.length + '）</h4>' +
-      qs.map(function (q, qi) { return questionFormHtml(qbase, qi, q); }).join('') +
-      '<div class="btn-row">' +
-        '<button class="btn btn--ghost btn--sm" data-act="add-choice" data-qbase="' + attr(qbase) + '">+ 选择题</button>' +
-        '<button class="btn btn--ghost btn--sm" data-act="add-essay" data-qbase="' + attr(qbase) + '">+ 综合题</button>' +
-      '</div></div>';
+  function addItemButtonsHtml(qbase, emphasizeFirst) {
+    return '<div class="ce-btn-row">' + (CFG.schema.itemKinds || []).map(function (k, i) {
+      var kindLabel = getPath(CFG.labels.kinds, k) || k;
+      var cls = 'ce-btn ce-btn--sm' + (emphasizeFirst && i === 0 ? ' ce-btn--primary' : '');
+      return '<button class="' + cls + '" type="button" data-act="add-item" data-kind="' + attr(k) + '" data-qbase="' + attr(qbase) + '">' +
+        esc(L('addItem', { k: kindLabel })) + '</button>';
+    }).join('') + '</div>';
   }
 
-  function postLessonEditorHtml(it) {
+  function hintCardHtml() {
+    return '<div class="ce-hintcard">' +
+      '<div class="ce-hintcard__text">' +
+        '<p class="ce-hintcard__title">' + esc(L('hintCard.title')) + '</p>' +
+        '<p class="ce-hintcard__desc">' + esc(L('hintCard.desc')) + '</p>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function groupEditorHtml(it) {
+    var mod = ensureGroup(it);
+    var qbase = 'modules.' + it.id + '.questions';
+    var qs = mod.questions || [];
+    return '<div class="ce-headline">' +
+        (it.no ? '<span class="ce-index">' + esc(it.no) + '</span>' : '') +
+        '<h2 class="ce-headline__title">' + esc((it.orphan ? L('orphanPrefix') : '') + (it.title || it.id)) + '</h2>' +
+      '</div>' +
+      '<div class="ce-card">' +
+        '<h3 class="ce-subhead">' + esc(L('sectionTitles.content')) + '</h3>' +
+        inputHtml(L('fields.groupTitle'), 'modules.' + it.id + '.title', mod.title, 'groupTitle') +
+        areaHtml(L('fields.groupIntro'), 'modules.' + it.id + '.intro', mod.intro, 2, 'groupIntro') +
+        '<h3 class="ce-subhead">' + esc(L('sectionTitles.items')) +
+          '<span class="ce-subhead__count">' + esc(L('itemCount', { n: qs.length })) + '</span></h3>' +
+        (qs.length ? '' : hintCardHtml()) +
+        qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
+        addItemButtonsHtml(qbase, !qs.length) +
+      '</div>';
+  }
+
+  function auxiliaryEditorHtml(it) {
     if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
     var pl = state.postLesson;
     if (!pl.sections) pl.sections = [];
     var sbase = 'postLesson.sections';
-    return '<div class="panel-head"><span class="pno">' + esc(it.no || '') + '</span><h2>' +
-      esc(it.title || pl.title || '课后练习') + '</h2></div>' +
-      '<div class="sec">' +
-        inputHtml('标题 title', 'postLesson.title', pl.title) +
-        inputHtml('副标题 subtitle（支持行内 Markdown）', 'postLesson.subtitle', pl.subtitle) +
+    return '<div class="ce-headline">' +
+        (it.no ? '<span class="ce-index">' + esc(it.no) + '</span>' : '') +
+        '<h2 class="ce-headline__title">' + esc(it.title || pl.title || L('auxiliaryFallback')) + '</h2>' +
+      '</div>' +
+      '<div class="ce-card">' +
+        '<h3 class="ce-subhead">' + esc(L('sectionTitles.content')) + '</h3>' +
+        inputHtml(L('fields.auxiliaryTitle'), 'postLesson.title', pl.title, 'sectionTitle') +
+        inputHtml(L('fields.auxiliarySubtitle'), 'postLesson.subtitle', pl.subtitle) +
       '</div>' +
       pl.sections.map(function (sec, si) {
         var qbase = sbase + '.' + si + '.questions';
-        return '<div class="sec">' +
-          '<div class="sec__head">' +
-            '<input type="text" data-path="' + sbase + '.' + si + '.title" value="' + attr(sec.title) + '" placeholder="分节标题，如：一、选择题">' +
-            '<button class="btn btn--danger btn--sm" data-act="del-section" data-sbase="' + attr(sbase) + '" data-si="' + si + '">删分节</button>' +
+        var qs = sec.questions || [];
+        return '<div class="ce-card">' +
+          '<div class="ce-card__head">' +
+            '<input class="ce-input" type="text" data-path="' + sbase + '.' + si + '.title" value="' + attr(sec.title) + '" placeholder="' + ph('sectionTitle') + '">' +
+            '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('removeSection')) + '" aria-label="' + attr(L('removeSection')) + '" data-act="del-section" data-sbase="' + attr(sbase) + '" data-si="' + si + '">×</button>' +
           '</div>' +
-          (sec.questions || []).map(function (q, qi) { return questionFormHtml(qbase, qi, q); }).join('') +
-          '<div class="btn-row">' +
-            '<button class="btn btn--ghost btn--sm" data-act="add-choice" data-qbase="' + attr(qbase) + '">+ 选择题</button>' +
-            '<button class="btn btn--ghost btn--sm" data-act="add-essay" data-qbase="' + attr(qbase) + '">+ 综合题</button>' +
-          '</div>' +
+          (qs.length ? '' : hintCardHtml()) +
+          qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
+          addItemButtonsHtml(qbase, !qs.length) +
         '</div>';
       }).join('') +
-      '<button class="btn btn--ghost btn--sm" data-act="add-section">+ 分节</button>';
+      '<button class="ce-btn ce-btn--sm" type="button" data-act="add-section">' + esc(L('addSection')) + '</button>';
+  }
+
+  function emptyStateHtml() {
+    var steps = (CFG.labels.guide.steps || []).map(function (s, i) {
+      var hint = (CFG.labels.guide.hints || [])[i] || '';
+      return '<li class="ce-empty__step">' +
+        '<span class="ce-index">' + (i + 1) + '</span>' +
+        '<span><strong>' + esc(s) + '</strong>' + (hint ? '<br><span class="ce-field__hint">' + esc(hint) + '</span>' : '') + '</span></li>';
+    }).join('');
+    return '<div class="ce-empty">' +
+      '<div class="ce-empty__icon" aria-hidden="true">' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M9 9v11"/></svg>' +
+      '</div>' +
+      '<p class="ce-empty__title">' + esc(L('notLoadedTitle')) + '</p>' +
+      '<p class="ce-empty__text">' + esc(L('notLoadedText')) + '</p>' +
+      '<ol class="ce-empty__steps">' + steps + '</ol>' +
+      '<div class="ce-empty__actions">' +
+        '<button class="ce-btn ce-btn--primary" type="button" data-act="import-structure">' + esc(L('actions.importStructure')) + '</button>' +
+        '<button class="ce-btn" type="button" data-act="load-local">' + esc(L('actions.loadLocal')) + '</button>' +
+      '</div>' +
+      '<p class="ce-empty__text ce-field__hint">' + esc(L('dropHint')) + '</p>' +
+    '</div>';
   }
 
   function renderEditor() {
     var node = el('#editor');
     if (!node) return;
-    if (!manifest && treeItems().length === 0) {
-      node.innerHTML = '<div class="sec"><h3 class="sec__title">未加载课程结构</h3>' +
-        '<p class="hint">未找到 <code>lesson-manifest.js</code>（课程结构清单）。可点顶部「载入课程结构」选择课程的 ' +
-        '<code>index.html</code>（或将其拖入左侧模块栏），编辑器会用同一套规则现场解析出模块结构；' +
-        '也可将本编辑器放在课程分发包的 <code>dist/</code> 目录（与 <code>index.html</code>、' +
-        '<code>lesson-manifest.js</code>、<code>practice-data.js</code> 同级）后使用。</p></div>';
+    if (!manifest && navItems().length === 0) {
+      node.innerHTML = emptyStateHtml();
       return;
     }
     var it = selectedItem();
-    if (!it) { node.innerHTML = '<p class="hint">请选择左侧模块</p>'; return; }
-    node.innerHTML = it.kind === 'postLesson' ? postLessonEditorHtml(it) : moduleEditorHtml(it);
+    if (!it) { node.innerHTML = '<p class="ce-status">' + esc(L('selectionEmpty')) + '</p>'; return; }
+    node.innerHTML = it.kind === 'auxiliary' ? auxiliaryEditorHtml(it) : groupEditorHtml(it);
   }
 
-  /* ---------- 模块树渲染 ---------- */
-  function renderTree() {
-    var items = treeItems();
+  /* ==========================================================
+     十、分组导航渲染
+     ========================================================== */
+  function renderNav() {
+    var items = navItems();
     var html = items.map(function (it) {
-      var meta, empty = false;
-      if (it.kind === 'module') { var n = moduleCount(it.id); meta = n + ' 题'; empty = n === 0; }
-      else { var n2 = postLessonCount(); meta = n2 + ' 题'; empty = n2 === 0; }
-      var cls = 'tree__item' + (it.id === selectedId ? ' is-active' : '') + (it.orphan ? ' is-dim' : '');
-      return '<button class="' + cls + '" data-select="' + attr(it.id) + '">' +
-        '<span class="tree__line"><span class="tree__no">' + esc(it.no || '') + '</span>' +
-        '<span class="tree__name">' + esc(it.title || it.id) + '</span></span>' +
-        '<span class="tree__meta' + (empty ? ' is-empty' : '') + '">' + meta + '</span>' +
+      var n = it.kind === 'group' ? groupCount(it.id) : auxiliaryCount();
+      var cls = 'ce-nav__item' +
+        (it.id === selectedId ? ' is-active' : '') +
+        (it.orphan ? ' ce-nav__item--dim' : '');
+      return '<button class="' + cls + '" type="button" data-select="' + attr(it.id) + '">' +
+        '<span class="ce-nav__line">' +
+          (it.no ? '<span class="ce-index">' + esc(it.no) + '</span>' : '') +
+          '<span class="ce-nav__name">' + esc(it.title || it.id) + '</span>' +
+        '</span>' +
+        '<span class="ce-nav__meta' + (n === 0 ? ' is-empty' : '') + '">' + esc(L('itemCount', { n: n })) + '</span>' +
         '</button>';
     }).join('');
-    el('#tree').innerHTML = html || '<p class="hint">未找到课程结构</p>';
+    el('#tree').innerHTML = html || '<p class="ce-note">' + esc(L('emptyNav')) + '</p>';
 
-    var b = el('#lesson-badge');
-    if (b) b.textContent = manifest ? (manifest.lesson || '') : '';
+    var sub = el('#context-badge');
+    if (sub) {
+      var ctx = manifest ? (manifest.title || manifest.lesson || '') : '';
+      sub.textContent = ctx || L('statusMissing');
+    }
     var st = el('#tree-status');
     if (st) {
-      var notes = treeSummary();
+      var notes = navSummary();
       st.textContent = manifest
-        ? (notes.length ? notes.join('；') : '结构已就绪')
-        : '未找到 lesson-manifest.js（可载入 index.html）';
-      st.className = 'hint' + (manifest && notes.length ? ' hint--warn' : '');
+        ? (notes.length ? notes.join('；') : L('statusReady'))
+        : L('statusMissing');
+      st.className = 'ce-note' + (manifest && notes.length ? ' ce-status--warn' : '');
     }
   }
-  function treeSummary() {
+
+  function navSummary() {
     var notes = [];
     var unedited = [];
-    treeItems().forEach(function (it) {
-      if (it.kind !== 'module' || it.orphan) return;
-      if (!moduleCount(it.id)) unedited.push(it.id);
+    navItems().forEach(function (it) {
+      if (it.kind !== 'group' || it.orphan) return;
+      if (!groupCount(it.id)) unedited.push(it.id);
     });
     var known = {};
-    (manifest && manifest.modules ? manifest.modules : []).forEach(function (m) { known[m.id] = true; });
+    ((manifest && manifest.modules) || []).forEach(function (m) { known[m.id] = true; });
     var orphans = Object.keys((state && state.modules) || {}).filter(function (id) {
       var mod = state.modules[id];
       return !known[id] && mod && mod.questions && mod.questions.length;
     });
-    if (unedited.length) notes.push(unedited.length + ' 个模块未编辑（运行时回退内置题目）');
-    if (orphans.length) notes.push(orphans.length + ' 个孤儿模块');
+    if (unedited.length) notes.push(L('validation.unedited', { n: unedited.length }));
+    if (orphans.length) notes.push(L('validation.orphan', { n: orphans.length }));
     return notes;
   }
 
-  /* ---------- 预览渲染 ---------- */
-  function previewQuestionHtml(q, no) {
+  /* ==========================================================
+     十一、预览渲染
+     ========================================================== */
+  function previewItemHtml(q, no) {
+    var head = '<div class="ce-preview__head">' +
+      '<span class="ce-index">' + no + '</span>' +
+      '<span class="ce-tag' + (q.type === 'essay' ? ' ce-tag--info' : '') + '">' +
+        esc(q.type === 'essay' ? L('kinds.essay') : (q.mode === 'multiple' ? L('kinds.multiple') : L('kinds.single'))) +
+      '</span></div>';
+
     if (q.type === 'essay') {
       var stems = Array.isArray(q.stems) ? q.stems : (q.stems ? [q.stems] : []);
-      return '<div class="q"><div>' +
-        '<span class="no">' + no + '</span><span class="q__badge essay">综合题</span>' +
-        (q.material ? '<div class="material">' + md(q.material) + '</div>' : '') +
-        (stems.length ? '<ol class="stems">' + stems.map(function (s) { return '<li>' + inline(s) + '</li>'; }).join('') + '</ol>' : '') +
-        '<div class="answer"><h5>参考答案</h5>' + (md(q.referenceAnswer) || '<span class="empty">（未填写）</span>') +
-        (q.analysis ? '<h5>解析</h5>' + md(q.analysis) : '') +
-        (q.criteria && q.criteria.length ? '<h5>评分标准</h5><ol>' + q.criteria.map(function (c) { return '<li>' + inline(c) + '</li>'; }).join('') + '</ol>' : '') +
-        '</div></div></div>';
+      return '<div class="ce-preview__item">' + head +
+        (q.material ? '<div class="ce-callout">' + md(q.material) + '</div>' : '') +
+        (stems.length ? '<ol class="ce-preview__list">' + stems.map(function (s) { return '<li>' + inline(s) + '</li>'; }).join('') + '</ol>' : '') +
+        '<div class="ce-answer">' +
+          '<h5 class="ce-answer__title">' + esc(L('fields.reference')) + '</h5>' + inlineOrEmpty(q.referenceAnswer) +
+          (q.analysis ? '<h5 class="ce-answer__title">' + esc(L('fields.analysis')) + '</h5>' + md(q.analysis) : '') +
+          (q.criteria && q.criteria.length ? '<h5 class="ce-answer__title">' + esc(L('fields.criteria')) + '</h5><ol>' +
+            q.criteria.map(function (c) { return '<li>' + inline(c) + '</li>'; }).join('') + '</ol>' : '') +
+        '</div></div>';
     }
+
     var answer = Array.isArray(q.answer) ? q.answer : [q.answer];
-    return '<div class="q"><div>' +
-      '<span class="no">' + no + '</span><span class="q__badge choice">' + (q.mode === 'multiple' ? '多选题' : '单选题') + '</span>' +
-      (q.material ? '<div class="material">' + md(q.material) + '</div>' : '') +
-      '<p class="stem">' + inline(q.stem || '') + '</p>' +
-      '<div class="options">' + (q.options || []).map(function (opt) {
-        var c = answer.indexOf(opt.key) >= 0 ? ' correct' : '';
-        return '<div class="opt-btn' + c + '">' + esc(opt.key) + '. ' + inline(opt.text) + '</div>';
+    return '<div class="ce-preview__item">' + head +
+      (q.material ? '<div class="ce-callout">' + md(q.material) + '</div>' : '') +
+      '<p class="ce-preview__stem">' + inline(q.stem || '') + '</p>' +
+      '<div class="ce-preview__options">' + (q.options || []).map(function (opt) {
+        var c = answer.indexOf(opt.key) >= 0 ? ' ce-preview__option--correct' : '';
+        return '<div class="ce-preview__option' + c + '">' + esc(opt.key) + '. ' + inline(opt.text) + '</div>';
       }).join('') + '</div>' +
-      '<div class="answer"><h5>正确答案：' + answer.join('') + '</h5>' +
-      (q.analysis ? md(q.analysis) : '<span class="empty">（未填写解析）</span>') +
-      (q.knowledge && q.knowledge.items && q.knowledge.items.length
-        ? '<h5>知识归纳</h5>' + (q.knowledge.title ? '<p>' + inline(q.knowledge.title) + '</p>' : '') +
-          '<ul>' + q.knowledge.items.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>'
-        : '') +
-      '</div></div></div>';
+      '<div class="ce-answer">' +
+        '<h5 class="ce-answer__title">' + esc(L('fields.answer')) + '：' + esc(answer.join('')) + '</h5>' +
+        (q.analysis ? md(q.analysis) : '<p class="ce-preview__empty">' + esc(L('emptyValue')) + '</p>') +
+        (q.knowledge && q.knowledge.items && q.knowledge.items.length
+          ? '<h5 class="ce-answer__title">' + esc(q.knowledge.title || L('fields.notes')) + '</h5>' +
+            '<ul>' + q.knowledge.items.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>'
+          : '') +
+      '</div></div>';
   }
 
   function renderPreview() {
@@ -649,36 +1624,42 @@
     var it = selectedItem();
     var no = 1, html = '';
     if (!it) {
-      node.innerHTML = '<p class="empty">请选择左侧模块</p>';
+      node.innerHTML = '<p class="ce-preview__empty">' + esc(L('selectionEmpty')) + '</p>';
       renderOutput();
       return;
     }
-    if (it.kind === 'module') {
+    if (it.kind === 'group') {
       var mod = (state.modules && state.modules[it.id]) || {};
-      html = '<div class="sec"><h3 class="sec__title">' + esc(mod.title || it.title) + '</h3>' +
-        (mod.intro ? '<p class="p">' + inline(mod.intro) + '</p>' : '') +
-        (mod.questions || []).map(function (q) { return previewQuestionHtml(q, no++); }).join('') +
+      var qs = mod.questions || [];
+      html = '<div class="ce-preview__group">' +
+        '<h3 class="ce-preview__title">' + esc(mod.title || it.title) + '</h3>' +
+        (mod.intro ? '<p>' + inline(mod.intro) + '</p>' : '') +
+        (qs.length
+          ? qs.map(function (q) { return previewItemHtml(q, no++); }).join('')
+          : '<p class="ce-preview__empty">' + esc(L('groupEmpty')) + '</p>') +
         '</div>';
-      if (!(mod.questions || []).length) html += '<p class="empty">该模块暂无题目</p>';
     } else {
       var pl = state.postLesson || {};
       html = (pl.sections || []).map(function (sec) {
-        return '<div class="sec"><h3 class="sec__title">' + esc(sec.title || '') + '</h3>' +
-          (sec.questions || []).map(function (q) { return previewQuestionHtml(q, no++); }).join('') + '</div>';
+        return '<div class="ce-preview__group">' +
+          '<h3 class="ce-preview__title">' + esc(sec.title || '') + '</h3>' +
+          (sec.questions || []).map(function (q) { return previewItemHtml(q, no++); }).join('') +
+          '</div>';
       }).join('');
-      if (!html) html = '<p class="empty">课后练习暂无内容</p>';
+      if (!html) html = '<p class="ce-preview__empty">' + esc(L('auxiliaryEmpty')) + '</p>';
     }
     node.innerHTML = html;
     renderOutput();
   }
 
-  /* ---------- 导出 ---------- */
+  /* ==========================================================
+     十二、导出与校验
+     ========================================================== */
   function generated() {
     var modules = {};
     Object.keys((state && state.modules) || {}).forEach(function (id) {
       var mod = state.modules[id];
-      if (!mod) return;
-      if (!mod.questions || !mod.questions.length) return;
+      if (!mod || !mod.questions || !mod.questions.length) return;
       var out = {};
       if (mod.title) out.title = mod.title;
       if (mod.intro) out.intro = mod.intro;
@@ -692,77 +1673,145 @@
       modules: modules
     };
     if (state.postLesson) payload.postLesson = state.postLesson;
-    return FILE_HEADER + 'window.__PRACTICE_DATA__ = ' + JSON.stringify(payload, null, 2) + ';\n';
+    return '/* Generated by Content Editor */\n' +
+      'window.' + SRC.exportGlobal + ' = ' + JSON.stringify(payload, null, 2) + ';\n';
   }
   function renderOutput() { var o = el('#output'); if (o) o.value = generated(); }
 
-  /* ---------- 校验 ---------- */
-  function validateQuestion(q, label, issues) {
-    if (q.type === 'essay') {
-      var stems = (Array.isArray(q.stems) ? q.stems : [q.stems]).filter(function (s) { return s && String(s).trim(); });
-      if (!stems.length) issues.push(label + '（综合题）：缺少设问');
-      if (!q.referenceAnswer) issues.push(label + '（综合题）：缺少参考答案');
-      return;
-    }
-    if (!q.stem) issues.push(label + '：缺少题干');
-    var filled = (q.options || []).filter(function (o) { return o && String(o.text).trim(); });
-    if (filled.length < 2) issues.push(label + '：至少需要两个有内容的选项');
-    var keys = (q.options || []).map(function (o) { return o.key; });
-    var answers = (Array.isArray(q.answer) ? q.answer : [q.answer]).filter(function (a) { return keys.indexOf(a) >= 0; });
-    if (!answers.length) issues.push(label + '：未设置有效答案');
-  }
-  function validateState() {
+  /** 校验：返回结构化问题（含可定位的 base 与字段路径），供状态条与高亮共用 */
+  function collectIssues() {
     var issues = [];
-    if (!manifest) issues.push('未加载 lesson-manifest.js，无法校验模块映射');
-    if (!state.modules || !Object.keys(state.modules).length) {
-      if (postLessonCount() === 0) issues.push('尚无任何题目（所有模块与课后练习均为空）');
+    function push(label, message, base, paths) {
+      issues.push({ label: label, message: message, base: base, paths: paths || [] });
     }
-    // 逐模块逐题校验
+    if (!manifest) {
+      push('', L('validation.structureMissing'), '', []);
+    }
+    if (totalItems() === 0) {
+      push('', L('validation.empty'), '', []);
+    }
+
+    function check(q, base, label) {
+      if (q.type === 'essay') {
+        var stems = (Array.isArray(q.stems) ? q.stems : [q.stems]).filter(function (s) { return s && String(s).trim(); });
+        if (!stems.length) push(label, L('validation.missingField', { label: label, field: L('fields.stems') }), base, [base + '.stems']);
+        if (!q.referenceAnswer) push(label, L('validation.missingField', { label: label, field: L('fields.reference') }), base, [base + '.referenceAnswer']);
+        return;
+      }
+      if (!q.stem) push(label, L('validation.missingField', { label: label, field: L('fields.stem') }), base, [base + '.stem']);
+      var optPaths = (q.options || []).map(function (o, i) { return base + '.options.' + i + '.text'; });
+      var filled = (q.options || []).filter(function (o) { return o && String(o.text).trim(); });
+      if (filled.length < 2) push(label, L('validation.tooFewOptions', { label: label, field: L('fields.options') }), base, optPaths);
+      var keys = (q.options || []).map(function (o) { return o.key; });
+      var answers = (Array.isArray(q.answer) ? q.answer : [q.answer]).filter(function (a) { return keys.indexOf(a) >= 0; });
+      if (!answers.length) push(label, L('validation.invalidAnswer', { label: label, field: L('fields.answer') }), base, []);
+    }
+
     Object.keys((state && state.modules) || {}).forEach(function (id) {
       var mod = state.modules[id];
       if (!mod) return;
       var it = findItem(id);
-      var label = it ? ((it.no ? it.no + ' ' : '') + (it.title || id)) : id;
-      (mod.questions || []).forEach(function (q, qi) { validateQuestion(q, label + ' 第 ' + (qi + 1) + ' 题', issues); });
+      var label = groupLabel(it) || id;
+      (mod.questions || []).forEach(function (q, qi) {
+        check(q, 'modules.' + id + '.questions.' + qi, label + ' #' + (qi + 1));
+      });
     });
-    // 课后练习校验
     var pl = state.postLesson;
     if (pl && pl.sections) {
       pl.sections.forEach(function (sec, si) {
         (sec.questions || []).forEach(function (q, qi) {
-          validateQuestion(q, '课后练习 第 ' + (si + 1) + ' 节 第 ' + (qi + 1) + ' 题', issues);
+          check(q, 'postLesson.sections.' + si + '.questions.' + qi,
+            (sec.title || L('sectionFallback')) + ' #' + (si + 1) + '-' + (qi + 1));
         });
       });
     }
     return issues;
   }
-  function renderValidate() {
-    var issues = validateState();
-    var notes = treeSummary();
-    var node = el('#validate-status');
+
+  /** 把问题标记到编辑区对应字段上 */
+  function markInvalid(issues) {
+    els('#editor .is-invalid').forEach(function (n) { n.classList.remove('is-invalid'); });
+    els('#editor [aria-invalid="true"]').forEach(function (n) { n.removeAttribute('aria-invalid'); });
+    els('#editor .ce-card--item[data-base]').forEach(function (card) {
+      var base = card.getAttribute('data-base');
+      var hit = issues.some(function (is) { return is.base === base; });
+      card.classList.toggle('is-invalid', hit);
+    });
+    issues.forEach(function (is) {
+      is.paths.forEach(function (p, idx) {
+        var node = el('#editor [data-path="' + p + '"]');
+        if (!node) return;
+        node.classList.add('is-invalid');
+        node.setAttribute('aria-invalid', 'true');
+        if (idx === 0 && !node.id) node.id = 'inv-' + p.replace(/[^a-zA-Z0-9]/g, '-');
+      });
+    });
+  }
+
+  function renderValidation(issues) {
+    issues = issues || collectIssues();
+    var notes = navSummary();
+    var node = el('#status-bar');
+    var badge = el('#issue-badge');
+    if (badge) {
+      badge.textContent = String(issues.length);
+      badge.hidden = issues.length === 0;
+    }
     if (node) {
-      var head = issues.length
-        ? '校验发现 ' + issues.length + ' 处待完善：' + issues.slice(0, 2).join('；') + (issues.length > 2 ? ' 等' : '')
-        : '校验通过：结构完整，可导出。';
-      node.textContent = notes.length ? head + '  ·  ' + notes.join('；') : head;
-      node.className = 'hint' + (issues.length || notes.length ? ' hint--warn' : ' hint--ok');
+      var ok = issues.length === 0;
+      var head = ok
+        ? L('validation.summaryOk')
+        : L('validation.summaryIssues', { n: issues.length }) + (issues[0] ? issues[0].message : '');
+      node.innerHTML = esc(head) +
+        (!ok && issues.some(function (i) { return i.base; })
+          ? ' <button class="ce-linkbtn" type="button" data-act="locate-issue">' + esc(L('validation.locate')) + '</button>'
+          : '') +
+        (notes.length ? ' <span class="ce-field__hint">· ' + esc(notes.join('；')) + '</span>' : '');
+      node.className = 'ce-status' + (ok ? (notes.length ? ' ce-status--warn' : ' ce-status--ok') : ' ce-status--error');
     }
     return issues;
   }
 
-  /* ---------- 全量渲染 ---------- */
-  function renderAll() {
-    ensureSelected();
-    renderTree();
-    renderEditor();
-    renderPreview();
-    renderValidate();
+  function locateFirstIssue(issues) {
+    var first = issues.filter(function (i) { return i.paths && i.paths.length; })[0];
+    var target = first ? el('#editor [data-path="' + first.paths[0] + '"]')
+      : (issues[0] && issues[0].base ? el('#editor .ce-card--item[data-base="' + issues[0].base + '"]') : null);
+    if (target) {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (target.focus) target.focus({ preventScroll: true });
+    }
   }
 
-  /* ---------- 结构操作 ---------- */
+  /* ==========================================================
+     十三、全量渲染
+     ========================================================== */
+  function renderAll() {
+    ensureSelected();
+    renderNav();
+    renderEditor();          /* 可能惰性创建分组对象，故先渲染再统一校验 */
+    var issues = collectIssues();
+    markInvalid(issues);
+    renderPreview();
+    renderValidation(issues);
+    renderGuide();
+  }
+  /** 仅输入时的轻量更新：不重建编辑区（避免失焦） */
+  function renderOnInput() {
+    var issues = collectIssues();
+    markInvalid(issues);
+    renderNav();
+    renderPreview();
+    renderValidation(issues);
+    renderGuide();
+  }
+
+  /* ==========================================================
+     十四、结构操作
+     ========================================================== */
   function renumberOptions(q) {
     q.options.forEach(function (o, i) { o.key = String.fromCharCode(65 + i); });
   }
+
   function handleStruct(act, t) {
     var qbase = t.dataset.qbase, qi = Number(t.dataset.qi);
     var base = t.dataset.base, oi = Number(t.dataset.oi);
@@ -776,31 +1825,33 @@
         break;
       case 'del-section':
         arr = getPath(state, sbase);
-        if (!arr || arr.length <= 1) { toast('至少保留一个分节'); return; }
-        if (!confirm('删除该分节及其全部题目？')) return;
-        arr.splice(si, 1); break;
-      case 'add-choice':
+        if (!arr || arr.length <= 1) { toast(L('toast.keepOneSection'), 'warn'); return; }
+        confirmDialog(L('dialog.removeSection'), function () {
+          getPath(state, sbase).splice(si, 1);
+          saveDraft(); renderAll();
+        });
+        return;
+      case 'add-item':
         arr = getPath(state, qbase);
-        if (arr) arr.push(newChoice());
+        if (arr) arr.push(newItem(t.dataset.kind));
         break;
-      case 'add-essay':
-        arr = getPath(state, qbase);
-        if (arr) arr.push(newEssay());
-        break;
-      case 'del-q':
+      case 'del-item':
         arr = getPath(state, qbase);
         if (!arr) return;
-        if (!confirm('删除该题？')) return;
-        arr.splice(qi, 1); break;
-      case 'dup-q':
+        confirmDialog(L('dialog.removeItem'), function () {
+          getPath(state, qbase).splice(qi, 1);
+          saveDraft(); renderAll();
+        });
+        return;
+      case 'dup-item':
         arr = getPath(state, qbase);
         if (arr) arr.splice(qi + 1, 0, clone(arr[qi]));
         break;
-      case 'up-q':
+      case 'up-item':
         arr = getPath(state, qbase);
         if (arr && qi > 0) arr.splice(qi - 1, 0, arr.splice(qi, 1)[0]);
         break;
-      case 'down-q':
+      case 'down-item':
         arr = getPath(state, qbase);
         if (arr && qi < arr.length - 1) arr.splice(qi + 1, 0, arr.splice(qi, 1)[0]);
         break;
@@ -811,23 +1862,25 @@
       case 'del-option':
         q = getPath(state, base);
         if (!q || !q.options) return;
-        if (q.options.length <= 2) { toast('至少保留两个选项'); return; }
+        if (q.options.length <= 2) { toast(L('toast.keepTwoOptions'), 'warn'); return; }
         q.options.splice(oi, 1); renumberOptions(q);
         if (!Array.isArray(q.answer) && q.options.every(function (o) { return o.key !== q.answer; })) q.answer = q.options[0].key;
         break;
       default: return;
     }
-    save(); renderAll();
+    saveDraft(); renderAll();
   }
 
   function selectItem(id) {
     selectedId = id;
     var it = findItem(id);
-    if (it && it.kind === 'module') ensureModule(it);
+    if (it && it.kind === 'group') ensureGroup(it);
     renderAll();
   }
 
-  /* ---------- 富文本插入 ---------- */
+  /* ==========================================================
+     十五、富文本插入
+     ========================================================== */
   function insertAt(textarea, text) {
     var start = textarea.selectionStart || 0, end = textarea.selectionEnd || 0;
     var value = textarea.value;
@@ -837,6 +1890,7 @@
     textarea.focus();
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
+
   function pickImage(textarea) {
     var input = document.createElement('input');
     input.type = 'file'; input.accept = 'image/*';
@@ -845,69 +1899,112 @@
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function () {
-        insertAt(textarea, '![' + (file.name || '图片') + '](' + reader.result + ')\n');
-        toast('图片已转 base64 内联');
+        insertAt(textarea, '![' + (file.name || L('imageNameFallback')) + '](' + reader.result + ')\n');
+        toast(L('toast.imageInlined'), 'ok');
       };
       reader.readAsDataURL(file);
     };
     input.click();
   }
-  function pickTable(textarea) {
-    var cols = parseInt(prompt('表格列数（1-6）：', '3'), 10);
-    if (!cols || cols < 1 || cols > 6) return;
-    var rows = parseInt(prompt('表格数据行数（不含表头）：', '3'), 10);
-    if (!rows || rows < 1) rows = 1;
-    var head = [], sep = [], body = [];
-    for (var c = 0; c < cols; c++) { head.push('表头' + (c + 1)); sep.push('---'); }
-    for (var r = 0; r < rows; r++) {
-      var row = [];
-      for (var k = 0; k < cols; k++) row.push('内容');
-      body.push('| ' + row.join(' | ') + ' |');
-    }
-    var table = '\n| ' + head.join(' | ') + ' |\n| ' + sep.join(' | ') + ' |\n' + body.join('\n') + '\n';
-    insertAt(textarea, table);
+
+  function clampInt(raw, min, max, fallback) {
+    var n = parseInt(raw, 10);
+    if (isNaN(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
   }
 
-  /* ---------- 导出 / 复制 / 导入 ---------- */
+  function buildTable(cols, rows) {
+    var head = [], sep = [], body = [];
+    for (var c = 0; c < cols; c++) { head.push('H' + (c + 1)); sep.push('---'); }
+    for (var r = 0; r < rows; r++) {
+      var row = [];
+      for (var k = 0; k < cols; k++) row.push('');
+      body.push('| ' + row.join(' | ') + ' |');
+    }
+    return '\n| ' + head.join(' | ') + ' |\n| ' + sep.join(' | ') + ' |\n' +
+      (body.length ? body.join('\n') + '\n' : '');
+  }
+
+  function pickTable(textarea) {
+    openDialog({
+      title: L('dialog.tableTitle'),
+      body: '<div class="ce-dialog__grid">' +
+        '<label class="ce-field"><span class="ce-field__label">' + esc(L('dialog.tableCols')) + '</span>' +
+        '<input class="ce-input" type="number" min="1" max="8" value="3" data-autofocus id="dlg-cols"></label>' +
+        '<label class="ce-field"><span class="ce-field__label">' + esc(L('dialog.tableRows')) + '</span>' +
+        '<input class="ce-input" type="number" min="0" max="50" value="3" id="dlg-rows"></label>' +
+        '</div>',
+      confirmText: L('dialog.tableInsert'),
+      onConfirm: function () {
+        var cols = clampInt(el('#dlg-cols').value, 1, 8, 3);
+        var rows = clampInt(el('#dlg-rows').value, 0, 50, 3);
+        insertAt(textarea, buildTable(cols, rows));
+      }
+    });
+  }
+
+  /* ==========================================================
+     十六、导入 / 导出 / 就近读写
+     ========================================================== */
   function download() {
     var blob = new Blob([generated()], { type: 'text/javascript;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = 'practice-data.js';
+    a.href = url; a.download = SRC.exportFile;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    toast('已导出 practice-data.js');
+    toast(L('toast.exported', { name: SRC.exportFile }), 'ok');
+  }
+
+  function fallbackCopy(text) {
+    var ta = el('#output');
+    ta.value = text; ta.select();
+    try { document.execCommand('copy'); toast(L('toast.copied'), 'ok'); }
+    catch (e) { toast(L('toast.copyManual'), 'warn'); }
   }
   function copyOut() {
     var text = generated();
-    var done = function () { toast('已复制到剪贴板'); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
-    } else { fallbackCopy(text, done); }
+      navigator.clipboard.writeText(text).then(function () { toast(L('toast.copied'), 'ok'); },
+        function () { fallbackCopy(text); });
+    } else { fallbackCopy(text); }
   }
-  function fallbackCopy(text, done) {
-    var ta = el('#output');
-    ta.value = text; ta.select();
-    try { document.execCommand('copy'); done(); } catch (e) { toast('请手动复制下方文本'); }
-  }
-  function importFile(file) {
+
+  function importDataFile(file) {
     var reader = new FileReader();
     reader.onload = function () {
       try {
         var raw = String(reader.result);
         var m = raw.match(/\{[\s\S]*\}/);
         var parsed = JSON.parse(m ? m[0] : raw);
-        if (adopt(parsed)) { save(); ensureSelected(); renderAll(); toast('导入成功'); }
-        else throw new Error('无法识别的数据结构');
-      } catch (err) { toast('导入失败：' + err.message); }
+        if (adopt(parsed)) { saveDraft(); ensureSelected(); renderAll(); toast(L('toast.imported'), 'ok'); }
+        else throw new Error(L('toast.unparsable'));
+      } catch (err) { toast(L('toast.importFailed', { msg: err.message }), 'error'); }
     };
     reader.readAsText(file);
   }
 
-  /* ---------- 同目录文件读写（就近预填 / 写回） ----------
-     结构与数据文件与主页面 index.html 同级：lesson-manifest.js（只读结构）、practice-data.js（可编辑内容）。
-     file:// 下 fetch 会被 CORS 拦截，故读用经典 <script> 注入读取全局变量；
-     写优先用 File System Access API 就近覆盖，不可用时回退为下载。 */
+  function adopt(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (data.modules || data.postLesson) {
+      state = {
+        version: data.version || 1,
+        lesson: data.lesson || (manifest && manifest.lesson) || '',
+        updatedAt: data.updatedAt || '',
+        modules: data.modules ? clone(data.modules) : {},
+        postLesson: data.postLesson ? clone(data.postLesson)
+          : { title: L('auxiliaryFallback'), subtitle: '', sections: [] }
+      };
+      return true;
+    }
+    if (data.sections) {
+      state = emptyState();
+      state.postLesson = { title: data.title || L('auxiliaryFallback'), subtitle: data.subtitle || '', sections: data.sections };
+      return true;
+    }
+    return false;
+  }
+
   function loadScript(src) {
     return new Promise(function (resolve) {
       var s = document.createElement('script');
@@ -917,37 +2014,56 @@
       document.head.appendChild(s);
     });
   }
-  function loadManifest() {
-    if (window.__LESSON_MANIFEST__) return Promise.resolve(window.__LESSON_MANIFEST__);
-    return loadScript(MANIFEST_FILE).then(function () { return window.__LESSON_MANIFEST__ || null; });
+
+  function loadStructure() {
+    if (window[SRC.structureGlobal]) return Promise.resolve(window[SRC.structureGlobal]);
+    return loadScript(SRC.structureFile).then(function () { return window[SRC.structureGlobal] || null; });
+  }
+  function loadContent() {
+    if (window[SRC.dataGlobal]) return Promise.resolve(window[SRC.dataGlobal]);
+    return loadScript(SRC.dataFile).then(function () { return window[SRC.dataGlobal] || null; });
   }
 
-  /* S5：清单缺失时回退——用 DOMParser 跑与构建期（scripts/manifest.mjs）同一套抽取规则。
-     仅取顶层模块 section（class 含 section），标题/序号取 .section__title / .section__tag-num，
-     练习键与形态取 .practice-btn 的 data-practice / data-practice-kind，末个无练习按钮的 section 为课后练习。 */
-  function extractManifestFromDoc(doc) {
-    var modules = [], postLesson = null;
-    var sections = doc.querySelectorAll('section.section');
+  /** 结构清单缺失时的回退：用配置中的选择器从结构页面现场抽取 */
+  function extractStructureFromDoc(doc) {
+    var modules = [], auxiliary = null;
+    var sections = doc.querySelectorAll(EXT.section);
     Array.prototype.forEach.call(sections, function (sec) {
       var id = sec.id || '';
       if (!id) return;
-      var nav = sec.getAttribute('data-nav') || '';
-      var noEl = sec.querySelector('.section__tag-num');
-      var titleEl = sec.querySelector('.section__title');
-      var btn = sec.querySelector('.practice-btn[data-practice]');
-      var no = noEl ? noEl.textContent.replace(/\s+/g, ' ').trim() : '';
-      var title = titleEl ? titleEl.textContent.replace(/\s+/g, ' ').trim() : '';
-      if (!btn) { postLesson = { id: id, no: no, nav: nav, title: title }; return; }
+      var noEl = EXT.num ? sec.querySelector(EXT.num) : null;
+      var titleEl = EXT.title ? sec.querySelector(EXT.title) : null;
+      var btn = EXT.practiceBtn ? sec.querySelector(EXT.practiceBtn) : null;
+      var clean = function (node) { return node ? node.textContent.replace(/\s+/g, ' ').trim() : ''; };
+      var no = clean(noEl), title = clean(titleEl);
+      var nav = EXT.navAttr ? (sec.getAttribute(EXT.navAttr) || '') : '';
+      if (!btn) { auxiliary = { id: id, no: no, nav: nav, title: title }; return; }
       modules.push({
-        key: btn.getAttribute('data-practice') || '', id: id, no: no, nav: nav, title: title,
-        practice: true, kind: btn.getAttribute('data-practice-kind') || 'choice'
+        key: (EXT.practiceKeyAttr && btn.getAttribute(EXT.practiceKeyAttr)) || '',
+        id: id, no: no, nav: nav, title: title, practice: true,
+        kind: (EXT.practiceKindAttr && btn.getAttribute(EXT.practiceKindAttr)) || 'choice'
       });
     });
     return {
-      contract: 'lesson-manifest', version: 1, lesson: '', title: doc.title || '',
-      generatedAt: new Date().toISOString(), modules: modules, postLesson: postLesson
+      contract: 'structure-manifest', version: 1, lesson: '', title: doc.title || '',
+      generatedAt: new Date().toISOString(), modules: modules, postLesson: auxiliary
     };
   }
+
+  function loadStructureFromFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var doc = new DOMParser().parseFromString(String(reader.result), 'text/html');
+        var m = extractStructureFromDoc(doc);
+        if (!m.modules.length && !m.postLesson) throw new Error('no sections matched');
+        applyManifest(m);
+        toast(L('toast.structureLoaded', { n: m.modules.length }), 'ok');
+      } catch (err) { toast(L('toast.structureFailed', { msg: err.message }), 'error'); }
+    };
+    reader.readAsText(file);
+  }
+
   function applyManifest(m) {
     if (!m) return false;
     manifest = m;
@@ -958,63 +2074,167 @@
     renderAll();
     return true;
   }
-  function loadManifestFromHtmlFile(file) {
-    var reader = new FileReader();
-    reader.onload = function () {
-      try {
-        var doc = new DOMParser().parseFromString(String(reader.result), 'text/html');
-        var m = extractManifestFromDoc(doc);
-        if (!m.modules.length && !m.postLesson) throw new Error('未找到模块（需含 section.section 与 practice-btn[data-practice]）');
-        applyManifest(m);
-        toast('已从 index.html 解析课程结构（模块 ' + m.modules.length + '）');
-      } catch (err) { toast('解析失败：' + err.message); }
-    };
-    reader.readAsText(file);
-  }
-  function loadDataFile() {
-    if (window.__PRACTICE_DATA__) return Promise.resolve(window.__PRACTICE_DATA__);
-    return loadScript(DATA_FILE).then(function () { return window.__PRACTICE_DATA__ || null; });
-  }
-  function adopt(data) {
-    if (!data || typeof data !== 'object') return false;
-    if (data.modules || data.postLesson) {
-      state = {
-        version: data.version || 1,
-        lesson: data.lesson || (manifest && manifest.lesson) || '',
-        updatedAt: data.updatedAt || '',
-        modules: data.modules ? clone(data.modules) : {},
-        postLesson: data.postLesson ? clone(data.postLesson) : { title: '练习', subtitle: '', sections: [] }
-      };
-      return true;
-    }
-    // 兼容旧 custom-quiz.js（仅 sections）→ 并入课后练习
-    if (data.sections) {
-      state = emptyState();
-      state.postLesson = { title: data.title || '练习', subtitle: data.subtitle || '', sections: data.sections };
-      return true;
-    }
-    return false;
-  }
+
   function saveToFile() {
+    var btn = el('[data-act="save-local"]');
     var text = generated();
     if (!window.showSaveFilePicker) { download(); return; }
+    setBusy(btn, true);
     window.showSaveFilePicker({
-      suggestedName: 'practice-data.js',
-      types: [{ description: 'JavaScript 数据文件', accept: { 'text/javascript': ['.js'] } }]
+      suggestedName: SRC.exportFile,
+      types: [{ description: 'JavaScript', accept: { 'text/javascript': ['.js'] } }]
     }).then(function (handle) {
       return handle.createWritable().then(function (w) {
         return w.write(text).then(function () { return w.close(); });
       });
-    }).then(function () { toast('已保存到所选文件'); })
-      .catch(function (err) {
-        if (err && err.name === 'AbortError') return;
-        toast('直接保存不可用，已改为下载');
-        download();
-      });
+    }).then(function () {
+      setBusy(btn, false);
+      toast(L('toast.saved'), 'ok');
+    }).catch(function (err) {
+      setBusy(btn, false);
+      if (err && err.name === 'AbortError') return;
+      toast(L('toast.saveFallback'), 'warn');
+      download();
+    });
   }
 
-  /* ---------- 事件绑定 ---------- */
+  /* ==========================================================
+     十七、主题 / 布局
+     ========================================================== */
+  var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+  function resolvedTheme() {
+    if (CFG.theme === 'light' || CFG.theme === 'dark') return CFG.theme;
+    return (mql && mql.matches) ? 'dark' : 'light';
+  }
+  function applyTheme() {
+    document.body.setAttribute('data-theme', resolvedTheme());
+  }
+  function toggleTheme() {
+    var next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    CFG.theme = next;
+    storeSet(THEME_KEY, next);
+    applyTheme();
+  }
+
+  function loadPrefs() {
+    var rawTheme = storeGet(THEME_KEY);
+    if (rawTheme === 'light' || rawTheme === 'dark') CFG.theme = rawTheme;
+    var rawLayout = storeGet(LAYOUT_KEY);
+    if (rawLayout) {
+      try {
+        var saved = JSON.parse(rawLayout);
+        if (saved && typeof saved.nav === 'boolean') CFG.layout.nav = saved.nav;
+        if (saved && typeof saved.preview === 'boolean') CFG.layout.preview = saved.preview;
+      } catch (e) { /* 忽略 */ }
+    }
+    guideDismissed = storeGet(GUIDE_KEY) === '1';
+  }
+  function saveLayoutPref() {
+    storeSet(LAYOUT_KEY, JSON.stringify({ nav: CFG.layout.nav, preview: CFG.layout.preview }));
+  }
+  function applyLayout() {
+    var b = document.body;
+    b.setAttribute('data-density', CFG.density);
+    b.setAttribute('data-nav', CFG.layout.nav ? 'on' : 'off');
+    b.setAttribute('data-preview', CFG.layout.preview ? 'on' : 'off');
+    b.setAttribute('data-preview-placement', CFG.layout.previewPlacement);
+    if (CFG.layout.previewCollapsible && CFG.layout.preview) {
+      b.setAttribute('data-preview-collapsed', collapsed.preview ? 'on' : 'off');
+    } else {
+      b.removeAttribute('data-preview-collapsed');
+    }
+    var btn = el('#preview-collapse-btn');
+    if (btn) {
+      btn.hidden = !(CFG.layout.previewCollapsible && CFG.layout.preview);
+      btn.textContent = collapsed.preview ? L('previewExpand') : L('previewCollapse');
+    }
+    els('#panel-toggles .ce-segment__btn').forEach(function (b2) {
+      var key = b2.dataset.panel;
+      b2.setAttribute('aria-pressed', String(!!CFG.layout[key]));
+    });
+  }
+
+  /* ==========================================================
+     十八、顶栏 / 工具条静态结构渲染
+     ========================================================== */
+  function renderHeaderActions() {
+    var node = el('#header-actions');
+    if (!node) return;
+    var a = CFG.labels.actions;
+    node.innerHTML =
+      '<div class="ce-actiongroup">' +
+        '<button class="ce-btn ce-btn--sm" type="button" data-act="validate">' +
+          esc(a.validate) + '<span class="ce-badge" id="issue-badge" hidden>0</span>' +
+        '</button>' +
+        '<div class="ce-menu">' +
+          '<button class="ce-btn ce-btn--sm" type="button" data-act="toggle-menu" aria-haspopup="true" aria-expanded="false" title="' + attr(a.more) + '">' +
+            esc(a.moreShort) +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+          '</button>' +
+          '<div class="ce-menu__panel" id="more-menu" hidden>' +
+            '<button class="ce-menu__item" type="button" data-act="import-structure">' + esc(a.importStructure) + '</button>' +
+            '<button class="ce-menu__item" type="button" data-act="import-data">' + esc(a.importData) + '</button>' +
+            '<button class="ce-menu__item" type="button" data-act="load-local">' + esc(a.loadLocal) + '</button>' +
+            '<button class="ce-menu__item" type="button" data-act="copy">' + esc(a.copy) + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<span class="ce-header__divider" aria-hidden="true"></span>' +
+      '<div class="ce-actiongroup">' +
+        '<button class="ce-btn ce-btn--sm" type="button" data-act="export">' + esc(a.export) + '</button>' +
+        '<button class="ce-btn ce-btn--sm ce-btn--primary" type="button" data-act="save-local">' + esc(a.saveLocal) + '</button>' +
+      '</div>';
+  }
+
+  function renderChrome() {
+    document.title = L('appTitle');
+    var t = el('#app-title'); if (t) t.textContent = L('appTitle');
+    var n = el('#nav-title'); if (n) n.textContent = L('navTitle');
+    var e = el('#editor-title'); if (e) e.textContent = L('editorTitle');
+    var p = el('#preview-title'); if (p) p.textContent = L('previewTitle');
+    var s = el('#output-summary'); if (s) s.textContent = L('outputSummary');
+    var g = el('#guide-btn'); if (g) g.title = L('guide.reopen');
+
+    var toggles = el('#panel-toggles');
+    if (toggles) {
+      if (CFG.layout.allowPanelToggle) {
+        toggles.className = 'ce-toolbar__group ce-segment';
+        toggles.innerHTML = ['nav', 'preview'].map(function (key) {
+          var label = key === 'nav' ? L('navTitle') : L('previewTitle');
+          return '<button class="ce-segment__btn" type="button" data-panel="' + key + '" aria-pressed="true">' + esc(label) + '</button>';
+        }).join('');
+      } else {
+        toggles.className = 'ce-toolbar__group';
+        toggles.innerHTML = '';
+      }
+    }
+
+    var sf = el('#structure-file');
+    if (sf) sf.accept = (SRC.acceptStructureExt || []).join(',');
+    var df = el('#data-file');
+    if (df) df.accept = (SRC.acceptDataExt || []).join(',');
+  }
+
+  /* ==========================================================
+     十九、事件绑定
+     ========================================================== */
+  function guideAddTarget() {
+    var it = selectedItem();
+    if (!it) return null;
+    if (it.kind === 'auxiliary') {
+      if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
+      if (!state.postLesson.sections || !state.postLesson.sections.length) {
+        state.postLesson.sections = [{ id: 'part-1', title: '', questions: [] }];
+      }
+      return 'postLesson.sections.0.questions';
+    }
+    ensureGroup(it);
+    return 'modules.' + it.id + '.questions';
+  }
+
   function bindGlobal() {
+    /* 输入：按 path 写回状态 */
     document.addEventListener('input', function (e) {
       var t = e.target;
       if (!(t.matches && t.matches('[data-path]'))) return;
@@ -1024,7 +2244,7 @@
       } else {
         setPath(state, path, t.value);
       }
-      save(); renderPreview(); renderTree(); renderValidate();
+      saveDraft(); renderOnInput();
     });
 
     document.addEventListener('change', function (e) {
@@ -1032,12 +2252,14 @@
       if (t.matches && t.matches('[data-answer]')) {
         var path = t.dataset.answer;
         if (t.dataset.multi === 'true') {
-          var checked = els('[data-answer="' + path + '"]').filter(function (i) { return i.checked; }).map(function (i) { return i.value; });
+          var checked = els('[data-answer="' + path + '"]')
+            .filter(function (i) { return i.checked; })
+            .map(function (i) { return i.value; });
           setPath(state, path, checked);
         } else {
           setPath(state, path, t.value);
         }
-        save(); renderPreview(); renderValidate(); return;
+        saveDraft(); renderPreview(); renderValidation(); renderGuide(); return;
       }
       if (t.matches && t.matches('[data-mode-path]')) {
         var q = getPath(state, t.dataset.modePath.replace(/\.mode$/, ''));
@@ -1045,72 +2267,175 @@
           q.mode = t.value;
           if (t.value === 'single') q.answer = Array.isArray(q.answer) ? (q.answer[0] || 'A') : q.answer;
         }
-        save(); renderEditor(); renderPreview(); renderTree(); renderValidate(); return;
+        saveDraft(); renderEditor(); renderValidation(); renderPreview(); renderGuide(); return;
       }
-      if (t.id === 'manifest-file' && t.files && t.files[0]) { loadManifestFromHtmlFile(t.files[0]); t.value = ''; return; }
-      if (t.id === 'import-file' && t.files && t.files[0]) importFile(t.files[0]);
+      if (t.id === 'structure-file' && t.files && t.files[0]) { loadStructureFromFile(t.files[0]); t.value = ''; return; }
+      if (t.id === 'data-file' && t.files && t.files[0]) { importDataFile(t.files[0]); t.value = ''; }
     });
 
     document.addEventListener('click', function (e) {
       var pick = e.target.closest ? e.target.closest('[data-select]') : null;
-      if (pick) { selectItem(pick.dataset.select); return; }
-      var t = e.target.closest ? e.target.closest('button') : null;
-      if (!t) return;
-      if (t.hasAttribute('data-insert-image')) { var f = t.closest('.field'); var ta = f && f.querySelector('textarea'); if (ta) pickImage(ta); return; }
-      if (t.hasAttribute('data-insert-table')) { var f2 = t.closest('.field'); var ta2 = f2 && f2.querySelector('textarea'); if (ta2) pickTable(ta2); return; }
-      var act = t.dataset.act;
-      if (!act) return;
-      if (act === 'validate') { var v = renderValidate(); toast(v.length ? '校验发现 ' + v.length + ' 处待完善' : '校验通过'); return; }
-      if (act === 'download') { download(); return; }
-      if (act === 'copy') { copyOut(); return; }
-      if (act === 'save-file') { saveToFile(); return; }
-      if (act === 'load-html') { var mf = el('#manifest-file'); if (mf) mf.click(); return; }
-      if (act === 'load-file') {
-        loadDataFile().then(function (data) {
-          if (adopt(data)) { ensureSelected(); renderAll(); toast('已载入同目录 practice-data.js'); }
-          else toast('未找到同目录 practice-data.js');
-        });
+      if (pick) { closeMenu(); selectItem(pick.dataset.select); return; }
+
+      var panelBtn = e.target.closest ? e.target.closest('[data-panel]') : null;
+      if (panelBtn) {
+        var key = panelBtn.dataset.panel;
+        CFG.layout[key] = !CFG.layout[key];
+        saveLayoutPref(); applyLayout();
         return;
       }
-      handleStruct(act, t);
+
+      /* 对话框动作（含遮罩点击）：不限于 button 元素 */
+      var actEl = e.target.closest ? e.target.closest('[data-act]') : null;
+      if (actEl) {
+        var dashAct = actEl.dataset.act;
+        if (dashAct === 'dialog-cancel') { closeDialog(); return; }
+        if (dashAct === 'dialog-confirm') {
+          var fn = dialogState.onConfirm;
+          var keep = fn ? fn() : undefined;
+          if (keep !== false) closeDialog();
+          return;
+        }
+      }
+
+      var t = e.target.closest ? e.target.closest('button') : null;
+      if (!t) { if (!(e.target.closest && e.target.closest('.ce-menu'))) closeMenu(); return; }
+
+      if (t.hasAttribute('data-insert-image')) {
+        var f = t.closest('.ce-field');
+        var ta = f && f.querySelector('textarea');
+        if (ta) pickImage(ta);
+        return;
+      }
+      if (t.hasAttribute('data-insert-table')) {
+        var f2 = t.closest('.ce-field');
+        var ta2 = f2 && f2.querySelector('textarea');
+        if (ta2) pickTable(ta2);
+        return;
+      }
+
+      var act = t.dataset.act;
+      if (!act) return;
+
+      switch (act) {
+        case 'validate': {
+          closeMenu();
+          var issues = collectIssues();
+          if (issues.length) {
+            markInvalid(issues);
+            toast(L('toast.validated', { n: issues.length, locate: L('validation.locate') }), 'warn');
+          } else {
+            toast(L('toast.validateOk'), 'ok');
+          }
+          renderValidation(); renderGuide();
+          return;
+        }
+        case 'locate-issue': locateFirstIssue(collectIssues()); return;
+        case 'export': closeMenu(); download(); return;
+        case 'copy': closeMenu(); copyOut(); return;
+        case 'save-local': closeMenu(); saveToFile(); return;
+        case 'import-structure': closeMenu(); { var sf = el('#structure-file'); if (sf) sf.click(); } return;
+        case 'import-data': closeMenu(); { var df = el('#data-file'); if (df) df.click(); } return;
+        case 'load-local':
+          closeMenu();
+          loadContent().then(function (data) {
+            if (adopt(data)) { ensureSelected(); renderAll(); toast(L('toast.localLoaded'), 'ok'); }
+            else toast(L('toast.localMissing'), 'warn');
+          });
+          return;
+        case 'toggle-menu': toggleMenu(); return;
+        case 'toggle-theme': toggleTheme(); return;
+        case 'collapse-preview': collapsed.preview = !collapsed.preview; applyLayout(); return;
+        case 'dismiss-guide':
+          guideDismissed = true; guideForced = false;
+          storeSet(GUIDE_KEY, '1'); renderGuide(); return;
+        case 'show-guide':
+          guideDismissed = false; guideForced = true;
+          storeSet(GUIDE_KEY, ''); renderGuide(); return;
+        case 'guide-select': {
+          var first = navItems()[0];
+          if (first) selectItem(first.id);
+          return;
+        }
+        case 'guide-add': {
+          var target = guideAddTarget();
+          if (!target) return;
+          var kinds = CFG.schema.itemKinds || [];
+          var arr = getPath(state, target);
+          if (arr) arr.push(newItem(kinds[0] || 'choice'));
+          saveDraft(); renderAll();
+          return;
+        }
+        default: handleStruct(act, t);
+      }
     });
 
-    // S5：把课程的 index.html 直接拖入左侧模块栏即可载入结构（清单缺失时的回退）
-    var treeCol = document.querySelector('.col--tree');
-    if (treeCol) {
-      treeCol.addEventListener('dragover', function (e) { e.preventDefault(); treeCol.classList.add('is-drop'); });
-      treeCol.addEventListener('dragleave', function () { treeCol.classList.remove('is-drop'); });
-      treeCol.addEventListener('drop', function (e) {
-        e.preventDefault(); treeCol.classList.remove('is-drop');
-        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        if (f) loadManifestFromHtmlFile(f);
-      });
+    document.addEventListener('mousedown', function (e) {
+      if (!(e.target.closest && e.target.closest('.ce-menu'))) closeMenu();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      trapFocus(e);
+      if (e.key === 'Escape') {
+        closeMenu();
+        var dlg = el('#dialog');
+        if (dlg && !dlg.hidden) { e.preventDefault(); closeDialog(); }
+      }
+    });
+
+    /* 结构文件拖放（可配置关闭） */
+    if (CFG.layout.acceptStructureDrop) {
+      var nav = el('.ce-panel--nav');
+      if (nav) {
+        nav.addEventListener('dragover', function (e) { e.preventDefault(); nav.classList.add('is-dragover'); });
+        nav.addEventListener('dragleave', function () { nav.classList.remove('is-dragover'); });
+        nav.addEventListener('drop', function (e) {
+          e.preventDefault(); nav.classList.remove('is-dragover');
+          var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) loadStructureFromFile(f);
+        });
+      }
+    }
+
+    if (mql) {
+      var onScheme = function () { if (CFG.theme === 'auto') applyTheme(); };
+      if (mql.addEventListener) mql.addEventListener('change', onScheme);
+      else if (mql.addListener) mql.addListener(onScheme);
     }
   }
 
-  /* ---------- 启动 ---------- */
+  /* ==========================================================
+     二十、启动
+     ========================================================== */
   function init() {
+    loadPrefs();
+    applyTheme();
+
     state = emptyState();
-    var hadDraft = load();
+    var hadDraft = loadDraft();
+
+    renderChrome();
+    renderHeaderActions();
+    applyLayout();
     bindGlobal();
     renderAll();
 
-    loadManifest().then(function (m) {
+    loadStructure().then(function (m) {
       if (m) manifest = m;
       if (manifest) {
         state.lesson = state.lesson || manifest.lesson || '';
         if (!state.postLesson) state.postLesson = emptyState().postLesson;
       }
       renderAll();
-      return loadDataFile();
+      return loadContent();
     }).then(function (data) {
       if (hadDraft) {
-        if (data) toast('已载入本机草稿；如需同目录文件请点「载入同目录文件」');
+        if (data) toast(L('toast.draftLoaded', { label: L('actions.loadLocal') }));
         return;
       }
-      if (adopt(data)) { ensureSelected(); renderAll(); toast('已载入同目录 practice-data.js'); }
+      if (adopt(data)) { ensureSelected(); renderAll(); toast(L('toast.localLoaded'), 'ok'); }
     }).catch(function (err) {
-      console.error('[练习编辑器] 初始化失败', err);
+      if (window.console) console.error('[内容编辑器] 初始化失败', err);
     });
   }
 

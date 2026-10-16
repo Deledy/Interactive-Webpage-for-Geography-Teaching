@@ -7,7 +7,7 @@
    与 index.html 同级）。加载方式刻意不用 fetch/JSON：file:// 双击打开时 fetch 会被 CORS 拦截；
    改为动态注入经典 <script src>，由数据文件把内容挂到 window.__PRACTICE_DATA__。
 
-   渲染：统一交给 shared/practice-window 的 PracticeWindow 组件（与随堂练习同一套），
+   渲染：统一交给 shared/practice-window 的 openPracticeWindow（页内挂载，与随堂练习同一套渲染器），
    本模块只保留「数据加载 + 入口 + 重置」职责（详见 practice-window 开发文档 §3 / §8）。
 
    数据源优先级：
@@ -16,9 +16,9 @@
    ============================================================ */
 import { getPracticeData, loadPracticeData } from './practiceStore'
 import { validateQuizData } from '../../../../shared/practice-window/src/validate'
-import { createPracticeView, type PracticeView } from '../../../../shared/practice-window/src/practiceWindow'
+import { openPracticeWindow, type PracticeWindowHandle } from '../../../../shared/practice-window/src/practiceWindow'
 
-let view: PracticeView | null = null
+let windowHandle: PracticeWindowHandle | null = null
 
 /** 兼容回退：注入旧 custom-quiz.js（内容挂到 window.__CUSTOM_QUIZ__）。 */
 function loadLegacyViaScript(): Promise<unknown> {
@@ -55,28 +55,29 @@ export function initCustomQuiz(): void {
   const host = document.getElementById('quiz-custom-body')
   if (!host) return
 
+  // M10 区块头部既有的「重做本页练习」入口 → 组件重置
   document.querySelector('[data-cq-reset]')?.addEventListener('click', () => {
-    view?.reset()
+    windowHandle?.reset()
   })
 
   void resolveData().then((loaded) => {
     const { data, issues } = validateQuizData(loaded)
     if (issues.length) console.warn('[customQuiz] 数据校验提示：', issues)
 
-    if (view) {
-      view.destroy()
-      view = null
-    }
+    windowHandle?.close()
+    windowHandle = null
     host.innerHTML = ''
 
-    view = createPracticeView({
+    // 页内挂载（container）；底部不再重复「重做」入口（区块头部已有）
+    windowHandle = openPracticeWindow({
+      container: host,
       title: data?.title || '自定义练习',
       subtitle: data?.subtitle,
       sections: data?.sections,
       mode: 'list',
       timer: false,
+      resetBar: false,
       emptyIssues: data ? [] : issues
     })
-    host.appendChild(view.root)
   })
 }

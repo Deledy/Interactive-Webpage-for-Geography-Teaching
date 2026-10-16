@@ -34,13 +34,54 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 1px;
 }
+.pw-timer.is-warn {
+  border-color: var(--pw-warn);
+  color: var(--pw-warn);
+}
+
+/* ---------- 顶部操作（全屏 / 关闭） ---------- */
+.pw-head__actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+}
+.pw-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-radius-btn);
+  background: var(--pw-surface);
+  color: var(--pw-text-dim);
+  font-family: inherit;
+  font-size: var(--pw-fs-note);
+  cursor: pointer;
+  transition: border-color var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease),
+    background var(--pw-dur) var(--pw-ease);
+}
+.pw-btn:hover {
+  border-color: var(--pw-blue-border);
+  color: var(--pw-text);
+}
+.pw-btn:active {
+  transform: scale(0.98);
+}
 
 /* ---------- 逐题导航（列表模式） ---------- */
 .pw-nav {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.pw-nav__progress {
+  color: var(--pw-text-dim);
+  font-size: var(--pw-fs-note);
+  font-variant-numeric: tabular-nums;
+}
+.pw-nav__dots {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 20px;
 }
 .pw-nav__dot {
   width: 34px;
@@ -62,12 +103,31 @@
   border-color: var(--pw-accent);
   color: var(--pw-accent);
 }
+.pw-nav__dot.is-current {
+  border-color: var(--pw-accent-2);
+  color: var(--pw-accent-2);
+  box-shadow: 0 0 0 2px var(--pw-blue-soft);
+}
+.pw-nav__dot.is-answered.is-current {
+  border-color: var(--pw-accent);
+  color: var(--pw-accent);
+  box-shadow: 0 0 0 2px var(--pw-blue-border);
+}
 
 /* ---------- 逐题模式：上/下一题 ---------- */
 .pw-step-actions {
   display: flex;
   gap: 14px;
   margin-top: 20px;
+}
+
+/* ---------- 底部状态栏（重做本页练习） ---------- */
+.pw-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pw-border);
 }
 
 /* ---------- 关键词高亮 ---------- */
@@ -419,6 +479,73 @@
   font-weight: 700;
 }
 
+/* ---------- 浮层容器（openPracticeWindow 缺省形态：全屏毛玻璃） ---------- */
+.pw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: auto;
+  background: var(--pw-overlay-bg);
+  backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.1);
+}
+.pw-panel {
+  position: relative;
+  min-height: 100%;
+  padding: clamp(20px, 4vh, 44px) clamp(18px, 4vw, 64px);
+  background: var(--pw-panel-bg);
+}
+
+/* ---------- 内容宽度约束（超宽屏下保持易读行宽） ---------- */
+.pw-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* ---------- 左右布局：左 = 题目，右 = 答案与解析 ---------- */
+.pw-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(16px, 2.4vw, 36px);
+  align-items: start;
+}
+.pw-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pw-col > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.cq-q__awaiting {
+  padding: 18px;
+  border: 1px dashed var(--pw-border);
+  border-radius: var(--pw-radius-btn);
+  color: var(--pw-text-dim);
+  font-size: var(--pw-fs-note);
+  line-height: 1.7;
+}
+
+/* ---------- 全屏沉浸（CSS 铺满视口；Esc/再次点击退出） ---------- */
+.pw.is-fullscreen,
+.pw-panel.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: auto;
+  padding: 32px clamp(16px, 5vw, 72px);
+  background: var(--pw-panel-bg);
+}
+
 /* ---------- 窄屏 ---------- */
 @media (max-width: 900px) {
   .cq-q__options {
@@ -426,5 +553,18 @@
   }
   .cq-q {
     padding: 20px 18px;
+  }
+  .pw-overlay {
+    padding: 0;
+  }
+  .pw-panel {
+    padding: 20px 16px;
+  }
+  .pw-split {
+    grid-template-columns: 1fr;
+  }
+  .pw.is-fullscreen,
+  .pw-panel.is-fullscreen {
+    padding: 20px 16px;
   }
 }

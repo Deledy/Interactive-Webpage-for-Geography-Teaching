@@ -350,23 +350,28 @@ describe('M11 复习（复习模式切换）', () => {
 })
 
 describe('随堂练习浮层', () => {
-  it('题目已全部清空：点开任一模块练习浮层均为空态占位', () => {
+  it('数据文件未加载时回退源码内置题目（同样为空）：浮层显示空态，且同一时刻仅一个浮层', () => {
     initPracticeEntry()
-    const content = document.getElementById('practice-content')!
 
     ;(document.querySelector('[data-practice="M1"]') as HTMLElement).click()
-    const modal = document.getElementById('practice-modal')!
-    expect(modal.hidden).toBe(false)
-    expect(document.querySelectorAll('.practice-q')).toHaveLength(0)
-    expect(content.querySelector('.cq-empty')).not.toBeNull()
+    const overlay = document.querySelector('.pw-overlay')
+    expect(overlay).not.toBeNull()
+    expect(overlay!.querySelector('.pw-panel')).not.toBeNull()
+    expect(overlay!.querySelector('.cq-empty')).not.toBeNull()
 
-    // 地球 / 生命模块同样保留练习入口，但内容为空
+    // 地球 / 生命模块同样保留练习入口，但内容为空；再次打开会顶替上一个浮层
     ;(document.querySelector('[data-practice="M7"]') as HTMLElement).click()
-    expect(document.querySelectorAll('.practice-q')).toHaveLength(0)
-    expect(content.querySelector('.cq-empty')).not.toBeNull()
+    expect(document.querySelectorAll('.pw-overlay')).toHaveLength(1)
+    expect(document.querySelector('.pw-overlay .cq-empty')).not.toBeNull()
 
     ;(document.querySelector('[data-practice="M8"]') as HTMLElement).click()
-    expect(content.querySelector('.cq-empty')).not.toBeNull()
+    expect(document.querySelectorAll('.pw-overlay')).toHaveLength(1)
+    expect(document.querySelector('.pw-overlay .cq-empty')).not.toBeNull()
+
+    // Esc 关闭浮层并恢复页面滚动
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    expect(document.querySelector('.pw-overlay')).toBeNull()
+    expect(document.body.style.overflow).toBe('')
   })
 })
 

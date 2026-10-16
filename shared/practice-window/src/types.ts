@@ -58,6 +58,14 @@ export interface CqSection {
   questions?: CqQuestion[]
 }
 
+/** 单个模块的随堂练习；kind:'drag' 表示特殊题型（拖拽题），内容由课程页面自行提供 */
+export interface PracticeModule {
+  title?: string
+  intro?: string
+  kind?: 'choice' | 'drag'
+  questions?: CqQuestion[]
+}
+
 /** 题库数据（课后练习） */
 export interface CqData {
   version?: number

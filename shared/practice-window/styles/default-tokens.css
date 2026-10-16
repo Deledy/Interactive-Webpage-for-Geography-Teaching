@@ -28,4 +28,7 @@
   --pw-dur:          var(--dur, 0.35s);
   --pw-ease:         var(--ease, cubic-bezier(0.25, 0.8, 0.35, 1));
   --pw-material-bg:  rgba(11, 16, 38, 0.55);
+  --pw-overlay-bg:    rgba(4, 7, 20, 0.55);          /* 全屏毛玻璃：外层遮罩 */
+  --pw-backdrop-blur: 22px;                          /* 全屏毛玻璃：背景模糊半径 */
+  --pw-panel-bg:      rgba(13, 18, 40, 0.55);        /* 面板（半透明，与遮罩叠加出毛玻璃） */
 }

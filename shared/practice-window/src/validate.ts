@@ -1,13 +1,15 @@
 /* ============================================================
    PracticeWindow · 结构校验与版本协商
    ------------------------------------------------------------
-   把外置数据收敛为可安全渲染的 CqData：
+   把外置数据收敛为可安全渲染的结构（题级 / 模块级 / 题库级）：
    - 逐题校验：选择题需「题干 + ≥2 选项 + 有效答案（答案键须落在选项内）」；
      综合题需「设问或参考答案」；非法题丢弃并记录问题（issues）。
+   - 模块级校验：kind:'drag' 只保留占位；无有效题则视为缺失。
    - 版本：数据 version 高于支持上限 → 仅提示、不阻断。
    - 无任何有效题目时 data = null（消费方渲染空态，不白屏）。
+   本文件是「统一 schema 校验」的单一真源，课程侧（practiceStore 等）应复用而非重写。
    ============================================================ */
-import type { CqChoice, CqData, CqEssay, CqQuestion, CqSection } from './types'
+import type { CqChoice, CqData, CqEssay, CqQuestion, CqSection, PracticeModule } from './types'
 
 /** 当前组件支持的数据版本 */
 export const DATA_VERSION = 1
@@ -94,4 +96,26 @@ export function validateQuizData(raw: unknown): { data: CqData | null; issues: s
 /** 便捷：把「单节题目数组」包装成 CqData 结构（模块随堂练习用） */
 export function sectionsFromQuestions(title: string | undefined, subtitle: string | undefined, questions: CqQuestion[]): CqData {
   return { title, subtitle, sections: [{ questions }] }
+}
+
+/**
+ * 单模块校验（随堂练习用）：过滤非法题，无有效题则视为缺失（返回 undefined）。
+ * kind:'drag' 为特殊题型占位，内容由课程页面自行提供，此处只保留占位信息。
+ */
+export function validateModulePractice(raw: unknown): { module?: PracticeModule; issues: string[] } {
+  const issues: string[] = []
+  if (!raw || typeof raw !== 'object') return { issues }
+  const source = raw as PracticeModule
+  if (source.kind === 'drag') return { module: { ...source, kind: 'drag' }, issues }
+  if (!Array.isArray(source.questions)) return { module: { ...source }, issues }
+  const questions: CqQuestion[] = []
+  source.questions.forEach((question, index) => {
+    const valid = validateQuestion(question, `第 ${index + 1} 题`, issues)
+    if (valid) questions.push(valid)
+  })
+  if (!questions.length) {
+    issues.push('无有效题目，已忽略')
+    return { issues }
+  }
+  return { module: { ...source, questions }, issues }
 }

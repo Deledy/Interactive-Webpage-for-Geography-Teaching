@@ -503,53 +503,6 @@ button { font-family: inherit; }
   flex-shrink: 0;
 }
 
-/* 练习弹窗：比拓展浮层更宽，容纳拖拽分类与多道选择题 */
-.modal--practice .modal__panel { width: min(880px, 96vw); }
-.practice-intro {
-  margin: 0 0 18px;
-  color: var(--text-dim);
-  font-size: var(--fs-note);
-}
-
-/* 练习题（选择题） */
-.practice-q { margin-top: 20px; }
-.practice-q:first-of-type { margin-top: 0; }
-.practice-q__text {
-  margin: 0 0 10px;
-  font-size: 18px;
-  line-height: 1.6;
-  color: var(--text-main);
-}
-.practice-q__options { display: flex; flex-wrap: wrap; gap: 10px; }
-.practice-q__opt {
-  min-height: 44px;
-  padding: 8px 18px;
-  font-size: 16px;
-  line-height: 1.5;
-  text-align: left;
-  color: var(--text-main);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-btn);
-  cursor: pointer;
-  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.practice-q__opt:hover { border-color: var(--cyan); color: var(--cyan); }
-.practice-q__opt.is-correct {
-  border-color: var(--success);
-  color: var(--success);
-  box-shadow: 0 0 12px rgba(102, 187, 106, 0.35);
-}
-.practice-q__opt.is-wrong {
-  border-color: var(--error);
-  color: var(--error);
-  box-shadow: 0 0 12px rgba(239, 83, 80, 0.3);
-}
-.practice-q__opt:disabled { cursor: default; }
-.practice-q__feedback { margin: 10px 0 0; font-size: 16px; min-height: 22px; }
-.practice-q__feedback.is-correct { color: var(--success); }
-.practice-q__feedback.is-wrong { color: var(--error); }
-
 /* ---------- 5. 通用组件 ---------- */
 /* 深色玻璃卡片 */
 .card {
