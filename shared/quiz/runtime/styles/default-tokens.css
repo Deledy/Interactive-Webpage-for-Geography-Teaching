@@ -1,0 +1,36 @@
+/* ============================================================
+   PracticeWindow · 默认主题令牌（--pw-*）
+   ------------------------------------------------------------
+   这里只提供中性兜底值，保证课程尚未提供配色表时仍然可读。
+   真实课程与编辑器预览都要以 lessons/<课>/src/styles/quiz-theme.css
+   为准（构建时同时复制到 dist/ 供编辑器读取），不做自动映射。
+   选择器用 :where(.pw) 把优先级降到 0，保证课程配色表无论加载先后
+   都能覆盖这里的兜底值。
+   ============================================================ */
+:where(.pw) {
+  --pw-surface:      rgba(255, 255, 255, 0.06);
+  --pw-border:       rgba(255, 255, 255, 0.14);
+  --pw-accent:       #ffd54f;
+  --pw-accent-2:     #4fc3f7;
+  --pw-accent-text:  #bfe9ff;
+  --pw-blue:         #64b5f6;
+  --pw-blue-soft:    rgba(100, 181, 246, 0.14);
+  --pw-blue-border:  rgba(100, 181, 246, 0.45);
+  --pw-success:      #66bb6a;
+  --pw-error:        #ef5350;
+  --pw-warn:         #ffb74d;
+  --pw-text:         #e8eaf6;
+  --pw-text-dim:     rgba(232, 234, 246, 0.7);
+  --pw-radius-card:  16px;
+  --pw-radius-btn:   10px;
+  --pw-font:         "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  --pw-fs-body:      20px;
+  --pw-fs-note:      16px;
+  --pw-fs-h3:        24px;
+  --pw-dur:          0.35s;
+  --pw-ease:         cubic-bezier(0.25, 0.8, 0.35, 1);
+  --pw-material-bg:  rgba(11, 16, 38, 0.55);
+  --pw-overlay-bg:   rgba(4, 7, 20, 0.55);
+  --pw-backdrop-blur: 22px;
+  --pw-panel-bg:     rgba(13, 18, 40, 0.55);
+}

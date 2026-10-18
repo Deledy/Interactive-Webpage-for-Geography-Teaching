@@ -497,9 +497,9 @@ function bindDrag(card: HTMLButtonElement): void {
  * 3. 无 alpha 的 .mp4 —— 最后的兜底。
  */
 const LAUNCH_VIDEO_SOURCES = [
-  { src: `${import.meta.env.BASE_URL}launch-hevc.mov`, type: 'video/quicktime' },
-  { src: `${import.meta.env.BASE_URL}launch.webm`, type: 'video/webm' },
-  { src: `${import.meta.env.BASE_URL}launch.mp4`, type: 'video/mp4' }
+  { src: `${import.meta.env.BASE_URL}assets/launch-hevc.mov`, type: 'video/quicktime' },
+  { src: `${import.meta.env.BASE_URL}assets/launch.webm`, type: 'video/webm' },
+  { src: `${import.meta.env.BASE_URL}assets/launch.mp4`, type: 'video/mp4' }
 ]
 let launchVideo: HTMLVideoElement | null = null
 

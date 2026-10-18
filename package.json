@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build",
-    "build:all": "node scripts/build.mjs",
-    "build:lesson": "node scripts/build.mjs --lesson",
+    "predev": "npm run build:editor",
+    "build": "npm run typecheck && npm run build:editor && node scripts/build.mjs",
+    "build:editor": "vite build --config vite.editor.config.ts",
+    "build:all": "npm run build:editor && node scripts/build.mjs",
+    "build:lesson": "npm run build:editor && node scripts/build.mjs --lesson",
     "assemble": "node scripts/assemble.mjs",
     "deploy": "node scripts/deploy.mjs",
     "check": "node scripts/check.mjs",
@@ -24,6 +26,7 @@
     "d3-hierarchy": "^3.1.2",
     "echarts": "^6.1.0",
     "gsap": "^3.15.0",
+    "suneditor": "^3.3.3",
     "three": "^0.180.0"
   },
   "devDependencies": {

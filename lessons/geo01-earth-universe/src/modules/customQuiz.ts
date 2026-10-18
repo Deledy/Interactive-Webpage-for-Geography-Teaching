@@ -3,20 +3,20 @@
    ------------------------------------------------------------
    定位：给「分发之后」的教师留一个可自行设题的练习模块（选择题 / 综合题）。
 
-   数据外置：题目数据来自本课 public/practice-data.js 的 postLesson（构建时原样复制到 dist 根目录，
-   与 index.html 同级）。加载方式刻意不用 fetch/JSON：file:// 双击打开时 fetch 会被 CORS 拦截；
+   数据外置：题目数据来自本课 public/quiz-editor/practice-data.js 的 postLesson（构建时原样复制到
+   dist/quiz-editor/，与题目编辑器同目录）。加载方式刻意不用 fetch/JSON：file:// 双击打开时 fetch 会被 CORS 拦截；
    改为动态注入经典 <script src>，由数据文件把内容挂到 window.__PRACTICE_DATA__。
 
-   渲染：统一交给 shared/practice-window 的 openPracticeWindow（页内挂载，与随堂练习同一套渲染器），
-   本模块只保留「数据加载 + 入口 + 重置」职责（详见 practice-window 开发文档 §3 / §8）。
+   渲染：统一交给 shared/quiz/runtime 的 openPracticeWindow（页内挂载，与随堂练习同一套渲染器），
+   本模块只保留「数据加载 + 入口 + 重置」职责（详见 shared/quiz/runtime/docs 练习窗口开发文档 §3 / §8）。
 
    数据源优先级：
    - 统一数据文件 practice-data.js 的 postLesson（可编辑真源）；
    - 旧 custom-quiz.js（window.__CUSTOM_QUIZ__）作为兼容回退保留一个版本。
    ============================================================ */
 import { getPracticeData, loadPracticeData } from './practiceStore'
-import { validateQuizData } from '../../../../shared/practice-window/src/validate'
-import { openPracticeWindow, type PracticeWindowHandle } from '../../../../shared/practice-window/src/practiceWindow'
+import { validateQuizData } from '../../../../shared/quiz/runtime/src/validate'
+import { openPracticeWindow, type PracticeWindowHandle } from '../../../../shared/quiz/runtime/src/practiceWindow'
 
 let windowHandle: PracticeWindowHandle | null = null
 
@@ -25,7 +25,7 @@ function loadLegacyViaScript(): Promise<unknown> {
   const globalWindow = window as unknown as { __CUSTOM_QUIZ__?: unknown }
   return new Promise((resolve) => {
     const script = document.createElement('script')
-    script.src = './custom-quiz.js'
+    script.src = './quiz-editor/custom-quiz.js'
     script.async = true
     script.onload = () => resolve(globalWindow.__CUSTOM_QUIZ__ ?? null)
     script.onerror = () => resolve(null)

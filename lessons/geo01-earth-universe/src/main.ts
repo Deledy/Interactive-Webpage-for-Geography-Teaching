@@ -1,6 +1,7 @@
 /* ============================================================
    地球的宇宙环境 · 入口（迁移自 js/main.js，按模块拆分后统一启动）
    ============================================================ */
+import './styles/quiz-theme.css'
 import { initStarfield } from './modules/starfield'
 import { initNav } from './modules/nav'
 import { initFullscreen } from './modules/fullscreen'

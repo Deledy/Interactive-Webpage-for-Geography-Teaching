@@ -18,6 +18,8 @@ node_modules/
 lessons/*/dist/
 dist/
 dist-book/
+# 离线编辑器构建产物（npm run build:editor 生成）
+shared/quiz/editor/build/
 
 # 环境变量
 .env

@@ -2,7 +2,7 @@
  * 课程结构清单（lesson-manifest）抽取器。
  *
  * 纯函数、无副作用：输入一节课的 index.html 源码，输出结构化清单。
- * - 构建期：scripts/build.mjs 调用，生成 dist/lesson-manifest.js；
+ * - 构建期：scripts/build.mjs 调用，生成 dist/quiz-editor/lesson-manifest.js；
  * - 编辑器：两端共用同一套规则（MANIFEST_RULES），保证构建期与浏览器端结果一致。
  *
  * 该清单是"只读契约"：每次构建重新生成，不要手工修改（改结构请改 index.html）。

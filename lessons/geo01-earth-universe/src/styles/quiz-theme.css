@@ -1,0 +1,47 @@
+/* ============================================================
+   地球的宇宙环境 · 答题卡片配色表（quiz-theme）
+   ------------------------------------------------------------
+   - 单一真源：主课程（src/main.ts 引入）与离线编辑器预览共用本文件；
+   - 这里写最终色值，不引用课程其它变量，避免编辑器缺少上下文时失真；
+   - 只作用于答题窗口（.pw），不影响课程页面其它部分；
+   - 构建时本文件会被复制为 dist/quiz-editor/quiz-theme.css 供编辑器读取。
+   ============================================================ */
+.pw {
+  /* 强调 / 判定 */
+  --pw-accent: #FFD54F;
+  --pw-accent-2: #4FC3F7;
+  --pw-accent-text: #BFE9FF;
+  --pw-success: #66BB6A;
+  --pw-error: #EF5350;
+  --pw-warn: #FFB74D;
+
+  /* 蓝体系（材料、选项 hover、提交按钮） */
+  --pw-blue: #64B5F6;
+  --pw-blue-soft: rgba(100, 181, 246, 0.12);
+  --pw-blue-border: rgba(100, 181, 246, 0.45);
+
+  /* 面 / 线 / 文字 */
+  --pw-surface: rgba(255, 255, 255, 0.06);
+  --pw-border: rgba(255, 255, 255, 0.14);
+  --pw-panel-bg: rgba(13, 18, 40, 0.55);
+  --pw-overlay-bg: rgba(4, 7, 20, 0.55);
+  --pw-material-bg: rgba(11, 16, 38, 0.55);
+  --pw-text: #E8EAF6;
+  --pw-text-dim: rgba(232, 234, 246, 0.7);
+
+  /* 形状 */
+  --pw-radius-card: 12px;
+  --pw-radius-btn: 8px;
+
+  /* 排版（投屏基准） */
+  --pw-font: "SourceHanSansSC", "Source Han Sans SC", "思源黑体", "Noto Sans SC",
+    "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+  --pw-fs-body: 20px;
+  --pw-fs-note: 16px;
+  --pw-fs-h3: 24px;
+
+  /* 动效 / 毛玻璃 */
+  --pw-dur: 0.35s;
+  --pw-ease: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --pw-backdrop-blur: 22px;
+}

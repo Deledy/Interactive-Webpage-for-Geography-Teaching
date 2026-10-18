@@ -3,18 +3,18 @@
    ------------------------------------------------------------
    - 数据：优先读统一数据文件 practice-data.js 的对应模块（可编辑真源），
      缺失则回退 lessonData.practices 的内置题目；
-   - 渲染与浮层：统一交给 shared/practice-window 的 openPracticeWindow
+   - 渲染与浮层：统一交给 shared/quiz/runtime 的 openPracticeWindow
      （组件自建浮层：遮罩 / Esc / 「关闭」按钮退出，滚动锁定，单实例）；
    - 特殊题型（如拖拽 kind:'drag'）不属于通用编辑器/组件职责，此处仅按「无通用题目」渲染空态，
      其实现由课程页面自行硬编码（本轮不实现）。
-   详见 shared/practice-window/docs/通用练习窗口_开发文档.md。
+   详见 shared/quiz/runtime/docs/通用练习窗口_开发文档.md。
    ============================================================ */
 import { $$ } from '../utils/dom'
 import { App } from '../state'
 import { lessonData } from '../data/lessonData'
 import type { PracticeQuestion } from '../types'
 import { getModulePractice } from './practiceStore'
-import { openPracticeWindow, type PracticeWindowHandle } from '../../../../shared/practice-window/src/practiceWindow'
+import { openPracticeWindow, type PracticeWindowHandle } from '../../../../shared/quiz/runtime/src/practiceWindow'
 
 let windowHandle: PracticeWindowHandle | null = null
 

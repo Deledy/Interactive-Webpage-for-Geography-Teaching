@@ -5,7 +5,7 @@ const data = {
   version: 1,
   lesson: 'geo01-earth-universe',
   title: '自定义练习',
-  subtitle: '副标题 **加粗**',
+  subtitle: '副标题 <strong>加粗</strong>',
   sections: [
     {
       id: 'a',
@@ -14,14 +14,15 @@ const data = {
         {
           type: 'choice',
           mode: 'single',
-          material: '材料段落\n\n| 列1 | 列2 |\n| --- | --- |\n| a | b |',
+          material:
+            '<p>材料段落</p><table class="cq-table"><thead><tr><th>列1</th><th>列2</th></tr></thead><tbody><tr><td>a</td><td>b</td></tr></tbody></table>',
           stem: '单选题干',
           options: [
             { key: 'A', text: '甲' },
             { key: 'B', text: '乙' }
           ],
           answer: 'A',
-          analysis: '解析 **要点**',
+          analysis: '解析 <strong>要点</strong>',
           knowledge: { title: '归纳', items: ['点1', '点2'] }
         },
         {
@@ -44,7 +45,7 @@ const data = {
       questions: [
         {
           type: 'essay',
-          material: '![图](./x.svg)',
+          material: '<img class="cq-img" src="./x.svg" alt="图">',
           stems: ['（1）问一', '（2）问二'],
           referenceAnswer: '参考答案内容',
           analysis: '解析内容',
@@ -101,13 +102,13 @@ describe('customQuiz', () => {
     expect(verdict?.classList.contains('is-right')).toBe(true)
   })
 
-  it('综合题：点击展开参考答案与评分标准', async () => {
+  it('综合题：点击展开参考答案与解析，不再渲染评分标准', async () => {
     initCustomQuiz()
     await tick()
     expect(host().querySelector('.cq-block--answer')).toBeNull()
     q(2).querySelector<HTMLButtonElement>('.cq-reveal')!.click()
     expect(host().querySelector('.cq-block--answer')).not.toBeNull()
-    expect(host().querySelector('.cq-block--criteria')).not.toBeNull()
+    expect(host().querySelector('.cq-block--criteria')).toBeNull()
   })
 
   it('重置：清空作答状态', async () => {

@@ -8,11 +8,11 @@
  *
  * 作用（一次性、幂等、可重跑）：
  *   把源码内置的旧模型 `lessonData.practices` 转成统一 schema 的
- *   `lessons/<课>/public/practice-data.js`（`window.__PRACTICE_DATA__`），并提交。
+ *   `lessons/<课>/public/quiz-editor/practice-data.js`（`window.__PRACTICE_DATA__`），并提交。
  *
- * 数据真源约定（见 shared/custom-quiz-editor/docs 开发文档 §18 / §24）：
- *   - `practice-data.js` 与 `custom-quiz.js` 一样，是**提交在 public/ 的可编辑数据文件**，
- *     由 public/ → dist/ 的原样复制进入分发包；
+ * 数据真源约定（见 shared/quiz/editor/docs 开发文档 §18 / §24）：
+ *   - `practice-data.js` 与 `custom-quiz.js` 一样，是**提交在 public/quiz-editor/ 的可编辑数据文件**，
+ *     由 public/ → dist/ 的原样复制进入分发包的 quiz-editor/ 目录；
  *   - 构建脚本**不生成、不覆盖**该文件，避免冲掉教师改动；
  *   - 故本脚本仅用于「首次把旧数据搬过来」，默认目标已存在时跳过（幂等、不覆盖）。
  *
@@ -25,7 +25,7 @@
  *   explain                   → analysis
  *   PracticeDrag(type:'drag') → modules[id] = { kind:'drag', title?, intro? }（只读占位）
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
@@ -34,8 +34,8 @@ import { extractManifest } from './manifest.mjs'
 const projectRoot = fileURLToPath(new URL('..', import.meta.url))
 const lessonsRoot = join(projectRoot, 'lessons')
 
-/** 迁移后运行时支持的 schema 版本 */
-const PRACTICE_DATA_VERSION = 1
+/** 迁移后运行时支持的 schema 版本（v2：富文本字段为 HTML） */
+const PRACTICE_DATA_VERSION = 2
 
 /** 解析 --lesson=<课> 与 --lesson <课> 两种写法 */
 function parseLessonArg(argv) {
@@ -114,7 +114,7 @@ function buildFileContent(data) {
     '/* ============================================================',
     ' * 随堂练习 · 数据文件（教师可按学情自行编辑）',
     ' * ------------------------------------------------------------',
-    ' * 1. 本文件与 index.html 放在同一目录（构建后位于 dist 根目录），',
+    ' * 1. 本文件位于 quiz-editor 文件夹（构建后同样位于 dist/quiz-editor/，与题目编辑器同目录），',
     ' *    分发后直接替换本文件即可更新练习，无需重新构建、无需联网。',
     ' * 2. 内容格式与课后练习同构（题型统一为 choice / essay）：',
     ' *    - choice：mode 为 "single" 单选 / "multiple" 多选；',
@@ -132,10 +132,11 @@ function buildFileContent(data) {
 /** 迁移单课 */
 async function migrateLesson(dir) {
   const lessonDir = join(lessonsRoot, dir)
-  const practicesPath = join(lessonDir, 'public', 'practice-data.js')
+  const quizEditorDir = join(lessonDir, 'public', 'quiz-editor')
+  const practicesPath = join(quizEditorDir, 'practice-data.js')
   const force = process.argv.slice(2).includes('--force')
   if (existsSync(practicesPath) && !force) {
-    console.log(`[跳过] ${dir}：public/practice-data.js 已存在（如需覆盖请加 --force）`)
+    console.log(`[跳过] ${dir}：public/quiz-editor/practice-data.js 已存在（如需覆盖请加 --force）`)
     return
   }
 
@@ -161,7 +162,7 @@ async function migrateLesson(dir) {
   }
 
   // 课后练习：直接沿用已提交的 custom-quiz.js（仅取 title / subtitle / sections）
-  const quiz = readWindowGlobal(join(lessonDir, 'public', 'custom-quiz.js'), '__CUSTOM_QUIZ__')
+  const quiz = readWindowGlobal(join(quizEditorDir, 'custom-quiz.js'), '__CUSTOM_QUIZ__')
   const postLesson = quiz
     ? { title: quiz.title, subtitle: quiz.subtitle, sections: quiz.sections || [] }
     : undefined
@@ -181,10 +182,11 @@ async function migrateLesson(dir) {
     return
   }
 
+  mkdirSync(quizEditorDir, { recursive: true })
   writeFileSync(practicesPath, buildFileContent(data), 'utf8')
   const questionCount = Object.values(modules).reduce((n, mod) => n + ((mod.questions && mod.questions.length) || 0), 0)
   console.log(
-    `[迁移] ${dir} → public/practice-data.js（模块 ${moduleCount}、题目 ${questionCount}、课后练习 ${postLesson ? 1 : 0}）`
+    `[迁移] ${dir} → public/quiz-editor/practice-data.js（模块 ${moduleCount}、题目 ${questionCount}、课后练习 ${postLesson ? 1 : 0}）`
   )
 }
 

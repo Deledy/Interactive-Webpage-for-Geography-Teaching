@@ -1,7 +1,10 @@
 /* ============================================================
-   PracticeWindow · 数据模型
+   内容层 · 数据契约
+   ------------------------------------------------------------
    —— 与课程 src/types.ts 的统一题型结构保持一致（结构化兼容，可直接传入课程数据）。
-   详见 shared/practice-window/docs/通用练习窗口_开发文档.md §6。
+   本文件是「内容契约」的唯一真源：运行时（runtime）与编辑器（editor）都引用这里，
+   不再各自维护一份。
+   详见 shared/quiz/docs/2026-10-17-quiz-card-wysiwyg-design.md §5。
    ============================================================ */
 
 export interface CqOption {
@@ -14,38 +17,40 @@ export interface CqKnowledge {
   items?: string[]
 }
 
-/** 选择题（单选 / 多选） */
+/** 选择题（单选；mode 仅为遗留多选数据保留） */
 export interface CqChoice {
   id?: string
   type: 'choice'
-  /** 单选（默认）/ 多选 */
+  /** 遗留字段：编辑器只产出单选，运行时仅兼容旧数据 */
   mode?: 'single' | 'multiple'
-  /** 题源标注，可空 */
+  /** 遗留字段：不再渲染 */
   source?: string
-  /** 材料（富文本，支持 ==关键词高亮==） */
+  /** 材料（HTML，关键词用 <mark class="cq-hl">） */
   material?: string
   /** 题干 */
   stem: string
   options: CqOption[]
-  /** 单选为 'A'，多选为 ['A','C'] */
+  /** 编辑器产出单个字母 'A'；数组仅用于遗留多选数据 */
   answer: string | string[]
-  /** 解析（富文本） */
+  /** 解析（HTML） */
   analysis?: string
+  /** 遗留字段：不再渲染 */
   knowledge?: CqKnowledge
 }
 
-/** 综合题 */
+/** 主观题 */
 export interface CqEssay {
   id?: string
   type: 'essay'
+  /** 遗留字段：不再渲染 */
   source?: string
   material?: string
   /** 设问，可多条 */
   stems?: string | string[]
-  /** 参考答案 */
+  /** 参考答案（HTML） */
   referenceAnswer?: string
   analysis?: string
-  /** 评分标准 */
+  /** 遗留字段：不再渲染 */
   criteria?: string[]
 }
 

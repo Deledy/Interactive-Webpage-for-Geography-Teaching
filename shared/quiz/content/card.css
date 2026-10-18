@@ -1,137 +1,15 @@
 /* ============================================================
-   PracticeWindow · 组件样式（全部走 --pw-* 令牌）
+   内容层 · 题目卡片与内容样式（全部走 --pw-* 令牌）
    ------------------------------------------------------------
-   题面沿用 cq-* 类名（与课程既有 CSS / 测试契约一致），
-   颜色 / 圆角 / 字体 / 间距一律引用 --pw-*（见 default-tokens.css）。
+   作用范围：单题卡片（材料 / 题干 / 选项 / 判定 / 解析 / 知识归纳 /
+   综合题设问与参考答案）、分节标题、引导语、空态、富文本元素，
+   以及卡片内的动作按钮（cq-btn）。
+   窗口骨架（标题 / 导航 / 计时 / 浮层）的样式在 runtime/styles/practiceWindow.css。
+   本文件不引用任何单课类名，可被主课程与编辑器预览共用。
    ============================================================ */
 
-.pw {
-  font-family: var(--pw-font);
-  color: var(--pw-text);
-}
-
-/* ---------- 窗口头 ---------- */
-.pw-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-.pw-title {
-  flex: 1;
-  font-size: var(--pw-fs-h3);
-  font-weight: 700;
-  color: var(--pw-text);
-}
-.pw-timer {
-  flex: 0 0 auto;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--pw-border);
-  background: var(--pw-surface);
-  color: var(--pw-accent-2);
-  font-size: var(--pw-fs-note);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 1px;
-}
-.pw-timer.is-warn {
-  border-color: var(--pw-warn);
-  color: var(--pw-warn);
-}
-
-/* ---------- 顶部操作（全屏 / 关闭） ---------- */
-.pw-head__actions {
-  flex: 0 0 auto;
-  display: flex;
-  gap: 10px;
-}
-.pw-btn {
-  padding: 6px 14px;
-  border: 1px solid var(--pw-border);
-  border-radius: var(--pw-radius-btn);
-  background: var(--pw-surface);
-  color: var(--pw-text-dim);
-  font-family: inherit;
-  font-size: var(--pw-fs-note);
-  cursor: pointer;
-  transition: border-color var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease),
-    background var(--pw-dur) var(--pw-ease);
-}
-.pw-btn:hover {
-  border-color: var(--pw-blue-border);
-  color: var(--pw-text);
-}
-.pw-btn:active {
-  transform: scale(0.98);
-}
-
-/* ---------- 逐题导航（列表模式） ---------- */
-.pw-nav {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-.pw-nav__progress {
-  color: var(--pw-text-dim);
-  font-size: var(--pw-fs-note);
-  font-variant-numeric: tabular-nums;
-}
-.pw-nav__dots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.pw-nav__dot {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--pw-border);
-  background: transparent;
-  color: var(--pw-text-dim);
-  font-family: inherit;
-  font-size: var(--pw-fs-note);
-  cursor: pointer;
-  transition: border-color var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease);
-}
-.pw-nav__dot:hover {
-  border-color: var(--pw-blue-border);
-  color: var(--pw-text);
-}
-.pw-nav__dot.is-answered {
-  border-color: var(--pw-accent);
-  color: var(--pw-accent);
-}
-.pw-nav__dot.is-current {
-  border-color: var(--pw-accent-2);
-  color: var(--pw-accent-2);
-  box-shadow: 0 0 0 2px var(--pw-blue-soft);
-}
-.pw-nav__dot.is-answered.is-current {
-  border-color: var(--pw-accent);
-  color: var(--pw-accent);
-  box-shadow: 0 0 0 2px var(--pw-blue-border);
-}
-
-/* ---------- 逐题模式：上/下一题 ---------- */
-.pw-step-actions {
-  display: flex;
-  gap: 14px;
-  margin-top: 20px;
-}
-
-/* ---------- 底部状态栏（重做本页练习） ---------- */
-.pw-foot {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--pw-border);
-}
-
-/* ---------- 关键词高亮 ---------- */
-.pw-hl {
+/* ---------- 关键词高亮（题库中写 <mark class="cq-hl">） ---------- */
+.cq-hl {
   padding: 0 3px;
   border-radius: 3px;
   background: var(--pw-blue-soft);
@@ -147,6 +25,9 @@
 }
 .cq-empty {
   padding: 28px 32px;
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-radius-card);
 }
 .cq-empty__title {
   margin: 0 0 10px;
@@ -230,10 +111,6 @@
   background: var(--pw-blue-soft);
   border-color: var(--pw-accent);
   color: var(--pw-accent);
-}
-.cq-q__source {
-  color: var(--pw-text-dim);
-  font-size: 14px;
 }
 .cq-q__material {
   margin: 0 0 14px;
@@ -380,20 +257,23 @@
   font-size: var(--pw-fs-body);
   line-height: 1.7;
 }
-.cq-knowledge__title {
-  margin: 0 0 8px;
-  color: var(--pw-text);
-  font-weight: 600;
-}
-.cq-knowledge__list {
-  margin: 0;
-  padding-left: 20px;
+
+/* ---------- 材料分栏（编辑器 cq-cols 契约） ----------
+   每栏由编辑器独立生成；窄屏自动上下堆叠。 */
+.cq-cols {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--pw-text-dim);
-  font-size: var(--pw-fs-note);
-  line-height: 1.6;
+  gap: 18px;
+  margin: 10px 0;
+}
+.cq-col {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+.cq-col img { max-width: 100%; height: auto; }
+.cq-col table { max-width: 100%; }
+@media (max-width: 720px) {
+  .cq-cols { flex-direction: column; }
 }
 
 /* ---------- 设问 ---------- */
@@ -408,11 +288,50 @@
   line-height: 1.7;
 }
 
-/* ---------- 操作按钮 ---------- */
+/* ---------- 卡片动作按钮（公共类，不依赖单课 .btn） ---------- */
 .cq-q__actions {
   margin-top: 18px;
   display: flex;
   gap: 14px;
+}
+.cq-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 28px;
+  font-family: inherit;
+  font-size: var(--pw-fs-body);
+  font-weight: 600;
+  border-radius: var(--pw-radius-btn);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s var(--pw-ease), box-shadow var(--pw-dur) var(--pw-ease),
+    background var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease);
+}
+.cq-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.cq-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cq-btn--primary {
+  background: var(--pw-accent);
+  color: #1a1405;
+}
+.cq-btn--primary:hover:not(:disabled) {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--pw-accent) 55%, transparent);
+}
+.cq-btn--ghost {
+  background: transparent;
+  color: var(--pw-text);
+  border-color: var(--pw-border);
+}
+.cq-btn--ghost:hover:not(:disabled) {
+  border-color: var(--pw-accent-2);
+  color: var(--pw-accent-2);
 }
 
 /* ---------- 富文本 ---------- */
@@ -479,30 +398,7 @@
   font-weight: 700;
 }
 
-/* ---------- 浮层容器（openPracticeWindow 缺省形态：全屏毛玻璃） ---------- */
-.pw-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  overflow: auto;
-  background: var(--pw-overlay-bg);
-  backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.1);
-}
-.pw-panel {
-  position: relative;
-  min-height: 100%;
-  padding: clamp(20px, 4vh, 44px) clamp(18px, 4vw, 64px);
-  background: var(--pw-panel-bg);
-}
-
-/* ---------- 内容宽度约束（超宽屏下保持易读行宽） ---------- */
-.pw-inner {
-  max-width: 1320px;
-  margin: 0 auto;
-}
-
-/* ---------- 左右布局：左 = 题目，右 = 答案与解析 ---------- */
+/* ---------- 卡片内左右布局：左 = 题目，右 = 答案与解析 ---------- */
 .pw-split {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
@@ -528,24 +424,6 @@
   line-height: 1.7;
 }
 
-/* ---------- 全屏沉浸（CSS 铺满视口；Esc/再次点击退出） ---------- */
-.pw.is-fullscreen,
-.pw-panel.is-fullscreen {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  width: auto;
-  height: auto;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  overflow: auto;
-  padding: 32px clamp(16px, 5vw, 72px);
-  background: var(--pw-panel-bg);
-}
-
 /* ---------- 窄屏 ---------- */
 @media (max-width: 900px) {
   .cq-q__options {
@@ -554,17 +432,7 @@
   .cq-q {
     padding: 20px 18px;
   }
-  .pw-overlay {
-    padding: 0;
-  }
-  .pw-panel {
-    padding: 20px 16px;
-  }
   .pw-split {
     grid-template-columns: 1fr;
-  }
-  .pw.is-fullscreen,
-  .pw-panel.is-fullscreen {
-    padding: 20px 16px;
   }
 }

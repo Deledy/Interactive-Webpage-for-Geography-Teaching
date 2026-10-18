@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内容编辑器</title>
+</head>
+<body class="ce-app" data-theme="light" data-density="comfortable" data-nav="on" data-preview="on" data-preview-placement="side">
+
+<header class="ce-header">
+  <div class="ce-header__brand">
+    <span class="ce-header__logo" aria-hidden="true">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h16M4 12h16M4 18h10"/>
+      </svg>
+    </span>
+    <div class="ce-header__titles">
+      <h1 class="ce-header__title" id="app-title">内容编辑器</h1>
+      <span class="ce-header__subtitle" id="context-badge"></span>
+    </div>
+  </div>
+  <span class="ce-header__grow"></span>
+  <div class="ce-header__actions" id="header-actions"></div>
+</header>
+
+<section class="ce-guide" id="guide" hidden aria-label="上手步骤"></section>
+
+<div class="ce-toolbar">
+  <p class="ce-status" id="status-bar" role="status" aria-live="polite"></p>
+  <span class="ce-toolbar__grow"></span>
+  <button class="ce-iconbtn ce-iconbtn--plain" type="button" data-act="show-guide" id="guide-btn" title="上手步骤" aria-label="上手步骤" hidden>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.3 2.3c-.6.3-.9.8-.9 1.5v.4"/><path d="M12 17h.01"/>
+    </svg>
+  </button>
+  <div class="ce-toolbar__group" id="panel-toggles"></div>
+  <button class="ce-iconbtn" type="button" data-act="toggle-theme" id="theme-btn" title="切换主题" aria-label="切换主题">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/>
+    </svg>
+  </button>
+</div>
+
+<main class="ce-shell">
+  <aside class="ce-panel ce-panel--nav" id="panel-nav">
+    <div class="ce-panel__head"><h2 class="ce-panel__title" id="nav-title">分组</h2></div>
+    <div class="ce-nav" id="tree"></div>
+    <p class="ce-note" id="tree-status"></p>
+  </aside>
+
+  <section class="ce-panel ce-panel--editor" id="panel-editor">
+    <div class="ce-panel__head"><h2 class="ce-panel__title" id="editor-title">编辑</h2></div>
+    <div id="editor"></div>
+  </section>
+
+  <section class="ce-panel ce-panel--preview" id="panel-preview">
+    <div class="ce-panel__head">
+      <h2 class="ce-panel__title" id="preview-title">预览</h2>
+      <span class="ce-panel__grow"></span>
+      <button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="collapse-preview" hidden id="preview-collapse-btn">收起</button>
+    </div>
+    <div class="ce-preview" id="preview"></div>
+    <details class="ce-drawer">
+      <summary id="output-summary">输出预览 / 手动复制</summary>
+      <textarea class="ce-textarea ce-code" id="output" readonly aria-label="输出内容"></textarea>
+    </details>
+  </section>
+</main>
+
+<div class="ce-toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="ce-dialog" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+  <div class="ce-dialog__mask" data-act="dialog-cancel"></div>
+  <div class="ce-dialog__panel" role="document">
+    <h3 class="ce-dialog__title" id="dialog-title"></h3>
+    <div class="ce-dialog__body" id="dialog-body"></div>
+    <div class="ce-dialog__foot">
+      <button class="ce-btn" type="button" id="dialog-cancel" data-act="dialog-cancel">取消</button>
+      <button class="ce-btn ce-btn--primary" type="button" id="dialog-confirm" data-act="dialog-confirm">确定</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="structure-file" hidden>
+<input type="file" id="data-file" hidden>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>

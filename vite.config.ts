@@ -15,11 +15,16 @@ const projectRoot = fileURLToPath(new URL('.', import.meta.url))
  * - 单课独立开发：npm run dev 直接打开该课页面；npm run build 产出该课 dist/。
  * - 多课构建：`npm run build:all` / `npm run build:lesson -- --lesson=<课>` 由
  *   scripts/build.mjs 逐课调用本配置构建（纯工程操作，不调用任何 AI API）。
- * - 分发模式统一为"单文件内联 + 大资源外置"（参考 三角数据图互动网页 项目的成功方案）：
- *   viteSingleFile 将 JS/CSS 全部内联进 index.html；assetsInlineLimit 使图片/字体 base64
+ * - 分发模式统一为"单文件内联 + 资源外置"（参考 三角数据图互动网页 项目的成功方案）：
+ *   viteSingleFile 将 JS/CSS 全部内联进 index.html；assetsInlineLimit 使小图/字体 base64
  *   内联，保证 file:// 双击打开即可使用（@font-face 等子资源不被 CORS 拦截）；
- *   视频/3D 等超大资源放入课程 public/ 目录，构建时原样复制到 dist/（不内联，<video>
- *   在 file:// 下可播放）。构建后由 scripts/build.mjs 自动打包为 zip 分发。
+ *   视频/3D 等超大资源放入课程 public/assets/ 目录，构建时原样复制到 dist/assets/（不内联，
+ *   <video> 在 file:// 下可播放）。dist 根目录只保留主课程 index.html。
+ * - 产物结构（分发物）：
+ *     dist/index.html         主课程（JS/CSS 全部内联）
+ *     dist/assets/            全部外置资源（图片/视频/纹理等）
+ *     dist/quiz-editor/       题目编辑器、题库数据、结构清单与配色表
+ *   构建后由 scripts/build.mjs 自动打包为 zip 分发。
  */
 function resolveLessonDir(): string {
   const fromEnv = process.env.VITE_LESSON?.trim()
@@ -37,18 +42,26 @@ function resolveLessonDir(): string {
 const lessonDir = resolveLessonDir()
 
 /**
- * 开发期把 shared/ 下的离线编辑器挂到 /custom-quiz-editor.html，
- * 使主页面「教师：配置题目」入口在 `npm run dev` 下同样可用（单一真源，不复制副本）。
- * 构建产物由 scripts/build.mjs 复制同名文件到 dist/。
+ * 开发期把构建好的离线编辑器（shared/quiz/editor/build/index.html）挂到
+ * /quiz-editor/custom-quiz-editor.html，并把它需要的本课配色表挂到
+ * /quiz-editor/quiz-theme.css（编辑器内部按同级相对路径加载这些文件）。
+ * 编辑器由 `npm run build:editor` 生成（predev / build 已自动执行）。
  */
 function sharedEditorDevPlugin(): Plugin {
-  const editorFile = join(projectRoot, 'shared', 'custom-quiz-editor', 'index.html')
+  const editorFile = join(projectRoot, 'shared', 'quiz', 'editor', 'build', 'index.html')
+  const themeFile = join(projectRoot, 'lessons', lessonDir, 'src', 'styles', 'quiz-theme.css')
   return {
     name: 'shared-quiz-editor-dev',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const pathname = (req.url || '').split('?')[0]
-        if (pathname !== '/custom-quiz-editor.html' || !existsSync(editorFile)) return next()
+        if (pathname === '/quiz-editor/quiz-theme.css') {
+          if (!existsSync(themeFile)) return next()
+          res.setHeader('Content-Type', 'text/css; charset=utf-8')
+          res.end(readFileSync(themeFile))
+          return
+        }
+        if (pathname !== '/quiz-editor/custom-quiz-editor.html' || !existsSync(editorFile)) return next()
         res.setHeader('Content-Type', 'text/html; charset=utf-8')
         res.end(readFileSync(editorFile))
       })
@@ -72,14 +85,15 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2018',
     chunkSizeWarningLimit: 800,
-    // 大资源（如图片）不内联时输出到 dist 根目录，而非默认的 dist/assets/。
-    // 原因：vite-plugin-singlefile 会把 JS 内联进 index.html，此时 JS 里由 Vite 生成的
-    // `new URL("文件名.png", import.meta.url)` 相对路径会基于 index.html 解析；
-    // 若资源仍在 assets/ 子目录，file:// 双击打开会 404。放根目录可保证相对路径正确解析。
+    // 大资源先输出到 dist 根目录。原因：vite-plugin-singlefile 会把 JS 内联进 index.html，
+    // 此时 JS 里由 Vite 生成的 `new URL("文件名.png", import.meta.url)` 是**裸文件名**
+    // （不包含 assets 目录前缀），相对路径只能基于 index.html 解析。
+    // 构建完成后由 scripts/build.mjs 统一把根目录资源移入 dist/assets/ 并改写 index.html
+    // 内的引用，兼顾"目录整洁"与 file:// 双击可用。
     assetsDir: '',
     // 字体（woff2/ttf/otf）一律 base64 内联进单文件：file:// 下 @font-face 引用外部字体文件
     // 会被 Chrome/Edge 以 CORS 拦截，必须内联才能保证双击离线可用；
-    // 其余资源仍按 4KB 阈值内联，大于 4KB 的图片输出为独立文件（见上方 assetsDir: ''，落在 dist 根目录）
+    // 其余资源仍按 4KB 阈值内联，大于 4KB 的图片输出为独立文件（构建后统一移入 dist/assets/）
     // （独立文件在 file:// 协议下通过 <img> 标签加载正常，不受 CORS 影响）
     assetsInlineLimit: (filePath, content) => {
       if (/\.(woff2?|ttf|otf)$/i.test(filePath)) return true

@@ -1,14 +1,14 @@
 /* ============================================================
-   随堂练习数据仓库（可编辑真源：public/practice-data.js）
+   随堂练习数据仓库（可编辑真源：public/quiz-editor/practice-data.js）
    ------------------------------------------------------------
    - 加载方式与 custom-quiz.js 一致：动态注入经典 <script src>，由数据文件把内容挂到
      window.__PRACTICE_DATA__。刻意不用 fetch/JSON——file:// 双击分发时 fetch 会被 CORS 拦截。
    - 数据真源优先级：window.__PRACTICE_DATA__（外置，可编辑）→ lessonData.practices（源码内置回退）。
-   - 结构校验：统一复用 shared/practice-window/src/validate.ts（单一真源，不在本文件重写）。
+   - 结构校验：统一复用 shared/quiz/runtime/src/validate.ts（单一真源，不在本文件重写）。
    - 运行时无需读取 lesson-manifest.js：模块 id 由消费方从段元素（closest('section.section').id）直接取得。
    ============================================================ */
 import type { CqData, PracticeData, PracticeModule } from '../types'
-import { DATA_VERSION, validateModulePractice } from '../../../../shared/practice-window/src/validate'
+import { DATA_VERSION, validateModulePractice } from '../../../../shared/quiz/runtime/src/validate'
 
 const PRACTICE_GLOBAL = '__PRACTICE_DATA__'
 
@@ -28,7 +28,7 @@ function warnVersion(data: PracticeData): void {
   }
 }
 
-/** 加载 ./practice-data.js（幂等；缺失返回 null） */
+/** 加载 ./quiz-editor/practice-data.js（幂等；缺失返回 null） */
 export function loadPracticeData(): Promise<PracticeData | null> {
   if (loaded) return Promise.resolve(loaded)
   if (loading) return loading
@@ -42,7 +42,7 @@ export function loadPracticeData(): Promise<PracticeData | null> {
 
   loading = new Promise<PracticeData | null>((resolve) => {
     const script = document.createElement('script')
-    script.src = './practice-data.js'
+    script.src = './quiz-editor/practice-data.js'
     script.async = true
     script.onload = () => {
       const data = (practiceGlobal()[PRACTICE_GLOBAL] as PracticeData | undefined) ?? null

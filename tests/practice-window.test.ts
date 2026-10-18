@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { createPracticeView, openPracticeWindow } from '../shared/practice-window/src/practiceWindow'
-import { renderMarkdown } from '../shared/practice-window/src/markdown'
-import { validateQuizData } from '../shared/practice-window/src/validate'
+import { createPracticeView, openPracticeWindow } from '../shared/quiz/runtime/src/practiceWindow'
+import { renderRichText } from '../shared/quiz/content/richText'
+import { validateQuizData } from '../shared/quiz/runtime/src/validate'
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -14,9 +14,9 @@ const twoChoices = [
 ]
 
 describe('PracticeWindow 组件', () => {
-  it('markdown：==关键词== 渲染为 mark.pw-hl', () => {
-    const html = renderMarkdown('材料中有 ==关键词== 高亮')
-    expect(html).toContain('<mark class="pw-hl">关键词</mark>')
+  it('富文本：HTML 关键词高亮经清洗后保留 mark.cq-hl', () => {
+    const html = renderRichText('<p>材料中有 <mark class="cq-hl">关键词</mark> 高亮</p>')
+    expect(html).toContain('<mark class="cq-hl">关键词</mark>')
   })
 
   it('列表模式：渲染题号点阵导航与正计时器', () => {
@@ -158,7 +158,7 @@ describe('PracticeWindow 组件', () => {
     view.destroy()
   })
 
-  it('左右布局（综合题）：左栏设问、右栏展开参考答案与评分标准', () => {
+  it('左右布局（主观题）：左栏设问、右栏展开参考答案与解析', () => {
     const view = createPracticeView({
       questions: [
         { type: 'essay', material: '材料', stems: ['（1）问一'], referenceAnswer: '参考答案', criteria: ['标准1'] }
@@ -170,7 +170,7 @@ describe('PracticeWindow 组件', () => {
 
     view.root.querySelector<HTMLButtonElement>('.cq-reveal')!.click()
     expect(view.root.querySelector('.pw-col--side .cq-block--answer')).not.toBeNull()
-    expect(view.root.querySelector('.pw-col--side .cq-block--criteria')).not.toBeNull()
+    expect(view.root.querySelector('.pw-col--side .cq-block--criteria')).toBeNull()
     view.destroy()
   })
 })

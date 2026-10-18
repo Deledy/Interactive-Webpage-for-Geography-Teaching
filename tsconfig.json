@@ -16,6 +16,7 @@
   },
   "include": [
     "vite.config.ts",
+    "vite.editor.config.ts",
     "vitest.config.ts",
     "lessons/**/src",
     "lessons/**/index.html",

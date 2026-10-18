@@ -1,33 +1,25 @@
 /* ============================================================
    PracticeWindow · 通用练习窗口组件
    ------------------------------------------------------------
-   - 与课程无关：数据用统一 schema（types.ts），视觉全走 --pw-* 令牌；
+   - 与课程无关：数据用统一 schema（content/types.ts），视觉全走 --pw-* 令牌；
+   - 单题卡片结构与富文本渲染由内容层（content/）统一提供，本文件只管窗口与交互；
    - 一份渲染器，两种容器：openPracticeWindow 缺省建浮层，传入 container 则页内挂载；
    - 交互状态机：单选点选即判 / 多选提交判定 / 综合题展开参考答案；
    - 窗口骨架：标题 + 全屏/关闭 + 「第 x / n 题」与题号点阵 + 底部「重做本页练习」；
    - 计时：正计时（timer）或限时倒计时（limitSeconds，不锁定、不阻断）。
-   详见 shared/practice-window/docs/通用练习窗口_开发文档.md。
+   详见 shared/quiz/runtime/docs/通用练习窗口_开发文档.md。
    ============================================================ */
-import type { CqChoice, CqData, CqEssay, CqQuestion, CqSection } from './types'
-import { escapeHtml, inlineMarkdown, renderMarkdown } from './markdown'
+import type { CqData, CqQuestion, CqSection } from '../../content/types'
+import { renderQuestionCard, type CardState } from '../../content/renderCard'
+import { escapeHtml, renderInlineRich } from '../../content/richText'
 import { validateQuizData } from './validate'
 import '../styles/default-tokens.css'
+import '../../content/card.css'
 import '../styles/practiceWindow.css'
-
-const CHOICE_BADGE: Record<'single' | 'multiple', string> = {
-  single: '单选题',
-  multiple: '多选题'
-}
-
-interface ItemState {
-  selected: string[]
-  submitted: boolean
-  revealed: boolean
-}
 
 export interface PracticeViewOptions {
   title?: string
-  /** 顶部引导语（支持行内 Markdown） */
+  /** 顶部引导语（行内富文本：HTML 清洗，或纯文本转义） */
   subtitle?: string
   /** 分节题目（课后练习用） */
   sections?: CqSection[]
@@ -69,6 +61,13 @@ export interface PracticeWindowOptions extends PracticeViewOptions {
   data?: CqData | null
   /** 页内挂载容器；缺省 = 组件内置浮层 */
   container?: HTMLElement
+  /**
+   * 展示形态（缺省由 container 推断）：
+   * - 'overlay'：铺满视口（真实课程使用）；
+   * - 'inline'：只把题目内容挂进容器（M10 页内区块）；
+   * - 'embedded'：窗口骨架铺满指定画布（编辑器整窗预览，需同时传 container）。
+   */
+  display?: 'overlay' | 'inline' | 'embedded'
 }
 
 export interface PracticeWindowHandle {
@@ -77,20 +76,6 @@ export interface PracticeWindowHandle {
   readonly overlay: HTMLElement | null
   reset(): void
   close(): void
-}
-
-function answerKeys(question: CqChoice): string[] {
-  return Array.isArray(question.answer) ? question.answer : [question.answer]
-}
-
-function isChoiceCorrect(question: CqChoice, selected: string[]): boolean {
-  const expected = answerKeys(question).slice().sort()
-  const actual = selected.slice().sort()
-  return expected.length === actual.length && expected.every((key, index) => key === actual[index])
-}
-
-function essayStems(question: CqEssay): string[] {
-  return Array.isArray(question.stems) ? question.stems : question.stems ? [question.stems] : []
 }
 
 function formatClock(seconds: number): string {
@@ -127,7 +112,7 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
   const countdown = typeof options.limitSeconds === 'number' && options.limitSeconds > 0
   const showTimer = countdown || !!options.timer
 
-  const states = new Map<string, ItemState>()
+  const states = new Map<string, CardState>()
   let step = 0
   let clock = countdown ? Math.floor(options.limitSeconds as number) : 0
   let timerId: number | null = null
@@ -146,7 +131,7 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
   flat.forEach((q, i) => globalIndex.set(q, i))
   const keyOf = (q: CqQuestion): string => `q-${globalIndex.get(q) ?? 0}`
 
-  function stateOf(key: string): ItemState {
+  function stateOf(key: string): CardState {
     let s = states.get(key)
     if (!s) {
       s = { selected: [], submitted: false, revealed: false }
@@ -155,165 +140,15 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
     return s
   }
 
-  /* ---------------- 题目渲染 ---------------- */
-
-  function optionClass(question: CqChoice, key: string, optionKey: string): string {
-    const state = stateOf(key)
-    const cls = ['cq-opt']
-    if (!state.submitted) {
-      if (state.selected.includes(optionKey)) cls.push('is-selected')
-      return cls.join(' ')
-    }
-    const correct = answerKeys(question)
-    if (correct.includes(optionKey)) cls.push('is-correct')
-    else if (state.selected.includes(optionKey)) cls.push('is-wrong')
-    else cls.push('is-dim')
-    return cls.join(' ')
-  }
-
-  function choiceHtml(question: CqChoice, key: string): string {
-    const modeOne = question.mode === 'multiple' ? 'multiple' : 'single'
-    const state = stateOf(key)
-    const revealed = state.submitted
-    const options = question.options
-      .map(
-        (opt) =>
-          `<button type="button" class="${optionClass(question, key, opt.key)}" data-cq-opt="${key}" data-key="${opt.key}"${
-            revealed ? ' disabled' : ''
-          }${state.selected.includes(opt.key) ? ' aria-pressed="true"' : ' aria-pressed="false"'}>
-          <span class="cq-opt__key">${escapeHtml(opt.key)}</span>
-          <span class="cq-opt__text">${inlineMarkdown(opt.text)}</span>
-        </button>`
-      )
-      .join('')
-
-    const right = isChoiceCorrect(question, state.selected)
-    const verdict = !revealed
-      ? ''
-      : `<div class="cq-verdict ${right ? 'is-right' : 'is-wrong'}">
-        <span class="cq-verdict__title">${right ? '回答正确' : '回答错误'}</span>
-        <span class="cq-verdict__key">正确答案：<b>${answerKeys(question).join('')}</b></span>
-      </div>`
-
-    const detail = !revealed
-      ? ''
-      : `<div class="cq-detail">
-        ${
-          question.analysis
-            ? `<section class="cq-block cq-block--analysis">
-                <h4 class="cq-block__title">解析</h4>
-                <div class="cq-block__body">${renderMarkdown(question.analysis)}</div>
-              </section>`
-            : ''
-        }
-        ${
-          question.knowledge && (question.knowledge.title || question.knowledge.items?.length)
-            ? `<section class="cq-block cq-block--knowledge">
-                <h4 class="cq-block__title">知识归纳</h4>
-                ${question.knowledge.title ? `<p class="cq-knowledge__title">${inlineMarkdown(question.knowledge.title)}</p>` : ''}
-                <ul class="cq-knowledge__list">${(question.knowledge.items ?? [])
-                  .map((item) => `<li>${inlineMarkdown(item)}</li>`)
-                  .join('')}</ul>
-              </section>`
-            : ''
-        }
-      </div>`
-
-    const submit =
-      modeOne === 'multiple' && !revealed
-        ? `<div class="cq-q__actions">
-          <button type="button" class="btn btn--primary cq-submit" data-cq-submit="${key}"${
-            state.selected.length ? '' : ' disabled'
-          }>提交答案</button>
-        </div>`
-        : ''
-
-    const awaiting = revealed
-      ? ''
-      : `<div class="cq-q__awaiting">${
-          modeOne === 'multiple' ? '勾选选项后点「提交答案」' : '选择一个选项'
-        }，这里将显示判定结果、正确答案与解析。</div>`
-
-    return `<article class="cq-q" data-q="${key}" data-type="choice">
-    <div class="cq-q__head">
-      <span class="cq-q__no">${(globalIndex.get(question) ?? 0) + 1}</span>
-      <span class="cq-q__badge">${CHOICE_BADGE[modeOne]}</span>
-      ${question.source ? `<span class="cq-q__source">${escapeHtml(question.source)}</span>` : ''}
-    </div>
-    <div class="pw-split">
-      <div class="pw-col pw-col--main">
-        ${question.material ? `<div class="cq-q__material">${renderMarkdown(question.material)}</div>` : ''}
-        <p class="cq-q__stem">${inlineMarkdown(question.stem)}</p>
-        <div class="cq-q__options">${options}</div>
-        ${submit}
-      </div>
-      <div class="pw-col pw-col--side">${verdict}${detail}${awaiting}</div>
-    </div>
-  </article>`
-  }
-
-  function essayHtml(question: CqEssay, key: string): string {
-    const state = stateOf(key)
-    const stems = essayStems(question)
-
-    const detail = !state.revealed
-      ? ''
-      : `<div class="cq-detail">
-        ${
-          question.referenceAnswer
-            ? `<section class="cq-block cq-block--answer">
-                <h4 class="cq-block__title">参考答案</h4>
-                <div class="cq-block__body">${renderMarkdown(question.referenceAnswer)}</div>
-              </section>`
-            : ''
-        }
-        ${
-          question.analysis
-            ? `<section class="cq-block cq-block--analysis">
-                <h4 class="cq-block__title">解析</h4>
-                <div class="cq-block__body">${renderMarkdown(question.analysis)}</div>
-              </section>`
-            : ''
-        }
-        ${
-          question.criteria?.length
-            ? `<section class="cq-block cq-block--criteria">
-                <h4 class="cq-block__title">评分标准</h4>
-                <ol class="cq-list cq-list--ordered">${question.criteria
-                  .map((item) => `<li>${inlineMarkdown(item)}</li>`)
-                  .join('')}</ol>
-              </section>`
-            : ''
-        }
-      </div>`
-
-    const reveal = `<div class="cq-q__actions">
-      <button type="button" class="btn ${state.revealed ? 'btn--ghost' : 'btn--primary'} cq-reveal" data-cq-reveal="${key}">
-        ${state.revealed ? '收起参考答案' : '查看参考答案'}
-      </button>
-    </div>`
-
-    return `<article class="cq-q" data-q="${key}" data-type="essay">
-    <div class="cq-q__head">
-      <span class="cq-q__no">${(globalIndex.get(question) ?? 0) + 1}</span>
-      <span class="cq-q__badge cq-q__badge--essay">综合题</span>
-      ${question.source ? `<span class="cq-q__source">${escapeHtml(question.source)}</span>` : ''}
-    </div>
-    <div class="pw-split">
-      <div class="pw-col pw-col--main">
-        ${question.material ? `<div class="cq-q__material">${renderMarkdown(question.material)}</div>` : ''}
-        ${stems.length ? `<ol class="cq-stems">${stems.map((stem) => `<li>${inlineMarkdown(stem)}</li>`).join('')}</ol>` : ''}
-      </div>
-      <div class="pw-col pw-col--side">
-        ${reveal}
-        ${state.revealed ? detail : '<div class="cq-q__awaiting">点击上方按钮，查看参考答案、解析与评分标准。</div>'}
-      </div>
-    </div>
-  </article>`
-  }
+  /* ---------------- 题目渲染（结构由内容层统一提供） ---------------- */
 
   function questionHtml(question: CqQuestion, key: string): string {
-    return question.type === 'essay' ? essayHtml(question, key) : choiceHtml(question, key)
+    return renderQuestionCard({
+      question,
+      key,
+      index: globalIndex.get(question) ?? 0,
+      state: stateOf(key)
+    })
   }
 
   /* ---------------- 窗口骨架 ---------------- */
@@ -429,11 +264,11 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
       .map((sec) => {
         const qs = (sec.questions ?? []).map((q) => questionHtml(q, keyOf(q))).join('')
         return `<section class="cq-sec">${
-          sec.title ? `<h3 class="cq-sec__title">${inlineMarkdown(sec.title)}</h3>` : ''
+          sec.title ? `<h3 class="cq-sec__title">${escapeHtml(sec.title)}</h3>` : ''
         }<div class="cq-sec__qs">${qs}</div></section>`
       })
       .join('')
-    const intro = options.subtitle ? `<p class="cq-intro">${inlineMarkdown(options.subtitle)}</p>` : ''
+    const intro = options.subtitle ? `<p class="cq-intro">${renderInlineRich(options.subtitle)}</p>` : ''
     root.innerHTML = `<div class="pw-inner">${headHtml()}${navHtml()}<div class="pw-body">${intro}${body}</div>${footHtml()}</div>`
     syncNav()
   }
@@ -572,7 +407,8 @@ let activeWindow: PracticeWindowHandle | null = null
 /**
  * 打开练习窗口：
  * - 未传 `container` → 组件自建**全屏毛玻璃浮层**（铺满视口、「关闭」按钮 / Esc 退出、页面滚动锁定）；
- * - 传入 `container` → 页内挂载（保持页面既有导航入口体验）。
+ * - 传入 `container` → 页内挂载（保持页面既有导航入口体验）；
+ * - `display: 'embedded'` + `container` → 浮层铺满该容器（编辑器整窗预览，不锁定页面滚动）。
  * 返回句柄；重复调用会自动关闭上一个窗口。
  */
 export function openPracticeWindow(options: PracticeWindowOptions): PracticeWindowHandle {
@@ -605,8 +441,11 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
     emptyIssues: issues
   }
 
+  // 嵌入画布：窗口骨架铺满指定容器（不走页内挂载分支）
+  const embedded = options.display === 'embedded' && !!options.container
+
   // 页内挂载
-  if (options.container) {
+  if (options.container && !embedded) {
     const view = createPracticeView({ ...base, fullscreen: options.fullscreen ?? true })
     options.container.appendChild(view.root)
     let closed = false
@@ -626,14 +465,16 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
     return handle
   }
 
-  // 内置浮层：全屏毛玻璃（铺满视口、对页面内容有明显遮盖）
+  // 浮层：默认铺满视口；嵌入模式下铺满指定画布（编辑器整窗预览）
+  const host = embedded ? (options.container as HTMLElement) : document.body
   const overlay = document.createElement('div')
-  overlay.className = 'pw-overlay'
+  overlay.className = embedded ? 'pw-overlay pw-overlay--embedded' : 'pw-overlay'
   overlay.setAttribute('data-pw-overlay', '')
   const panel = document.createElement('div')
   panel.className = 'pw-panel'
   panel.setAttribute('role', 'dialog')
-  panel.setAttribute('aria-modal', 'true')
+  // 嵌入画布属于页面内的一块预览区域，不是真正的模态框
+  if (!embedded) panel.setAttribute('aria-modal', 'true')
   overlay.appendChild(panel)
 
   let closed = false
@@ -658,8 +499,9 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
   }
   panel.appendChild(view.root)
 
+  // 只有真正的全屏浮层才锁定页面滚动；嵌入预览不能影响编辑器本身
   const previousOverflow = document.body.style.overflow
-  document.body.style.overflow = 'hidden'
+  if (!embedded) document.body.style.overflow = 'hidden'
 
   function onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') close()
@@ -671,13 +513,13 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
     view.destroy()
     document.removeEventListener('keydown', onKeydown)
     overlay.remove()
-    document.body.style.overflow = previousOverflow
+    if (!embedded) document.body.style.overflow = previousOverflow
     if (activeWindow === handle) activeWindow = null
     notifyClose?.()
   }
 
   document.addEventListener('keydown', onKeydown)
-  document.body.appendChild(overlay)
+  host.appendChild(overlay)
 
   handle = {
     root: view.root,

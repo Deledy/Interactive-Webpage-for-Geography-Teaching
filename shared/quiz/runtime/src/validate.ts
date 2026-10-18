@@ -9,10 +9,10 @@
    - 无任何有效题目时 data = null（消费方渲染空态，不白屏）。
    本文件是「统一 schema 校验」的单一真源，课程侧（practiceStore 等）应复用而非重写。
    ============================================================ */
-import type { CqChoice, CqData, CqEssay, CqQuestion, CqSection, PracticeModule } from './types'
+import type { CqChoice, CqData, CqEssay, CqQuestion, CqSection, PracticeModule } from '../../content/types'
 
-/** 当前组件支持的数据版本 */
-export const DATA_VERSION = 1
+/** 当前组件支持的数据版本（v2：富文本字段为 HTML） */
+export const DATA_VERSION = 2
 
 function validateChoiceQuestion(question: CqChoice, label: string, issues: string[]): CqChoice | null {
   const options = (question.options ?? []).filter((option) => option && option.key)
@@ -24,7 +24,8 @@ function validateChoiceQuestion(question: CqChoice, label: string, issues: strin
     issues.push(`${label}（选择题）题干 / 选项 / 答案不完整，已跳过`)
     return null
   }
-  return { ...question, options, answer: Array.isArray(question.answer) ? answers : answers[0] }
+  /* 编辑器只产出单字母答案；数组仅用于兼容遗留多选数据 */
+  return { ...question, options, answer: question.mode === 'multiple' ? answers : answers[0] }
 }
 
 function validateEssayQuestion(question: CqEssay, label: string, issues: string[]): CqEssay | null {

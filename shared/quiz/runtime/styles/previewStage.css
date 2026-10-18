@@ -1,0 +1,33 @@
+/* ============================================================
+   预览画布 · 1920 × 1080
+   ------------------------------------------------------------
+   给编辑器预览用的固定设计画布：内部按 1920×1080 排版，
+   整体等比缩放后嵌入编辑器面板，因此预览看到的就是真实窗口在
+   设计尺寸下的样子（不随编辑器面板宽度改变排版）。
+
+   - .pq-stage  ：外层，负责占位与裁剪（高度 = 画布高度 × 缩放比）；
+   - .pq-canvas ：1920×1080 真实尺寸，用 transform 缩放；
+   - .pq-mount  ：position: relative，嵌入模式的练习窗口挂在这里。
+
+   颜色取 --pw-* 令牌；未提供时用中性深色兜底。
+   ============================================================ */
+
+.pq-stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--pw-radius-card, 16px);
+  background: var(--pw-preview-bg, radial-gradient(circle at 50% 0%, #16204a 0%, #070b1c 70%));
+}
+
+.pq-canvas {
+  position: relative;
+  transform-origin: top left;
+  overflow: hidden;
+}
+
+.pq-mount {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}

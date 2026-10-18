@@ -1,11 +1,11 @@
-# 内容编辑器 · UI 美化与交互体验优化方案
+﻿# 内容编辑器 · UI 美化与交互体验优化方案
 
 > 本文档记录本轮「视觉规范统一 + 用户引导补齐 + 操作路径梳理 + 状态反馈完善」的改造方案与落地细节。
 > 设计令牌与组件清单的**权威定义**见 [通用化UI设计方案.md](./通用化UI设计方案.md)（本文改动已同步回该文档）。
 
 | 项目 | 内容 |
 | --- | --- |
-| 组件 | 内容编辑器（`shared/custom-quiz-editor/index.html`，单文件零依赖） |
+| 组件 | 内容编辑器（`shared/quiz/editor/index.html`，单文件零依赖） |
 | 文档版本 | v1.0 |
 | 状态 | 方案定稿 + 已按本方案改造代码（jsdom 回归 56/56 通过） |
 | 上一轮 | 通用性重构（去业务化 / 中性令牌 / 配置注入），见《通用化UI设计方案》 |
@@ -290,9 +290,9 @@
 
 | 文件 | 改动 |
 | --- | --- |
-| `shared/custom-quiz-editor/index.html` | 本轮全部视觉与交互改造（令牌块、组件样式、顶栏/工具条/引导条结构、菜单、校验定位、焦点陷阱、loading 态） |
-| `shared/custom-quiz-editor/docs/通用化UI设计方案.md` | 同步令牌与组件清单的新值 |
-| `shared/custom-quiz-editor/docs/UI优化方案_视觉与交互.md` | 本文档（新增） |
+| `shared/quiz/editor/index.html` | 本轮全部视觉与交互改造（令牌块、组件样式、顶栏/工具条/引导条结构、菜单、校验定位、焦点陷阱、loading 态） |
+| `shared/quiz/editor/docs/通用化UI设计方案.md` | 同步令牌与组件清单的新值 |
+| `shared/quiz/editor/docs/UI优化方案_视觉与交互.md` | 本文档（新增） |
 
 数据文件、构建脚本、`vite.config.ts`、单课页面**均未改动**。
 

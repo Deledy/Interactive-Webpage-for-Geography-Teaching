@@ -30,6 +30,20 @@ const DOC_REQUIRED = [
 const TEXT_EXTS = new Set(['.html', '.ts', '.css', '.js', '.json', '.md'])
 const REMOTE_URL_RE = /https?:\/\/[^\s"'<>()]+/g
 
+/**
+ * 答题卡片配色表必需令牌（对齐 shared/quiz/docs 设计说明 §6.2）。
+ * 缺项即报错，避免运行时静默回退到中性默认色。
+ */
+const REQUIRED_THEME_TOKENS = [
+  '--pw-accent', '--pw-accent-2', '--pw-accent-text',
+  '--pw-success', '--pw-error', '--pw-warn',
+  '--pw-surface', '--pw-border', '--pw-panel-bg', '--pw-overlay-bg', '--pw-material-bg',
+  '--pw-text', '--pw-text-dim',
+  '--pw-radius-card', '--pw-radius-btn',
+  '--pw-font', '--pw-fs-body', '--pw-fs-note', '--pw-fs-h3',
+  '--pw-dur', '--pw-ease', '--pw-backdrop-blur'
+]
+
 const errors = []
 const warnings = []
 
@@ -62,6 +76,21 @@ function scanRemoteUrls(lessonRoot) {
   return found
 }
 
+/** 该课源码是否引用了共享练习运行时 */
+function usesQuizRuntime(lessonRoot) {
+  const srcDir = join(lessonRoot, 'src')
+  if (!existsSync(srcDir)) return false
+  const walk = (dir) =>
+    readdirSync(dir, { withFileTypes: true }).some((entry) => {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) return walk(full)
+      return entry.isFile() &&
+        /\.(ts|js)$/.test(entry.name) &&
+        readFileSync(full, 'utf-8').includes('shared/quiz/runtime')
+    })
+  return walk(srcDir)
+}
+
 function checkLesson(name) {
   const lessonRoot = join(lessonsRoot, name)
   let lesson
@@ -88,6 +117,20 @@ function checkLesson(name) {
     if (!existsSync(join(lessonRoot, path))) {
       errors.push(`[${name}] resources 中登记的资源不存在：${path}`)
     }
+  }
+
+  // 答题卡片配色表（错误）：使用共享运行时必须有，且必需令牌齐全
+  const themePath = join(lessonRoot, 'src', 'styles', 'quiz-theme.css')
+  if (existsSync(themePath)) {
+    const css = readFileSync(themePath, 'utf-8')
+    const missingTokens = REQUIRED_THEME_TOKENS.filter(
+      (token) => !new RegExp(token.replace(/-/g, '\\-') + '\\s*:').test(css)
+    )
+    if (missingTokens.length > 0) {
+      errors.push(`[${name}] 配色表缺少令牌：${missingTokens.join('、')}`)
+    }
+  } else if (usesQuizRuntime(lessonRoot)) {
+    errors.push(`[${name}] 使用共享练习运行时，但缺少 src/styles/quiz-theme.css`)
   }
 
   // 远程 URL 引用（宽松：仅告警）
