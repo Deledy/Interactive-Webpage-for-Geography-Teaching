@@ -69,10 +69,12 @@ import './editor.css'
       statusReady: '结构已就绪',
       statusMissing: '未找到结构清单文件',
       sectionTitlePlaceholder: '分区标题',
-      itemCount: '{n} 条',
+      itemCount: '{n} 组',
+      questionCount: '{n} 道题目',
       addItem: '新增{k}',
-      addSection: '新增分区',
-      removeSection: '删除分区',
+      addGroup: '新增题组',
+      addSection: '新增题组',
+      removeSection: '删除题组',
       addOption: '新增{f}',
 
       actions: {
@@ -91,23 +93,23 @@ import './editor.css'
         label: '上手步骤',
         dismiss: '关闭引导',
         reopen: '上手步骤',
-        steps: ['载入结构', '选择分组', '填写内容', '校验并导出'],
+        steps: ['载入结构', '选择分组', '新增题组', '校验并导出'],
         hints: [
           '导入结构文件，确定有哪些分组',
           '在左侧点选一个分组',
-          '新增条目并填写字段',
+          '新增题组，填写材料并添加题目',
           '通过校验后保存或导出'
         ],
         nextImport: '导入结构文件',
         nextSelect: '选择第一个分组',
-        nextAdd: '新增{k}',
+        nextAdd: '新增题组',
         nextValidate: '开始校验',
         nextExport: '导出数据文件'
       },
 
       fields: {
-        material: '背景',
-        stem: '正文',
+        material: '材料',
+        stem: '题干',
         options: '候选项',
         optionPlaceholder: '候选项内容',
         answer: '选定项',
@@ -119,26 +121,26 @@ import './editor.css'
       },
 
       placeholders: {
-        material: '可选，为条目补充背景材料',
-        stem: '填写本条目要展示的正文内容',
+        material: '填写本组共用的材料，组内题目将共用这道材料',
+        stem: '填写本题的题干内容',
         analysis: '可选，说明判断依据或补充解释',
         stems: '每行一个问题，将渲染为有序列表',
         reference: '填写参考内容，可直接使用 HTML（如 <strong>加粗</strong>）',
         sectionTitle: '分区标题'
       },
 
-      kinds: { choice: '选择题', essay: '主观题' },
+      kinds: { choice: '选择题', essay: '综合题' },
 
       itemActions: { up: '上移', down: '下移', duplicate: '复制', remove: '删除' },
 
       sectionTitles: {
         content: '分组设置',
-        items: '条目'
+        items: '题组'
       },
 
       hintCard: {
-        title: '该分组还没有内容',
-        desc: '从下方按钮新增第一条内容，右侧会同步预览效果。'
+        title: '该分组还没有题组',
+        desc: '先新增一个题组，填写材料，再在题组内添加选择题或综合题。'
       },
 
       validation: {
@@ -179,8 +181,8 @@ import './editor.css'
         title: '确认操作',
         cancel: '取消',
         confirm: '确定',
-        removeSection: '删除该分区及其全部条目？此操作不可撤销。',
-        removeItem: '删除该条目？此操作不可撤销。'
+        removeSection: '删除该题组及其全部题目？此操作不可撤销。',
+        removeItem: '删除该题目？此操作不可撤销。'
       }
     },
 
@@ -277,15 +279,87 @@ import './editor.css'
   function newItem(kind) {
     if (kind === 'essay') {
       return {
-        id: '', type: 'essay', material: '', stems: [''],
+        id: '', type: 'essay', stems: [''],
         referenceAnswer: '', analysis: ''
       };
     }
     return {
-      id: '', type: 'choice', material: '', stem: '',
+      id: '', type: 'choice', stem: '',
       options: [{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }],
       answer: 'A', analysis: ''
     };
+  }
+
+  /** 新题组：一则材料 + 一组题目 */
+  function newGroup() {
+    return { id: '', material: '', questions: [] };
+  }
+
+  /**
+   * 旧数据迁移：把「每题自带材料」的扁平 questions 收敛为「题组共用材料」。
+   * 连续且材料相同的题目归入同一题组，保证迁移不丢内容、不改语义。
+   */
+  function toGroups(questions) {
+    var groups = [];
+    var last = null;
+    (questions || []).forEach(function (q) {
+      var copy = clone(q);
+      var material = copy.material || '';
+      delete copy.material;
+      if (last && last.material === material) {
+        last.questions.push(copy);
+      } else {
+        last = { id: '', material: material, questions: [copy] };
+        groups.push(last);
+      }
+    });
+    return groups;
+  }
+
+  function normalizeModule(mod) {
+    if (!mod) return;
+    if (!Array.isArray(mod.groups)) {
+      mod.groups = toGroups(mod.questions || []);
+      delete mod.questions;
+    }
+    mod.groups.forEach(function (g) {
+      if (!g) return;
+      if (!Array.isArray(g.questions)) g.questions = [];
+      g.questions.forEach(function (q) { if (q) delete q.material; });
+    });
+  }
+
+  function normalizeSections(sections) {
+    var out = [];
+    (sections || []).forEach(function (sec) {
+      if (!sec) return;
+      var qs = Array.isArray(sec.questions) ? sec.questions : [];
+      if (typeof sec.material === 'string' || !qs.length) {
+        sec.questions = qs;
+        if (typeof sec.material !== 'string') sec.material = '';
+        sec.questions.forEach(function (q) { if (q) delete q.material; });
+        out.push(sec);
+        return;
+      }
+      toGroups(qs).forEach(function (g, gi) {
+        out.push({
+          id: sec.id ? sec.id + (gi ? '-' + (gi + 1) : '') : '',
+          title: sec.title || '',
+          material: g.material,
+          questions: g.questions
+        });
+      });
+    });
+    return out;
+  }
+
+  /** 统一迁移内存中的草稿 / 导入数据 */
+  function normalizeState() {
+    if (!state) return;
+    Object.keys(state.modules || {}).forEach(function (id) { normalizeModule(state.modules[id]); });
+    if (state.postLesson) {
+      state.postLesson.sections = normalizeSections(state.postLesson.sections || []);
+    }
   }
 
   function emptyState() {
@@ -319,7 +393,11 @@ import './editor.css'
     if (!raw) return false;
     try {
       var parsed = JSON.parse(raw);
-      if (parsed && (parsed.modules || parsed.postLesson)) { state = parsed; return true; }
+      if (parsed && (parsed.modules || parsed.postLesson)) {
+        state = parsed;
+        normalizeState();
+        return true;
+      }
     } catch (e) { /* 损坏数据忽略 */ }
     return false;
   }
@@ -355,7 +433,7 @@ import './editor.css'
     Object.keys((state && state.modules) || {}).forEach(function (id) {
       if (known[id]) return;
       var mod = state.modules[id];
-      if (mod && mod.questions && mod.questions.length) {
+      if (mod && questionsOf(mod).length) {
         items.push({ kind: 'group', id: id, no: '', title: mod.title || id, nav: '', orphan: true });
       }
     });
@@ -376,16 +454,34 @@ import './editor.css'
   }
   function ensureGroup(it) {
     if (!state.modules) state.modules = {};
-    if (!state.modules[it.id]) state.modules[it.id] = { title: '', intro: '', questions: [] };
-    return state.modules[it.id];
+    if (!state.modules[it.id]) state.modules[it.id] = { title: '', intro: '', groups: [] };
+    var mod = state.modules[it.id];
+    if (!Array.isArray(mod.groups)) normalizeModule(mod);
+    return mod;
+  }
+  function questionsOf(mod) {
+    return ((mod && mod.groups) || []).reduce(function (acc, g) {
+      return acc.concat((g && g.questions) || []);
+    }, []);
   }
   function groupCount(id) {
     var mod = state.modules && state.modules[id];
-    return mod && mod.questions ? mod.questions.length : 0;
+    return questionsOf(mod).length;
+  }
+  /** 有效题组数（导出口径：至少有 1 道题） */
+  function unitCount(id) {
+    var mod = state.modules && state.modules[id];
+    return ((mod && mod.groups) || []).filter(function (g) {
+      return g && g.questions && g.questions.length;
+    }).length;
   }
   function auxiliaryCount() {
     var secs = (state.postLesson && state.postLesson.sections) || [];
     return secs.reduce(function (n, s) { return n + ((s.questions && s.questions.length) || 0); }, 0);
+  }
+  function auxiliaryUnitCount() {
+    var secs = (state.postLesson && state.postLesson.sections) || [];
+    return secs.filter(function (s) { return s && s.questions && s.questions.length; }).length;
   }
   function totalItems() {
     var n = Object.keys((state && state.modules) || {}).reduce(function (acc, id) { return acc + groupCount(id); }, 0);
@@ -537,12 +633,10 @@ import './editor.css'
   }
 
   function guideAction(current) {
-    var kinds = CFG.schema.itemKinds || [];
-    var firstKind = kinds[0] || 'choice';
     switch (current) {
       case 0: return { act: 'import-structure', label: L('guide.nextImport') };
       case 1: return { act: 'guide-select', label: L('guide.nextSelect') };
-      case 2: return { act: 'guide-add', label: L('guide.nextAdd', { k: (getPath(CFG.labels.kinds, firstKind) || firstKind) }) };
+      case 2: return { act: 'guide-add-group', label: L('guide.nextAdd') };
       case 3: return { act: 'validate', label: L('guide.nextValidate') };
       default: return { act: 'export', label: L('guide.nextExport') };
     }
@@ -603,8 +697,7 @@ import './editor.css'
   }
 
   function choiceFormHtml(base, q) {
-    return richAreaHtml(L('fields.material'), base + '.material', q.material, 3, 'material') +
-      areaHtml(L('fields.stem'), base + '.stem', q.stem, 3, 'stem') +
+    return areaHtml(L('fields.stem'), base + '.stem', q.stem, 3, 'stem') +
       '<div class="ce-field"><span class="ce-field__label">' + esc(L('fields.options')) + '</span>' +
         (q.options || []).map(function (opt, oi) { return optionHtml(base, oi, opt); }).join('') +
         '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="add-option" data-base="' + attr(base) + '">' +
@@ -616,7 +709,6 @@ import './editor.css'
   function essayFormHtml(base, q) {
     var stems = Array.isArray(q.stems) ? q.stems.join('\n') : (q.stems || '');
     return '' +
-      richAreaHtml(L('fields.material'), base + '.material', q.material, 4, 'material') +
       areaHtml(L('fields.stems'), base + '.stems', stems, 3, 'stems') +
       richAreaHtml(L('fields.reference'), base + '.referenceAnswer', q.referenceAnswer, 4, 'reference') +
       richAreaHtml(L('fields.analysis'), base + '.analysis', q.analysis, 3, 'analysis');
@@ -628,7 +720,7 @@ import './editor.css'
     var kindLabel = isEssay ? L('kinds.essay') : L('kinds.choice');
     return '<div class="ce-card ce-card--item" data-base="' + attr(base) + '">' +
       '<div class="ce-card__head">' +
-        '<span class="ce-index">' + (qi + 1) + '</span>' +
+        '<span class="ce-qno">题目 ' + (qi + 1) + '</span>' +
         '<span class="ce-tag' + (isEssay ? ' ce-tag--info' : '') + '">' + esc(kindLabel) + '</span>' +
         '<span class="ce-panel__grow"></span>' +
         '<div class="ce-card__actions">' +
@@ -643,7 +735,7 @@ import './editor.css'
   }
 
   function addItemButtonsHtml(qbase, emphasizeFirst) {
-    return '<div class="ce-btn-row">' + (CFG.schema.itemKinds || []).map(function (k, i) {
+    return '<div class="ce-btn-row ce-additems">' + (CFG.schema.itemKinds || []).map(function (k, i) {
       var kindLabel = getPath(CFG.labels.kinds, k) || k;
       var cls = 'ce-btn ce-btn--sm' + (emphasizeFirst && i === 0 ? ' ce-btn--primary' : '');
       return '<button class="' + cls + '" type="button" data-act="add-item" data-kind="' + attr(k) + '" data-qbase="' + attr(qbase) + '">' +
@@ -660,20 +752,54 @@ import './editor.css'
       '</div>';
   }
 
+  /** 题组卡片：材料 + 题目列表；外层为强容器，内层题目为弱卡片 */
+  function groupCardHtml(gbase, gi, g, titlePath) {
+    var qbase = gbase + '.' + gi + '.questions';
+    var qs = g.questions || [];
+    var title = titlePath
+      ? '<input class="ce-input ce-group__title" type="text" data-path="' + attr(titlePath) + '" value="' + attr(g.title || '') + '" placeholder="' + ph('sectionTitle') + '">'
+      : '';
+    return '<div class="ce-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">' +
+      '<div class="ce-group__head">' +
+        '<span class="ce-group__badge">题组 ' + (gi + 1) + '</span>' +
+        title +
+        '<span class="ce-group__meta">' + esc(L('questionCount', { n: qs.length })) + '</span>' +
+        '<span class="ce-panel__grow"></span>' +
+        '<div class="ce-group__actions">' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('itemActions.up')) + '" aria-label="' + attr(L('itemActions.up')) + '" data-act="up-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">↑</button>' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('itemActions.down')) + '" aria-label="' + attr(L('itemActions.down')) + '" data-act="down-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">↓</button>' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="dup-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">' + esc(L('itemActions.duplicate')) + '</button>' +
+          '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="del-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">' + esc(L('itemActions.remove')) + '</button>' +
+        '</div>' +
+      '</div>' +
+      richAreaHtml(L('fields.material'), gbase + '.' + gi + '.material', g.material, 3, 'material') +
+      '<div class="ce-group__questions">' +
+        (qs.length ? '' : '<p class="ce-group__empty">该题组还没有题目，从下方新增选择题或综合题。</p>') +
+        qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
+        addItemButtonsHtml(qbase, !qs.length) +
+      '</div>' +
+      '</div>';
+  }
+
+  function addGroupButtonHtml(gbase) {
+    return '<button class="ce-btn ce-btn--primary ce-addgroup" type="button" data-act="add-group" data-gbase="' + attr(gbase) + '">' +
+      esc(L('addGroup')) + '</button>';
+  }
+
   function groupEditorHtml(it) {
     var mod = ensureGroup(it);
-    var qbase = 'modules.' + it.id + '.questions';
-    var qs = mod.questions || [];
+    var gbase = 'modules.' + it.id + '.groups';
+    var groups = mod.groups || [];
     return '<div class="ce-headline">' +
         (it.no ? '<span class="ce-index">' + esc(it.no) + '</span>' : '') +
         '<h2 class="ce-headline__title">' + esc((it.orphan ? L('orphanPrefix') : '') + (it.title || it.id)) + '</h2>' +
       '</div>' +
-      '<div class="ce-card">' +
+      '<div class="ce-card ce-card--groups">' +
         '<h3 class="ce-subhead">' + esc(L('sectionTitles.items')) +
-          '<span class="ce-subhead__count">' + esc(L('itemCount', { n: qs.length })) + '</span></h3>' +
-        (qs.length ? '' : hintCardHtml()) +
-        qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
-        addItemButtonsHtml(qbase, !qs.length) +
+          '<span class="ce-subhead__count">' + esc(L('itemCount', { n: groups.length })) + '</span></h3>' +
+        (groups.length ? '' : hintCardHtml()) +
+        groups.map(function (g, gi) { return groupCardHtml(gbase, gi, g, ''); }).join('') +
+        addGroupButtonHtml(gbase) +
       '</div>';
   }
 
@@ -681,7 +807,7 @@ import './editor.css'
     if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
     var pl = state.postLesson;
     if (!pl.sections) pl.sections = [];
-    var sbase = 'postLesson.sections';
+    var gbase = 'postLesson.sections';
     return '<div class="ce-headline">' +
         (it.no ? '<span class="ce-index">' + esc(it.no) + '</span>' : '') +
         '<h2 class="ce-headline__title">' + esc(it.title || pl.title || L('auxiliaryFallback')) + '</h2>' +
@@ -691,20 +817,15 @@ import './editor.css'
         inputHtml(L('fields.auxiliaryTitle'), 'postLesson.title', pl.title, 'sectionTitle') +
         inputHtml(L('fields.auxiliarySubtitle'), 'postLesson.subtitle', pl.subtitle) +
       '</div>' +
-      pl.sections.map(function (sec, si) {
-        var qbase = sbase + '.' + si + '.questions';
-        var qs = sec.questions || [];
-        return '<div class="ce-card">' +
-          '<div class="ce-card__head">' +
-            '<input class="ce-input" type="text" data-path="' + sbase + '.' + si + '.title" value="' + attr(sec.title) + '" placeholder="' + ph('sectionTitle') + '">' +
-            '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" title="' + attr(L('removeSection')) + '" aria-label="' + attr(L('removeSection')) + '" data-act="del-section" data-sbase="' + attr(sbase) + '" data-si="' + si + '">×</button>' +
-          '</div>' +
-          (qs.length ? '' : hintCardHtml()) +
-          qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
-          addItemButtonsHtml(qbase, !qs.length) +
-        '</div>';
-      }).join('') +
-      '<button class="ce-btn ce-btn--sm" type="button" data-act="add-section">' + esc(L('addSection')) + '</button>';
+      '<div class="ce-card ce-card--groups">' +
+        '<h3 class="ce-subhead">' + esc(L('sectionTitles.items')) +
+          '<span class="ce-subhead__count">' + esc(L('itemCount', { n: pl.sections.length })) + '</span></h3>' +
+        (pl.sections.length ? '' : hintCardHtml()) +
+        pl.sections.map(function (sec, si) {
+          return groupCardHtml(gbase, si, sec, gbase + '.' + si + '.title');
+        }).join('') +
+        addGroupButtonHtml(gbase) +
+      '</div>';
   }
 
   function emptyStateHtml() {
@@ -772,7 +893,7 @@ import './editor.css'
   function renderNav() {
     var items = navItems();
     var html = items.map(function (it) {
-      var n = it.kind === 'group' ? groupCount(it.id) : auxiliaryCount();
+      var n = it.kind === 'group' ? unitCount(it.id) : auxiliaryUnitCount();
       var cls = 'ce-nav__item' +
         (it.id === selectedId ? ' is-active' : '') +
         (it.orphan ? ' ce-nav__item--dim' : '');
@@ -812,7 +933,7 @@ import './editor.css'
     ((manifest && manifest.modules) || []).forEach(function (m) { known[m.id] = true; });
     var orphans = Object.keys((state && state.modules) || {}).filter(function (id) {
       var mod = state.modules[id];
-      return !known[id] && mod && mod.questions && mod.questions.length;
+      return !known[id] && mod && questionsOf(mod).length;
     });
     if (unedited.length) notes.push(L('validation.unedited', { n: unedited.length }));
     if (orphans.length) notes.push(L('validation.orphan', { n: orphans.length }));
@@ -838,7 +959,7 @@ import './editor.css'
         kind: 'group',
         title: mod.title || it.title || '',
         subtitle: mod.intro || '',
-        questions: mod.questions || []
+        groups: mod.groups || []
       };
     }
     var pl = state.postLesson || {};
@@ -877,7 +998,7 @@ import './editor.css'
       display: 'embedded',
       title: payload.title,
       subtitle: payload.subtitle,
-      questions: aux ? undefined : payload.questions,
+      groups: aux ? undefined : payload.groups,
       sections: aux ? payload.sections : undefined,
       timer: !aux,
       closable: !aux,
@@ -902,15 +1023,31 @@ import './editor.css'
     var modules = {};
     Object.keys((state && state.modules) || {}).forEach(function (id) {
       var mod = state.modules[id];
-      if (!mod || !mod.questions || !mod.questions.length) return;
+      if (!mod) return;
+      var groups = (mod.groups || []).filter(function (g) {
+        return g && g.questions && g.questions.length;
+      });
+      if (!groups.length) return;
       var out = {};
       if (mod.title) out.title = mod.title;
       if (mod.intro) out.intro = mod.intro;
-      out.questions = mod.questions;
+      /* 题组为正式结构；questions 同步扁平化，兼容尚未升级的消费方 */
+      out.groups = groups.map(function (g) {
+        return { material: g.material || '', questions: g.questions };
+      });
+      out.questions = [];
+      groups.forEach(function (g) {
+        g.questions.forEach(function (q) {
+          var copy = clone(q);
+          if (g.material) copy.material = g.material;
+          else delete copy.material;
+          out.questions.push(copy);
+        });
+      });
       modules[id] = out;
     });
     var payload = {
-      version: state.version || 2,
+      version: 3,
       lesson: state.lesson || (manifest && manifest.lesson) || '',
       updatedAt: new Date().toISOString(),
       modules: modules
@@ -955,8 +1092,11 @@ import './editor.css'
       if (!mod) return;
       var it = findItem(id);
       var label = groupLabel(it) || id;
-      (mod.questions || []).forEach(function (q, qi) {
-        check(q, 'modules.' + id + '.questions.' + qi, label + ' #' + (qi + 1));
+      (mod.groups || []).forEach(function (g, gi) {
+        (g.questions || []).forEach(function (q, qi) {
+          check(q, 'modules.' + id + '.groups.' + gi + '.questions.' + qi,
+            label + ' 题组' + (gi + 1) + ' 第' + (qi + 1) + '题');
+        });
       });
     });
     var pl = state.postLesson;
@@ -964,7 +1104,7 @@ import './editor.css'
       pl.sections.forEach(function (sec, si) {
         (sec.questions || []).forEach(function (q, qi) {
           check(q, 'postLesson.sections.' + si + '.questions.' + qi,
-            (sec.title || L('sectionFallback')) + ' #' + (si + 1) + '-' + (qi + 1));
+            (sec.title || '题组' + (si + 1)) + ' 第' + (qi + 1) + '题');
         });
       });
     }
@@ -1068,19 +1208,43 @@ import './editor.css'
   function handleStruct(act, t) {
     var qbase = t.dataset.qbase, qi = Number(t.dataset.qi);
     var base = t.dataset.base, oi = Number(t.dataset.oi);
-    var sbase = t.dataset.sbase, si = Number(t.dataset.si);
+    var gbase = t.dataset.gbase, gi = Number(t.dataset.gi);
     var arr, q;
     switch (act) {
+      case 'add-group':
+        arr = getPath(state, gbase);
+        if (arr) arr.push(newGroup());
+        break;
+      case 'del-group':
+        arr = getPath(state, gbase);
+        if (!arr) return;
+        confirmDialog(L('dialog.removeSection'), function () {
+          getPath(state, gbase).splice(gi, 1);
+          saveDraft(); renderAll();
+        });
+        return;
+      case 'dup-group':
+        arr = getPath(state, gbase);
+        if (arr) arr.splice(gi + 1, 0, clone(arr[gi]));
+        break;
+      case 'up-group':
+        arr = getPath(state, gbase);
+        if (arr && gi > 0) arr.splice(gi - 1, 0, arr.splice(gi, 1)[0]);
+        break;
+      case 'down-group':
+        arr = getPath(state, gbase);
+        if (arr && gi < arr.length - 1) arr.splice(gi + 1, 0, arr.splice(gi, 1)[0]);
+        break;
       case 'add-section':
         if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
         if (!state.postLesson.sections) state.postLesson.sections = [];
-        state.postLesson.sections.push({ id: 'part-' + (state.postLesson.sections.length + 1), title: '', questions: [] });
+        state.postLesson.sections.push(newGroup());
         break;
       case 'del-section':
-        arr = getPath(state, sbase);
-        if (!arr || arr.length <= 1) { toast(L('toast.keepOneSection'), 'warn'); return; }
+        arr = getPath(state, 'postLesson.sections');
+        if (!arr) return;
         confirmDialog(L('dialog.removeSection'), function () {
-          getPath(state, sbase).splice(si, 1);
+          getPath(state, 'postLesson.sections').splice(Number(t.dataset.si), 1);
           saveDraft(); renderAll();
         });
         return;
@@ -1182,11 +1346,13 @@ import './editor.css'
         postLesson: data.postLesson ? clone(data.postLesson)
           : { title: L('auxiliaryFallback'), subtitle: '', sections: [] }
       };
+      normalizeState();
       return true;
     }
     if (data.sections) {
       state = emptyState();
       state.postLesson = { title: data.title || L('auxiliaryFallback'), subtitle: data.subtitle || '', sections: data.sections };
+      normalizeState();
       return true;
     }
     return false;
@@ -1421,18 +1587,21 @@ import './editor.css'
   /* ==========================================================
      十九、事件绑定
      ========================================================== */
-  function guideAddTarget() {
+  /** 引导第 3 步：新增一个题组并放入第一道题，避免出现空题组 */
+  function guideAddGroup() {
     var it = selectedItem();
-    if (!it) return null;
+    if (!it) return;
+    var kinds = CFG.schema.itemKinds || [];
+    var group = newGroup();
+    group.questions.push(newItem(kinds[0] || 'choice'));
     if (it.kind === 'auxiliary') {
       if (!state.postLesson) state.postLesson = { title: '', subtitle: '', sections: [] };
-      if (!state.postLesson.sections || !state.postLesson.sections.length) {
-        state.postLesson.sections = [{ id: 'part-1', title: '', questions: [] }];
-      }
-      return 'postLesson.sections.0.questions';
+      if (!state.postLesson.sections) state.postLesson.sections = [];
+      state.postLesson.sections.push(group);
+    } else {
+      ensureGroup(it).groups.push(group);
     }
-    ensureGroup(it);
-    return 'modules.' + it.id + '.questions';
+    saveDraft(); renderAll();
   }
 
   function bindGlobal() {
@@ -1535,15 +1704,9 @@ import './editor.css'
           if (first) selectItem(first.id);
           return;
         }
-        case 'guide-add': {
-          var target = guideAddTarget();
-          if (!target) return;
-          var kinds = CFG.schema.itemKinds || [];
-          var arr = getPath(state, target);
-          if (arr) arr.push(newItem(kinds[0] || 'choice'));
-          saveDraft(); renderAll();
+        case 'guide-add-group':
+          guideAddGroup();
           return;
-        }
         default: handleStruct(act, t);
       }
     });

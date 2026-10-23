@@ -56,10 +56,23 @@ export interface CqEssay {
 
 export type CqQuestion = CqChoice | CqEssay
 
+/**
+ * 题组：一则材料统领多道题目。
+ * 材料写在题组上，组内题目不再重复携带 material。
+ */
+export interface CqGroup {
+  id?: string
+  /** 材料（HTML，关键词用 <mark class="cq-hl">） */
+  material?: string
+  questions: CqQuestion[]
+}
+
 /** 题目分组（如「一、选择题」） */
 export interface CqSection {
   id?: string
   title?: string
+  /** 本节共用材料（HTML）；居中渲染一次 */
+  material?: string
   questions?: CqQuestion[]
 }
 
@@ -68,6 +81,9 @@ export interface PracticeModule {
   title?: string
   intro?: string
   kind?: 'choice' | 'drag'
+  /** 题组（优先渲染；groups 与 questions 同时存在时以 groups 为准） */
+  groups?: CqGroup[]
+  /** 扁平题目（兼容旧数据；无 groups 时使用） */
   questions?: CqQuestion[]
 }
 

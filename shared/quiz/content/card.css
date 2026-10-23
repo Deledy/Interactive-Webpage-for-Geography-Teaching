@@ -71,6 +71,60 @@
   gap: 24px;
 }
 
+/* ---------- 题组（材料 + 多题） ----------
+   与单题卡片共享同一套令牌与圆角语言，通过「左侧色条 + 题组徽标 +
+   材料底纹」形成层级差异，题目卡片仍保持原有白色卡片形态。 */
+.cq-group {
+  position: relative;
+  padding: 22px 24px 24px;
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-left: 4px solid var(--pw-accent-2);
+  border-radius: var(--pw-radius-card);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--pw-border) 60%, transparent);
+}
+.cq-group + .cq-group {
+  margin-top: 32px;
+}
+.cq-group__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cq-group__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--pw-accent-2);
+  color: #1a1405;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.cq-group__count {
+  color: var(--pw-text-dim);
+  font-size: var(--pw-fs-note);
+}
+.cq-group__material {
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  background: var(--pw-material-bg);
+  border-left: 3px solid var(--pw-accent);
+  border-radius: 0 var(--pw-radius-btn) var(--pw-radius-btn) 0;
+}
+.cq-group__qs {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+/* 题组内的题目卡片弱化外描边，避免与题组容器争夺层级 */
+.cq-group__qs .cq-q {
+  border-color: color-mix(in srgb, var(--pw-border) 70%, transparent);
+  box-shadow: none;
+}
+
 /* ---------- 单题卡片 ---------- */
 .cq-q {
   padding: 24px 28px;

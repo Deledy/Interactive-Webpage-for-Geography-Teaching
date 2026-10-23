@@ -35,6 +35,8 @@ export interface QuestionCardOptions {
   /** 全卷序号（0 起），用于题号展示 */
   index: number
   state: CardState
+  /** 是否渲染题目自带材料（题组模式下材料上提，传 false） */
+  showMaterial?: boolean
 }
 
 /** 选择题正确答案键（单选返回单元素数组） */
@@ -67,7 +69,7 @@ function optionClass(question: CqChoice, state: CardState, optionKey: string): s
   return cls.join(' ')
 }
 
-function choiceHtml(question: CqChoice, key: string, index: number, state: CardState): string {
+function choiceHtml(question: CqChoice, key: string, index: number, state: CardState, showMaterial: boolean): string {
   const modeOne = question.mode === 'multiple' ? 'multiple' : 'single'
   const revealed = state.submitted
   const options = question.options
@@ -125,7 +127,7 @@ function choiceHtml(question: CqChoice, key: string, index: number, state: CardS
     </div>
     <div class="pw-split">
       <div class="pw-col pw-col--main">
-        ${question.material ? `<div class="cq-q__material">${renderRichText(question.material)}</div>` : ''}
+        ${showMaterial && question.material ? `<div class="cq-q__material">${renderRichText(question.material)}</div>` : ''}
         <p class="cq-q__stem">${escapeHtml(question.stem)}</p>
         <div class="cq-q__options">${options}</div>
         ${submit}
@@ -135,7 +137,7 @@ function choiceHtml(question: CqChoice, key: string, index: number, state: CardS
   </article>`
 }
 
-function essayHtml(question: CqEssay, key: string, index: number, state: CardState): string {
+function essayHtml(question: CqEssay, key: string, index: number, state: CardState, showMaterial: boolean): string {
   const stems = essayStems(question)
 
   const detail = !state.revealed
@@ -172,7 +174,7 @@ function essayHtml(question: CqEssay, key: string, index: number, state: CardSta
     </div>
     <div class="pw-split">
       <div class="pw-col pw-col--main">
-        ${question.material ? `<div class="cq-q__material">${renderRichText(question.material)}</div>` : ''}
+        ${showMaterial && question.material ? `<div class="cq-q__material">${renderRichText(question.material)}</div>` : ''}
         ${stems.length ? `<ol class="cq-stems">${stems.map((stem) => `<li>${escapeHtml(stem)}</li>`).join('')}</ol>` : ''}
       </div>
       <div class="pw-col pw-col--side">
@@ -185,6 +187,8 @@ function essayHtml(question: CqEssay, key: string, index: number, state: CardSta
 
 /** 渲染一道题（选择题 / 综合题）的卡片 HTML */
 export function renderQuestionCard(options: QuestionCardOptions): string {
-  const { question, key, index, state } = options
-  return question.type === 'essay' ? essayHtml(question, key, index, state) : choiceHtml(question, key, index, state)
+  const { question, key, index, state, showMaterial = true } = options
+  return question.type === 'essay'
+    ? essayHtml(question, key, index, state, showMaterial)
+    : choiceHtml(question, key, index, state, showMaterial)
 }

@@ -9,9 +9,9 @@
    - 计时：正计时（timer）或限时倒计时（limitSeconds，不锁定、不阻断）。
    详见 shared/quiz/runtime/docs/通用练习窗口_开发文档.md。
    ============================================================ */
-import type { CqData, CqQuestion, CqSection } from '../../content/types'
+import type { CqData, CqGroup, CqQuestion, CqSection } from '../../content/types'
 import { renderQuestionCard, type CardState } from '../../content/renderCard'
-import { escapeHtml, renderInlineRich } from '../../content/richText'
+import { escapeHtml, renderInlineRich, renderRichText } from '../../content/richText'
 import { validateQuizData } from './validate'
 import '../styles/default-tokens.css'
 import '../../content/card.css'
@@ -23,6 +23,8 @@ export interface PracticeViewOptions {
   subtitle?: string
   /** 分节题目（课后练习用） */
   sections?: CqSection[]
+  /** 题组（一则材料统领多题；与 sections 二选一，优先） */
+  groups?: CqGroup[]
   /** 单组题目（模块随堂练习用；与 sections 二选一） */
   questions?: CqQuestion[]
   /** 列表模式（默认）/ 逐题模式 */
@@ -102,12 +104,28 @@ function findScrollParent(el: HTMLElement): HTMLElement | null {
  */
 export function createPracticeView(options: PracticeViewOptions): PracticeView {
   const mode: 'list' | 'step' = options.mode === 'step' ? 'step' : 'list'
-  const rawSections: CqSection[] =
-    options.sections && options.sections.length
+  /** 题组优先：有有效题组时按「材料 + 多题」渲染 */
+  const groups: CqGroup[] = (options.groups ?? []).filter(
+    (group) => group && Array.isArray(group.questions) && group.questions.length > 0
+  )
+  const useGroups = groups.length > 0
+  const rawSections: CqSection[] = useGroups
+    ? []
+    : options.sections && options.sections.length
       ? options.sections
       : [{ questions: options.questions ?? [] }]
-  const sections = rawSections.filter((sec) => sec.questions && sec.questions.length)
-  const flat: CqQuestion[] = sections.reduce<CqQuestion[]>((acc, sec) => acc.concat(sec.questions ?? []), [])
+  const sections = useGroups ? [] : rawSections.filter((sec) => sec.questions && sec.questions.length)
+  const flat: CqQuestion[] = useGroups
+    ? groups.reduce<CqQuestion[]>((acc, group) => acc.concat(group.questions), [])
+    : sections.reduce<CqQuestion[]>((acc, sec) => acc.concat(sec.questions ?? []), [])
+  /** 题目 → 所属题组材料（逐题模式下补回材料） */
+  const groupMaterial = new Map<CqQuestion, string>()
+  if (useGroups) {
+    groups.forEach((group) => {
+      if (!group.material) return
+      group.questions.forEach((question) => groupMaterial.set(question, group.material as string))
+    })
+  }
 
   const countdown = typeof options.limitSeconds === 'number' && options.limitSeconds > 0
   const showTimer = countdown || !!options.timer
@@ -142,12 +160,16 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
 
   /* ---------------- 题目渲染（结构由内容层统一提供） ---------------- */
 
-  function questionHtml(question: CqQuestion, key: string): string {
+  function questionHtml(question: CqQuestion, key: string, showMaterial = true): string {
+    /* 逐题模式下把题组材料补回题面；列表模式由题组统一渲染材料 */
+    const material = showMaterial && useGroups ? groupMaterial.get(question) ?? question.material : question.material
+    const view = material === question.material ? question : { ...question, material }
     return renderQuestionCard({
-      question,
+      question: view,
       key,
       index: globalIndex.get(question) ?? 0,
-      state: stateOf(key)
+      state: stateOf(key),
+      showMaterial
     })
   }
 
@@ -260,14 +282,34 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
       )}</div>${stepActionsHtml()}${footHtml()}</div>`
       return
     }
-    const body = sections
-      .map((sec) => {
-        const qs = (sec.questions ?? []).map((q) => questionHtml(q, keyOf(q))).join('')
-        return `<section class="cq-sec">${
-          sec.title ? `<h3 class="cq-sec__title">${escapeHtml(sec.title)}</h3>` : ''
-        }<div class="cq-sec__qs">${qs}</div></section>`
-      })
-      .join('')
+    const body = useGroups
+      ? groups
+          .map((group, gi) => {
+            const qs = group.questions.map((q) => questionHtml(q, keyOf(q), false)).join('')
+            const material = group.material
+              ? `<div class="cq-group__material">${renderRichText(group.material)}</div>`
+              : ''
+            return `<section class="cq-group" data-cq-group="${gi + 1}">
+              <div class="cq-group__head">
+                <span class="cq-group__badge">题组 ${gi + 1}</span>
+                <span class="cq-group__count">${group.questions.length} 题</span>
+              </div>
+              ${material}
+              <div class="cq-group__qs">${qs}</div>
+            </section>`
+          })
+          .join('')
+      : sections
+          .map((sec) => {
+            const qs = (sec.questions ?? []).map((q) => questionHtml(q, keyOf(q), !sec.material)).join('')
+            const material = sec.material
+              ? `<div class="cq-group__material cq-sec__material">${renderRichText(sec.material)}</div>`
+              : ''
+            return `<section class="cq-sec">${
+              sec.title ? `<h3 class="cq-sec__title">${escapeHtml(sec.title)}</h3>` : ''
+            }${material}<div class="cq-sec__qs">${qs}</div></section>`
+          })
+          .join('')
     const intro = options.subtitle ? `<p class="cq-intro">${renderInlineRich(options.subtitle)}</p>` : ''
     root.innerHTML = `<div class="pw-inner">${headHtml()}${navHtml()}<div class="pw-body">${intro}${body}</div>${footHtml()}</div>`
     syncNav()
@@ -430,6 +472,7 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
     title: options.title ?? options.data?.title,
     subtitle: options.subtitle ?? options.data?.subtitle,
     sections,
+    groups: options.groups,
     questions: sections ? undefined : options.questions,
     mode: options.mode,
     timer: options.timer,

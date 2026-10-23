@@ -219,6 +219,7 @@ export type {
   CqChoice,
   CqData,
   CqEssay,
+  CqGroup,
   CqKnowledge,
   CqOption,
   CqQuestion,

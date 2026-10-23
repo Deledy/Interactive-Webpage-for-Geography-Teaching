@@ -40,7 +40,8 @@ export function initPracticeEntry(): void {
     const legacy = lessonData.practices?.[sectionId] ?? lessonData.practices?.[practiceKey]
 
     const title = mod?.title || legacy?.title || '随堂练习'
-    // 通用题型：优先统一数据文件；否则回退源码内置旧题；再没有则空态
+    // 通用题型：优先统一数据文件（题组结构）；否则回退源码内置旧题；再没有则空态
+    const groups = mod?.groups && mod.groups.length ? mod.groups : undefined
     const questions = mod?.questions && mod.questions.length ? mod.questions : legacyQuestions(legacy)
 
     // openPracticeWindow 会先关闭上一个窗口；任意路径关闭都会触发 onClose
@@ -48,6 +49,7 @@ export function initPracticeEntry(): void {
       title,
       subtitle: mod?.intro,
       // 结构化兼容：课程统一题型与组件题型同构
+      groups: groups as never,
       questions: questions as never,
       timer: true,
       onClose: () => {

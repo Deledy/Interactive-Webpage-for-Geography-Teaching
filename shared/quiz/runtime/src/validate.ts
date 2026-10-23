@@ -9,10 +9,10 @@
    - 无任何有效题目时 data = null（消费方渲染空态，不白屏）。
    本文件是「统一 schema 校验」的单一真源，课程侧（practiceStore 等）应复用而非重写。
    ============================================================ */
-import type { CqChoice, CqData, CqEssay, CqQuestion, CqSection, PracticeModule } from '../../content/types'
+import type { CqChoice, CqData, CqEssay, CqGroup, CqQuestion, CqSection, PracticeModule } from '../../content/types'
 
-/** 当前组件支持的数据版本（v2：富文本字段为 HTML） */
-export const DATA_VERSION = 2
+/** 当前组件支持的数据版本（v3：题组 groups / 节材料 material） */
+export const DATA_VERSION = 3
 
 function validateChoiceQuestion(question: CqChoice, label: string, issues: string[]): CqChoice | null {
   const options = (question.options ?? []).filter((option) => option && option.key)
@@ -100,14 +100,44 @@ export function sectionsFromQuestions(title: string | undefined, subtitle: strin
 }
 
 /**
- * 单模块校验（随堂练习用）：过滤非法题，无有效题则视为缺失（返回 undefined）。
- * kind:'drag' 为特殊题型占位，内容由课程页面自行提供，此处只保留占位信息。
+ * 题组校验：逐组过滤非法题；保留有有效题的题组。
+ * 全部无效时返回空数组（由调用方决定是否视为缺失）。
  */
+export function validateGroups(raw: unknown, labelPrefix: string, issues: string[]): CqGroup[] {
+  if (!Array.isArray(raw)) return []
+  const groups: CqGroup[] = []
+  raw.forEach((group, gi) => {
+    const source = group as CqGroup
+    if (!source || !Array.isArray(source.questions)) return
+    const label = `${labelPrefix}题组 ${gi + 1}`
+    const questions: CqQuestion[] = []
+    source.questions.forEach((question, qi) => {
+      const valid = validateQuestion(question, `${label}第 ${qi + 1} 题`, issues)
+      if (valid) questions.push(valid)
+    })
+    if (questions.length) groups.push({ ...source, questions })
+    else issues.push(`${label}无有效题目，已忽略`)
+  })
+  return groups
+}
+
+/** 单模块校验（随堂练习用）：过滤非法题，无有效题则视为缺失（返回 undefined）。 */
 export function validateModulePractice(raw: unknown): { module?: PracticeModule; issues: string[] } {
   const issues: string[] = []
   if (!raw || typeof raw !== 'object') return { issues }
   const source = raw as PracticeModule
   if (source.kind === 'drag') return { module: { ...source, kind: 'drag' }, issues }
+
+  /* 题组优先：groups 存在且至少一组有有效题时，以题组结构返回 */
+  if (Array.isArray(source.groups) && source.groups.length) {
+    const groups = validateGroups(source.groups, '', issues)
+    if (!groups.length) {
+      issues.push('题组内无有效题目，已忽略')
+      return { issues }
+    }
+    return { module: { ...source, groups }, issues }
+  }
+
   if (!Array.isArray(source.questions)) return { module: { ...source }, issues }
   const questions: CqQuestion[] = []
   source.questions.forEach((question, index) => {
