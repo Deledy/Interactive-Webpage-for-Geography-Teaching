@@ -6,7 +6,7 @@
   "grade": "高三一轮复习",
   "status": "done",
   "engine": "vite",
-  "entry": "dist/index.html",
+  "entry": "dist/课程/index.html",
   "resources": [
     { "path": "assets/fonts/noto-sans-sc-400-subset.woff2", "type": "font" },
     { "path": "assets/fonts/noto-sans-sc-700-subset.woff2", "type": "font" },

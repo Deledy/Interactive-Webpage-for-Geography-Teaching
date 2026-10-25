@@ -6,7 +6,7 @@
   "grade": "高中必修",
   "status": "done",
   "engine": "vite",
-  "entry": "dist/index.html",
+  "entry": "dist/课程/index.html",
   "resources": [
     { "path": "assets/images/universe-deep-field-smacs0723.png", "type": "image" },
     { "path": "assets/images/celestial-nebula-pillars.jpg", "type": "image" },

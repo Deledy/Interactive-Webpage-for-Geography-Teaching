@@ -85,7 +85,7 @@ function renderBookPage(book, chapters, lessonsMeta) {
       const cards = ch.lessons
         .map((id) => {
           const meta = lessonsMeta.find((m) => m.id === id)
-          const link = isDeploy ? `../lessons/${id}/index.html` : `../../lessons/${id}/dist/index.html`
+          const link = isDeploy ? `../lessons/${id}/课程/index.html` : `../../lessons/${id}/dist/课程/index.html`
           return `
             <a class="card" href="${link}" target="_blank">
               <div class="card-title">${escapeHtml(meta?.lessonTitle ?? id)}</div>

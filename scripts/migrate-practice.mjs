@@ -11,8 +11,8 @@
  *   `lessons/<课>/public/quiz-editor/practice-data.js`（`window.__PRACTICE_DATA__`），并提交。
  *
  * 数据真源约定（见 shared/quiz/editor/docs 开发文档 §18 / §24）：
- *   - `practice-data.js` 与 `custom-quiz.js` 一样，是**提交在 public/quiz-editor/ 的可编辑数据文件**，
- *     由 public/ → dist/ 的原样复制进入分发包的 quiz-editor/ 目录；
+ *   - `practice-data.js` 是**提交在 public/quiz-editor/ 的可编辑数据文件**，
+ *     构建时被复制到分发包的「题目编辑器」目录（与课程目录同级）；
  *   - 构建脚本**不生成、不覆盖**该文件，避免冲掉教师改动；
  *   - 故本脚本仅用于「首次把旧数据搬过来」，默认目标已存在时跳过（幂等、不覆盖）。
  *
@@ -114,7 +114,7 @@ function buildFileContent(data) {
     '/* ============================================================',
     ' * 随堂练习 · 数据文件（教师可按学情自行编辑）',
     ' * ------------------------------------------------------------',
-    ' * 1. 本文件位于 quiz-editor 文件夹（构建后同样位于 dist/quiz-editor/，与题目编辑器同目录），',
+    ' * 1. 本文件构建后位于分发包的「题目编辑器」文件夹（与编辑器 html 同级），',
     ' *    分发后直接替换本文件即可更新练习，无需重新构建、无需联网。',
     ' * 2. 内容格式与课后练习同构（题型统一为 choice / essay）：',
     ' *    - choice：mode 为 "single" 单选 / "multiple" 多选；',

@@ -70,10 +70,10 @@ books/
 
 所有课程统一采用"**单文件内联 + 大资源外置**"的分发模式（参考 `三角数据图互动网页/` 项目的成功方案）：
 
-- 构建产物：`dist/index.html` —— **JS/CSS/图片/字体全部内联**，双击即可在浏览器打开（无需服务器）。
-- 外置资源统一放在 `dist/assets/`：视频/3D 等超大资源放入课程 `public/assets/`，构建时原样复制；其余大图由构建脚本自动归位（不内联，file:// 下可正常播放/加载）。
-- 题目编辑器与题库文件统一放在 `dist/quiz-editor/`（`custom-quiz-editor.html`、`practice-data.js`、`lesson-manifest.js`、`quiz-theme.css`），主页面 `dist/index.html` 从该目录读取题库。
-- 构建后自动打包为 zip（`dist/<课>.zip`）；分发时整个文件夹（或解压后的 zip）一起使用。
+- 构建产物：`dist/课程/index.html` —— **JS/CSS/图片/字体全部内联**，双击即可在浏览器打开（无需服务器）。
+- 外置资源统一放在 `dist/课程/assets/`：视频/3D 等超大资源放入课程 `public/assets/`，构建时原样复制；其余大图由构建脚本自动归位（不内联，file:// 下可正常播放/加载）。
+- 题目编辑器独立放在 `dist/题目编辑器/`：`题目编辑器.html` + `practice-data.js`（教师唯一需要替换的题库）+ `assets/`（`lesson-manifest.js` 结构清单、`quiz-theme.css` 配色）。课程页面通过相对路径 `../题目编辑器/practice-data.js` 读取题库。
+- 构建后自动打包为 zip（`lessons/<课>/<课>.zip`，内容为 `课程/` 与 `题目编辑器/` 两个目录）；分发时整个文件夹（或解压后的 zip）一起使用。
 - 注意：3D 模型（经 fetch / GLTFLoader 加载）受浏览器安全限制，file:// 下无法加载，需配一键启动器或在线部署。
 
 ## 目录规范

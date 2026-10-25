@@ -3,16 +3,12 @@
    ------------------------------------------------------------
    定位：给「分发之后」的教师留一个可自行设题的练习模块（选择题 / 综合题）。
 
-   数据外置：题目数据来自本课 public/quiz-editor/practice-data.js 的 postLesson（构建时原样复制到
-   dist/quiz-editor/，与题目编辑器同目录）。加载方式刻意不用 fetch/JSON：file:// 双击打开时 fetch 会被 CORS 拦截；
+   数据外置：题目数据来自本课 public/quiz-editor/practice-data.js 的 postLesson（构建后落在分发包的
+   「题目编辑器」文件夹，与课程目录同级）。加载方式刻意不用 fetch/JSON：file:// 双击打开时 fetch 会被 CORS 拦截；
    改为动态注入经典 <script src>，由数据文件把内容挂到 window.__PRACTICE_DATA__。
 
    渲染：统一交给 shared/quiz/runtime 的 openPracticeWindow（页内挂载，与随堂练习同一套渲染器），
    本模块只保留「数据加载 + 入口 + 重置」职责（详见 shared/quiz/runtime/docs 练习窗口开发文档 §3 / §8）。
-
-   数据源优先级：
-   - 统一数据文件 practice-data.js 的 postLesson（可编辑真源）；
-   - 旧 custom-quiz.js（window.__CUSTOM_QUIZ__）作为兼容回退保留一个版本。
    ============================================================ */
 import { getPracticeData, loadPracticeData } from './practiceStore'
 import { validateQuizData } from '../../../../shared/quiz/runtime/src/validate'
@@ -20,35 +16,16 @@ import { openPracticeWindow, type PracticeWindowHandle } from '../../../../share
 
 let windowHandle: PracticeWindowHandle | null = null
 
-/** 兼容回退：注入旧 custom-quiz.js（内容挂到 window.__CUSTOM_QUIZ__）。 */
-function loadLegacyViaScript(): Promise<unknown> {
-  const globalWindow = window as unknown as { __CUSTOM_QUIZ__?: unknown }
-  return new Promise((resolve) => {
-    const script = document.createElement('script')
-    script.src = './quiz-editor/custom-quiz.js'
-    script.async = true
-    script.onload = () => resolve(globalWindow.__CUSTOM_QUIZ__ ?? null)
-    script.onerror = () => resolve(null)
-    document.head.appendChild(script)
-  })
-}
-
 /**
- * 解析课后练习数据：
- * 1) 统一数据文件 practice-data.js 的 postLesson（可编辑真源）；
- * 2) 旧 custom-quiz.js 注入的 window.__CUSTOM_QUIZ__（兼容回退）。
+ * 解析课后练习数据：统一数据文件 practice-data.js 的 postLesson。
  * 刻意先同步检查已有数据，避免在无脚本环境的测试中 await 挂起。
  */
 async function resolveData(): Promise<unknown> {
   const ready = getPracticeData()
   if (ready) return ready.postLesson ?? null
 
-  const globalWindow = window as unknown as { __CUSTOM_QUIZ__?: unknown }
-  if (globalWindow.__CUSTOM_QUIZ__ !== undefined) return globalWindow.__CUSTOM_QUIZ__
-
   const store = await loadPracticeData()
-  if (store) return store.postLesson ?? null
-  return loadLegacyViaScript()
+  return store ? store.postLesson ?? null : null
 }
 
 export function initCustomQuiz(): void {

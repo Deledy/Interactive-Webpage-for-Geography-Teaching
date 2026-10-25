@@ -7,17 +7,19 @@
  *
  * 行为：
  * - 逐课调用 `vite build`（通过环境变量 VITE_LESSON 指定课程，由 vite.config.ts 解析）；
- * - 每课构建后将 shared/ 共享静态页（如自定义练习编辑器）复制进 dist/quiz-editor/；
- * - 每课构建后生成 dist/quiz-editor/lesson-manifest.js（课程结构清单，供题目编辑器识别模块并映射题目）；
- * - 自动将 dist/ 打包为 zip（统一分发模式的分发物）。
+ * - 每课构建后把产物重排为面向教师的两个顶层目录（见 arrangePackage）；
+ * - 自动将 dist 内两个目录打包为 zip（放在 dist 之外，作为交付物）。
  *
  * 产物结构：
- *   dist/index.html            主课程（JS/CSS 全部内联）
- *   dist/assets/               全部外置资源（图片/视频/纹理等）
- *   dist/quiz-editor/          题目编辑器 + 题库数据 + 结构清单 + 配色表
+ *   dist/课程/index.html            主课程（JS/CSS 全部内联）
+ *   dist/课程/assets/               全部外置资源（图片/视频/纹理等）
+ *   dist/题目编辑器/                题目编辑器 + 可编辑题库
+ *     ├─ 题目编辑器.html
+ *     ├─ practice-data.js           教师唯一需要替换的文件
+ *     └─ assets/                    结构清单与配色表（构建只读）
  */
 import { spawnSync } from 'node:child_process'
-import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
@@ -59,8 +61,7 @@ function buildLesson(dir) {
     throw new Error(`课程 ${dir} 构建失败（退出码 ${result.status}）`)
   }
   reorganizeDistAssets(dir)
-  copySharedIntoDist(dir)
-  writeManifest(dir)
+  arrangePackage(dir)
   return packDist(dir)
 }
 
@@ -106,55 +107,78 @@ function reorganizeDistAssets(dir) {
   console.log(`[资源] ${names.length} 个文件 → dist/assets/，并已改写 index.html 引用`)
 }
 
-/**
- * shared/ 下需随分发包落位的共享静态页：源文件 → dist/quiz-editor/ 内目标名
- * （ASCII 命名，规避 file:// 中文名编码问题）。
- * 单一真源在 shared/，此处只做构建期复制，不提交各课副本。
- */
-const SHARED_DIST_FILES = [
-  ['shared/quiz/editor/build/index.html', 'custom-quiz-editor.html']
-]
+/** 分发包的两个顶层目录（面向教师，用中文名便于识别） */
+const COURSE_DIR = '课程'
+const EDITOR_DIR = '题目编辑器'
 
-/** 题目编辑器相关文件在 dist 内的统一目录 */
-const QUIZ_DIST_DIR = 'quiz-editor'
+/** 离线编辑器单文件产物（npm run build:editor 生成） */
+const EDITOR_BUILD = 'shared/quiz/editor/build/index.html'
 
-/** 课程配色表：源文件 → dist/quiz-editor/quiz-theme.css（供离线编辑器预览读取） */
+/** 课程配色表：源文件 → dist/题目编辑器/assets/quiz-theme.css */
 const LESSON_THEME_SRC = join('src', 'styles', 'quiz-theme.css')
 
+/** 题库源文件所在目录（public/quiz-editor/，分发时落到题目编辑器目录） */
+const PRACTICE_PUBLIC_DIR = join('public', 'quiz-editor')
+
 /**
- * 将 shared/ 共享静态页与课程配色表复制进该课 dist/quiz-editor/。
- * 仅当课程提供 quiz-theme.css（即使用共享练习运行时）时才产出该目录，
+ * 把 Vite 产物重排为面向教师的分发包：
+ *   dist/课程/index.html + assets/
+ *   dist/题目编辑器/题目编辑器.html + practice-data.js + assets/(清单、配色)
+ * 仅当课程提供 quiz-theme.css（即使用共享练习运行时）时才产出题目编辑器目录，
  * 避免无关课程的分发包里出现空编辑器。
  */
-function copySharedIntoDist(dir) {
+function arrangePackage(dir) {
+  const distDir = join(lessonsRoot, dir, 'dist')
+  const htmlPath = join(distDir, 'index.html')
+  if (existsSync(htmlPath)) {
+    const courseDir = join(distDir, COURSE_DIR)
+    mkdirSync(courseDir, { recursive: true })
+    renameSync(htmlPath, join(courseDir, 'index.html'))
+    const assetsPath = join(distDir, 'assets')
+    if (existsSync(assetsPath)) renameSync(assetsPath, join(courseDir, 'assets'))
+    console.log(`[结构] 课程 → dist/${COURSE_DIR}/index.html + assets/`)
+  }
+
   const lessonDir = join(lessonsRoot, dir)
-  const distQuizDir = join(lessonDir, 'dist', QUIZ_DIST_DIR)
+  // Vite 会原样复制 public/quiz-editor/，这里清掉，避免分发包残留旧目录
+  const legacyDir = join(distDir, 'quiz-editor')
+  if (existsSync(legacyDir)) rmSync(legacyDir, { recursive: true, force: true })
+
   const themeFrom = join(lessonDir, LESSON_THEME_SRC)
   if (!existsSync(themeFrom)) return
-  mkdirSync(distQuizDir, { recursive: true })
-  for (const [src, dest] of SHARED_DIST_FILES) {
-    const from = join(projectRoot, src)
-    if (!existsSync(from)) {
-      console.warn(`[共享] 未找到 ${src}，请先执行 npm run build:editor`)
-      continue
-    }
-    copyFileSync(from, join(distQuizDir, dest))
-    console.log(`[共享] ${src} → dist/${QUIZ_DIST_DIR}/${dest}`)
+
+  const editorDir = join(distDir, EDITOR_DIR)
+  const editorAssets = join(editorDir, 'assets')
+  mkdirSync(editorAssets, { recursive: true })
+
+  const editorFrom = join(projectRoot, EDITOR_BUILD)
+  if (existsSync(editorFrom)) {
+    copyFileSync(editorFrom, join(editorDir, '题目编辑器.html'))
+  } else {
+    console.warn(`[共享] 未找到 ${EDITOR_BUILD}，请先执行 npm run build:editor`)
   }
-  copyFileSync(themeFrom, join(distQuizDir, 'quiz-theme.css'))
-  console.log(`[配色] ${LESSON_THEME_SRC} → dist/${QUIZ_DIST_DIR}/quiz-theme.css`)
+
+  // 题库留在编辑器同级：教师导出后直接覆盖同名文件即可，无需进入子目录
+  const dataFrom = join(lessonDir, PRACTICE_PUBLIC_DIR, 'practice-data.js')
+  if (existsSync(dataFrom)) {
+    copyFileSync(dataFrom, join(editorDir, 'practice-data.js'))
+  } else {
+    console.warn(`[结构] 未找到 ${PRACTICE_PUBLIC_DIR}/practice-data.js，题目编辑器将无初始题库`)
+  }
+
+  copyFileSync(themeFrom, join(editorAssets, 'quiz-theme.css'))
+  writeManifest(dir, editorAssets)
+  console.log(`[结构] 题目编辑器 → dist/${EDITOR_DIR}/`)
 }
 
 /**
- * 生成课程结构清单 dist/quiz-editor/lesson-manifest.js（只读契约）。
- * 读取该课**源** index.html，抽取模块信息；供题目编辑器识别模块并映射题目
- * （详见 shared/quiz/editor/docs 开发文档第二部分）。缺失源文件时跳过。
+ * 生成课程结构清单（只读契约），供题目编辑器识别模块并映射题目。
+ * 读取该课**源** index.html，抽取模块信息；缺失源文件时跳过。
  */
-function writeManifest(dir) {
+function writeManifest(dir, targetDir) {
   const lessonDir = join(lessonsRoot, dir)
-  const distQuizDir = join(lessonDir, 'dist', QUIZ_DIST_DIR)
   const htmlPath = join(lessonDir, 'index.html')
-  if (!existsSync(distQuizDir) || !existsSync(htmlPath)) return
+  if (!existsSync(htmlPath)) return
   let title = dir
   try {
     const meta = JSON.parse(readFileSync(join(lessonDir, 'lesson.json'), 'utf8'))
@@ -163,16 +187,16 @@ function writeManifest(dir) {
     // lesson.json 缺失或损坏时退化为目录名
   }
   const manifest = extractManifest(readFileSync(htmlPath, 'utf8'), { lesson: dir, title })
-  writeFileSync(join(distQuizDir, 'lesson-manifest.js'), manifestScript(manifest), 'utf8')
+  writeFileSync(join(targetDir, 'lesson-manifest.js'), manifestScript(manifest), 'utf8')
   const post = manifest.postLesson ? 1 : 0
-  console.log(`[清单] ${dir} → dist/${QUIZ_DIST_DIR}/lesson-manifest.js（模块 ${manifest.modules.length} + 课后练习 ${post}）`)
+  console.log(`[清单] ${dir} → dist/${EDITOR_DIR}/assets/lesson-manifest.js（模块 ${manifest.modules.length} + 课后练习 ${post}）`)
 }
 
-/** 将 dist/ 打包为 zip（放在该课 dist/ 下，作为构建产物） */
+/** 将 dist/ 内两个目录打包为 zip（放在该课目录下，不污染分发包本身） */
 function packDist(dir) {
   const distDir = join(lessonsRoot, dir, 'dist')
   if (!existsSync(distDir)) return Promise.resolve()
-  const zipPath = join(distDir, `${dir}.zip`)
+  const zipPath = join(lessonsRoot, dir, `${dir}.zip`)
   return new Promise((resolve, reject) => {
     const output = createWriteStream(zipPath)
     const archive = new ZipArchive({ zlib: { level: 9 } })
@@ -182,8 +206,7 @@ function packDist(dir) {
     })
     archive.on('error', reject)
     archive.pipe(output)
-    // 排除 dist 内的 zip 自身（*.zip）
-    archive.glob('**/*', { cwd: distDir, ignore: ['*.zip'] })
+    archive.glob('**/*', { cwd: distDir })
     archive.finalize()
   })
 }

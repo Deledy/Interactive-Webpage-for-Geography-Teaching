@@ -192,10 +192,11 @@ import './editor.css'
     },
 
     source: {
-      structureFile: 'lesson-manifest.js',
+      structureFile: 'assets/lesson-manifest.js',
       structureGlobal: '__LESSON_MANIFEST__',
       dataFile: 'practice-data.js',
       dataGlobal: '__PRACTICE_DATA__',
+      themeFile: 'assets/quiz-theme.css',
       exportFile: 'practice-data.js',
       exportGlobal: '__PRACTICE_DATA__',
       draftKey: 'content-editor-draft-v1',
@@ -1750,7 +1751,7 @@ import './editor.css'
      ========================================================== */
 
   /**
-   * 加载本课配色表：与课程共用同一份 quiz-theme.css。
+   * 加载本课配色表：与课程共用同一份 quiz-theme.css（随编辑器放在 assets/ 子目录）。
    * 动态追加到 head 末尾，保证后于默认令牌生效；
    * 文件缺失时保持中性默认配色，不阻断编辑器。
    */
@@ -1758,7 +1759,7 @@ import './editor.css'
     if (el('link[data-quiz-theme]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = './quiz-theme.css';
+    link.href = SRC.themeFile || 'assets/quiz-theme.css';
     link.setAttribute('data-quiz-theme', '');
     document.head.appendChild(link);
   }

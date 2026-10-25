@@ -4,7 +4,7 @@
  * 规则（对齐架构分析报告，决策 2026-08-07）：
  * - 错误（退出码 1，需修复）：
  *   1. lesson.json 无法解析
- *   2. status=done 的课程缺少 entry 指向的文件（默认 dist/index.html，请先构建）
+ *   2. status=done 的课程缺少 entry 指向的文件（默认 dist/课程/index.html，请先构建）
  *   3. resources 数组中登记的资源文件不存在
  * - 告警（宽松，不阻塞构建，退出码仍为 0）：
  *   1. 课内 HTML/源码存在远程 URL 引用 —— 资源本地化约束（宽松拦截，仅提示）
@@ -103,7 +103,7 @@ function checkLesson(name) {
 
   // status=done → entry 必须存在（错误）
   if (lesson.status === 'done') {
-    const entry = lesson.entry || 'dist/index.html'
+    const entry = lesson.entry || 'dist/课程/index.html'
     if (!existsSync(join(lessonRoot, entry))) {
       errors.push(`[${name}] status=done 但缺少入口文件 ${entry}（请先执行构建）`)
     }

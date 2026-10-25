@@ -1,9 +1,10 @@
 /* ============================================================
    随堂练习数据仓库（可编辑真源：public/quiz-editor/practice-data.js）
    ------------------------------------------------------------
-   - 加载方式与 custom-quiz.js 一致：动态注入经典 <script src>，由数据文件把内容挂到
+   - 加载方式与自定义练习一致：动态注入经典 <script src>，由数据文件把内容挂到
      window.__PRACTICE_DATA__。刻意不用 fetch/JSON——file:// 双击分发时 fetch 会被 CORS 拦截。
-   - 数据真源优先级：window.__PRACTICE_DATA__（外置，可编辑）→ lessonData.practices（源码内置回退）。
+   - 分发后数据文件位于课程目录同级的「题目编辑器」文件夹，课程通过相对路径读取；
+     缺失时回退 lessonData.practices（源码内置题库），不阻断课堂使用。
    - 结构校验：统一复用 shared/quiz/runtime/src/validate.ts（单一真源，不在本文件重写）。
    - 运行时无需读取 lesson-manifest.js：模块 id 由消费方从段元素（closest('section.section').id）直接取得。
    ============================================================ */
@@ -28,7 +29,7 @@ function warnVersion(data: PracticeData): void {
   }
 }
 
-/** 加载 ./quiz-editor/practice-data.js（幂等；缺失返回 null） */
+/** 加载 ../题目编辑器/practice-data.js（幂等；缺失返回 null） */
 export function loadPracticeData(): Promise<PracticeData | null> {
   if (loaded) return Promise.resolve(loaded)
   if (loading) return loading
@@ -42,7 +43,7 @@ export function loadPracticeData(): Promise<PracticeData | null> {
 
   loading = new Promise<PracticeData | null>((resolve) => {
     const script = document.createElement('script')
-    script.src = './quiz-editor/practice-data.js'
+    script.src = '../题目编辑器/practice-data.js'
     script.async = true
     script.onload = () => {
       const data = (practiceGlobal()[PRACTICE_GLOBAL] as PracticeData | undefined) ?? null
@@ -59,6 +60,12 @@ export function loadPracticeData(): Promise<PracticeData | null> {
 /** 同步读取已加载的数据快照（未加载返回 null，不触发加载） */
 export function getPracticeData(): PracticeData | null {
   return loaded
+}
+
+/** 清空已加载快照（供测试与热重载重置状态） */
+export function resetPracticeData(): void {
+  loaded = null
+  loading = null
 }
 
 /** 课后练习（沿用 CqData 的 title / subtitle / sections 结构） */

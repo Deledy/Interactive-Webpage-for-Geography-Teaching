@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { initCustomQuiz } from '../lessons/geo01-earth-universe/src/modules/customQuiz'
+import { resetPracticeData } from '../lessons/geo01-earth-universe/src/modules/practiceStore'
 
 const data = {
   version: 1,
@@ -68,9 +69,20 @@ async function tick(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
+/** 注入题库（统一数据文件的结构：postLesson 为课后练习） */
+function setPostLesson(postLesson: unknown): void {
+  ;(window as unknown as { __PRACTICE_DATA__: unknown }).__PRACTICE_DATA__ = {
+    version: 1,
+    lesson: 'geo01-earth-universe',
+    modules: {},
+    postLesson
+  }
+}
+
 beforeEach(() => {
   document.body.innerHTML = '<button data-cq-reset></button><div id="quiz-custom-body"></div>'
-  ;(window as unknown as { __CUSTOM_QUIZ__: unknown }).__CUSTOM_QUIZ__ = data
+  resetPracticeData()
+  setPostLesson(data)
 })
 
 describe('customQuiz', () => {
@@ -120,16 +132,16 @@ describe('customQuiz', () => {
   })
 
   it('无数据：显示空态', async () => {
-    ;(window as unknown as { __CUSTOM_QUIZ__: unknown }).__CUSTOM_QUIZ__ = { sections: [] }
+    setPostLesson({ sections: [] })
     initCustomQuiz()
     await tick()
     expect(host().querySelector('.cq-empty')).not.toBeNull()
   })
 
   it('损坏数据：无有效题目时回退空态并提示', async () => {
-    ;(window as unknown as { __CUSTOM_QUIZ__: unknown }).__CUSTOM_QUIZ__ = {
+    setPostLesson({
       sections: [{ title: '断节', questions: [{ type: 'choice', stem: '缺少选项与答案' }] }]
-    }
+    })
     initCustomQuiz()
     await tick()
     expect(host().querySelectorAll('.cq-q').length).toBe(0)
@@ -138,7 +150,7 @@ describe('customQuiz', () => {
   })
 
   it('部分损坏：丢弃非法题，渲染有效题', async () => {
-    ;(window as unknown as { __CUSTOM_QUIZ__: unknown }).__CUSTOM_QUIZ__ = {
+    setPostLesson({
       sections: [{
         id: 'a',
         title: '一、选择题',
@@ -147,7 +159,7 @@ describe('customQuiz', () => {
           { type: 'choice', stem: '有效题', options: [{ key: 'A', text: '甲' }, { key: 'B', text: '乙' }], answer: 'A' }
         ]
       }]
-    }
+    })
     initCustomQuiz()
     await tick()
     expect(host().querySelectorAll('.cq-q').length).toBe(1)
