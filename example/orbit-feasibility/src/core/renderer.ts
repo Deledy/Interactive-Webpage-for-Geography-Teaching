@@ -121,6 +121,8 @@ export function createPipeline(
   camera: THREE.PerspectiveCamera
 ): {
   composer: EffectComposer
+  /** 暴露泛光通道：深空缩放的中段需要更强的光晕把星系"糊"成星点，末段要收回 */
+  bloom: UnrealBloomPass
   resize: (starFields: THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>[]) => number
 } {
   const composer = new EffectComposer(renderer)
@@ -149,5 +151,5 @@ export function createPipeline(
     return pixels
   }
 
-  return { composer, resize }
+  return { composer, bloom, resize }
 }

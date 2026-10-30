@@ -110,7 +110,7 @@ describe('内容层 · 题目卡片渲染', () => {
       state: { selected: [], submitted: false, revealed: false }
     })
     expect(html).toContain('data-q="q-0"')
-    expect(html).toContain('<span class="cq-q__no">3</span>')
+    expect(html).toContain('<span class="cq-q__no">03</span>')
     expect(html).toContain('单选题')
     expect(html).toContain('<mark class="cq-hl">高亮</mark>')
     expect(html).toContain('题干文字')

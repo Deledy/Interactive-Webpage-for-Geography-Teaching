@@ -15,6 +15,7 @@ import { BODIES, MOON_ORBIT, type BodyDatum } from './data'
 import { TAU, random } from '../core/math'
 import { makeOrbit } from './orbits'
 import { glow } from '../core/glow'
+import { observedTexture } from './moon-textures'
 
 import sunTex from '../../assets/textures/sun.jpg'
 import mercuryTex from '../../assets/textures/mercury.jpg'
@@ -51,31 +52,14 @@ const TEXTURE_URLS: Record<string, string> = {
   'saturn-rings': saturnRingTex
 }
 
-/** 程序化生成月球贴图：灰色底 + 若干暗色环形山，避免为验证 Demo 引入新素材 */
-export function makeRockTexture(
-  base = '#c9c9c6',
-  craters = 260,
-  contrast = 60
-): THREE.CanvasTexture {
-  const size = 512
-  const c = document.createElement('canvas')
-  c.width = c.height = size
-  const ctx = c.getContext('2d')!
-  ctx.fillStyle = base
-  ctx.fillRect(0, 0, size, size)
-  for (let i = 0; i < craters; i++) {
-    const x = random() * size
-    const y = random() * size
-    const r = 3 + random() * 22
-    const shade = 150 + Math.floor(random() * contrast)
-    ctx.beginPath()
-    ctx.arc(x, y, r, 0, TAU)
-    ctx.fillStyle = `rgba(${shade},${shade},${shade - 6},${0.25 + random() * 0.45})`
-    ctx.fill()
-  }
-  const tex = new THREE.CanvasTexture(c)
-  tex.colorSpace = THREE.SRGBColorSpace
-  return tex
+/**
+ * 月球材质：优先使用 assets/textures/moons/moon.* 的真实观测底图；
+ * 未就位时按实测几何反照率（0.12）给纯色，**不生成任何程序化地表纹理**。
+ */
+function createMoonMaterial(): THREE.MeshPhongMaterial {
+  const map = observedTexture('moon')
+  if (map) return new THREE.MeshPhongMaterial({ map, shininess: 6, specular: 0x111111 })
+  return new THREE.MeshPhongMaterial({ color: 0x9c9a95, shininess: 2, specular: 0x050505 })
 }
 
 export async function loadTextures(): Promise<TextureMap> {
@@ -125,11 +109,17 @@ export function createSolarSystem(scene: THREE.Scene, root: THREE.Group, texture
     const group = new THREE.Group()
     root.add(group)
 
+    // 自转轴倾角：把球体与光环放进倾斜组，位置仍由外层 group 控制，
+    // 这样"行星躺着自转"不会把公转轨道位置一起带歪。
+    const tiltGroup = new THREE.Group()
+    tiltGroup.rotation.z = THREE.MathUtils.degToRad(d.axialTilt ?? 0)
+    group.add(tiltGroup)
+
     const mat =
       d.id === 'sun'
         ? new THREE.MeshBasicMaterial({ map: textures.sun, color: 0xffffff })
         : d.id === 'moon'
-          ? new THREE.MeshPhongMaterial({ map: makeRockTexture(), shininess: 2, specular: 0x111111 })
+          ? createMoonMaterial()
           : new THREE.MeshPhongMaterial({
               map: textures[d.texture],
               shininess: d.id === 'earth' ? 12 : 6,
@@ -141,7 +131,7 @@ export function createSolarSystem(scene: THREE.Scene, root: THREE.Group, texture
     mesh.rotation.y = d.id === 'earth' ? 2.9 : random() * TAU
     // 供鼠标点击拾取（参见 main.ts 的拾取逻辑）
     mesh.userData.bodyId = d.id
-    group.add(mesh)
+    tiltGroup.add(mesh)
 
     const body: Body = { id: d.id, datum: d, r: d.r, group, mesh, position: group.position }
     bodies.set(d.id, body)
@@ -180,14 +170,10 @@ export function createSolarSystem(scene: THREE.Scene, root: THREE.Group, texture
       })
       const rings = new THREE.Mesh(ringGeo, ringMat)
       rings.rotation.x = -Math.PI / 2
-      const tilted = new THREE.Group()
-      tilted.rotation.z = 0.466
-      mesh.rotation.z = 0.466
-      tilted.add(rings)
-      group.add(tilted)
+      // 光环与赤道面共面：直接放进倾斜组，不再单独设倾角
+      tiltGroup.add(rings)
       saturn = body
     }
-    if (d.id === 'uranus') mesh.rotation.z = 1.7
 
     if (d.id === 'earth') earth = body
     if (d.id === 'moon') moon = body

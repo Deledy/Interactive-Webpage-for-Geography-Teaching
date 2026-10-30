@@ -1,10 +1,12 @@
 /* ============================================================
    PracticeWindow · 窗口骨架样式（全部走 --pw-* 令牌）
    ------------------------------------------------------------
-   只负责「窗口」本身：标题栏、计时、全屏/关闭、题号导航、逐题切换、
-   底部重做栏、全屏毛玻璃浮层与内容宽度约束。
+   只负责「窗口」本身：居中大窗口、毛玻璃遮罩、标题栏、计时、
+   关闭、题号导航、逐题切换、底部重做栏与内容高度约束。
    单题卡片与富文本内容的样式在 content/card.css（内容层，两处共用）。
    颜色 / 圆角 / 字体 / 间距一律引用 --pw-*（见 styles/default-tokens.css）。
+
+   尺寸基准：1920 × 1080 设计画布；浮层按同一套尺寸居中缩放使用。
    ============================================================ */
 
 .pw {
@@ -12,29 +14,93 @@
   color: var(--pw-text);
 }
 
+/* 组件自带盒模型约束，避免宿主页面缺少全局 reset 时尺寸失真 */
+.pw,
+.pw *,
+.pw *::before,
+.pw *::after,
+.pw-overlay,
+.pw-overlay *,
+.pw-overlay *::before,
+.pw-overlay *::after {
+  box-sizing: border-box;
+}
+
 /* ---------- 窗口头 ---------- */
 .pw-head {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 18px;
+  padding: 40px 0 21px 22px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--pw-divider);
+}
+.pw-head__info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 22px;
+}
+.pw-head__title {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.pw-head__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--pw-text);
 }
 .pw-title {
-  flex: 1;
+  margin: 0;
   font-size: var(--pw-fs-h3);
   font-weight: 700;
   color: var(--pw-text);
+  letter-spacing: 1px;
 }
-.pw-timer {
+.pw-subtitle {
+  margin: 0;
+  min-width: 0;
+  color: var(--pw-text-dim);
+  font-size: var(--pw-fs-note);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pw-head__meta {
   flex: 0 0 auto;
-  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pw-progress {
+  padding: 6px 18px;
   border-radius: 999px;
   border: 1px solid var(--pw-border);
-  background: var(--pw-surface);
+  background: var(--pw-surface-2);
+  color: var(--pw-text-dim);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pw-timer {
+  padding: 6px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--pw-border);
+  background: var(--pw-surface-2);
   color: var(--pw-accent-2);
-  font-size: var(--pw-fs-note);
+  font-size: 20px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 .pw-timer.is-warn {
   border-color: var(--pw-warn);
@@ -42,37 +108,71 @@
 }
 
 /* ---------- 顶部操作（全屏 / 关闭） ---------- */
-.pw-head__actions {
-  flex: 0 0 auto;
-  display: flex;
-  gap: 10px;
-}
 .pw-btn {
-  padding: 6px 14px;
-  border: 1px solid var(--pw-border);
-  border-radius: var(--pw-radius-btn);
-  background: var(--pw-surface);
-  color: var(--pw-text-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  padding: 0 40px;
+  border: 0;
+  border-radius: 999px;
+  background: #1a2e49;
+  color: var(--pw-text-body);
   font-family: inherit;
-  font-size: var(--pw-fs-note);
+  font-size: var(--pw-fs-body);
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease),
-    background var(--pw-dur) var(--pw-ease);
+  transition: background var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease);
 }
-.pw-btn:hover {
-  border-color: var(--pw-blue-border);
+.pw-btn:hover:not(:disabled) {
+  background: #22395a;
   color: var(--pw-text);
 }
-.pw-btn:active {
+.pw-btn:active:not(:disabled) {
   transform: scale(0.98);
 }
+.pw-btn:disabled {
+  color: #54687f;
+  cursor: default;
+}
+.pw-btn--primary {
+  background: var(--pw-blue);
+  color: #ffffff;
+  font-weight: 600;
+}
+.pw-btn--primary:hover:not(:disabled) {
+  background: #2bb7ff;
+  color: #ffffff;
+}
+.pw-btn--primary:disabled {
+  background: #186a97;
+  color: #9dc7de;
+}
+.pw-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: #1f3a58;
+  color: #7cb8de;
+  cursor: pointer;
+  transition: background var(--pw-dur) var(--pw-ease), color var(--pw-dur) var(--pw-ease);
+}
+.pw-close:hover {
+  background: #26486c;
+  color: #ffffff;
+}
 
-/* ---------- 逐题导航（列表模式） ---------- */
+/* ---------- 题号导航（列表模式） ---------- */
 .pw-nav {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 16px;
   margin-bottom: 20px;
 }
 .pw-nav__progress {
@@ -83,13 +183,13 @@
 .pw-nav__dots {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 .pw-nav__dot {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--pw-border);
+  border: 1px solid var(--pw-option-border);
   background: transparent;
   color: var(--pw-text-dim);
   font-family: inherit;
@@ -102,71 +202,169 @@
   color: var(--pw-text);
 }
 .pw-nav__dot.is-answered {
-  border-color: var(--pw-accent);
-  color: var(--pw-accent);
-}
-.pw-nav__dot.is-current {
   border-color: var(--pw-accent-2);
   color: var(--pw-accent-2);
+}
+.pw-nav__dot.is-current {
+  border-color: var(--pw-blue);
+  color: var(--pw-blue);
   box-shadow: 0 0 0 2px var(--pw-blue-soft);
 }
 .pw-nav__dot.is-answered.is-current {
-  border-color: var(--pw-accent);
-  color: var(--pw-accent);
-  box-shadow: 0 0 0 2px var(--pw-blue-border);
+  border-color: var(--pw-accent-2);
+  color: var(--pw-accent-2);
+  box-shadow: 0 0 0 2px var(--pw-blue-soft);
 }
 
 /* ---------- 逐题模式：上/下一题 ---------- */
 .pw-step-actions {
   display: flex;
-  gap: 14px;
-  margin-top: 20px;
+  gap: 15px;
 }
 
-/* ---------- 底部状态栏（重做本页练习） ---------- */
+/* ---------- 底部状态栏（逐题切换 / 重做本页练习） ---------- */
 .pw-foot {
+  flex: 0 0 auto;
   display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--pw-border);
+  align-items: center;
+  gap: 15px;
+  margin-top: 28px;
+  padding: 28px 0 50px;
+  border-top: 1px solid var(--pw-divider);
+}
+.pw-foot__spacer {
+  flex: 1 1 auto;
+}
+.pw-reset {
+  padding: 0 30px;
+  background: #152842;
+  border: 1px solid #2a4462;
+  color: var(--pw-text);
+  font-size: 20px;
+}
+.pw-reset:hover:not(:disabled) {
+  background: #172c48;
+  border-color: #3f6795;
+  color: #ffffff;
 }
 
-/* ---------- 浮层容器（openPracticeWindow 缺省形态：全屏毛玻璃） ---------- */
+/* ---------- 浮层容器（openPracticeWindow 缺省形态：居中大窗口 + 毛玻璃遮罩） ---------- */
 .pw-overlay {
   position: fixed;
   inset: 0;
   z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 3vh, 40px) clamp(14px, 3vw, 48px);
   overflow: auto;
   background: var(--pw-overlay-bg);
-  backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.1);
+  backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--pw-backdrop-blur)) saturate(1.15);
 }
 .pw-panel {
   position: relative;
-  min-height: 100%;
-  padding: clamp(20px, 4vh, 44px) clamp(18px, 4vw, 64px);
+  display: flex;
+  flex-direction: column;
+  /* 16:9 窗口：宽度同时受设计宽度与视口高度约束，内容再整体等比缩放 */
+  width: min(1920px, 100%, calc(92vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+  border: 1px solid var(--pw-panel-border);
+  border-radius: var(--pw-radius-card);
   background: var(--pw-panel-bg);
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+}
+/* 设计画布：内部始终按 1920 × 1080 排版，整体缩放到窗口内（PPT 式一屏） */
+.pw-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--pw-scale, 1));
+  transform-origin: center center;
+}
+.pw-overlay .pw {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pw-overlay .pw-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  margin: 0;
+  padding: 0 37px;
+}
+.pw-overlay .pw-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ---------- 逐题模式：窗口内一屏一题，左材料 / 右上题目 / 右下说明 ---------- */
+.pw-overlay .pw--step .pw-body {
+  overflow: hidden;
+}
+.pw-overlay .pw--step .cq-q {
+  height: 100%;
+}
+.pw-overlay .pw--step .cq-q__panes {
+  height: 100%;
+}
+.pw-overlay .pw--step .cq-pane--material,
+.pw-overlay .pw--step .cq-pane__segment--question,
+.pw-overlay .pw--step .cq-pane__segment--note {
+  overflow-y: auto;
+  min-height: 0;
+}
+.pw-overlay .pw--step .cq-pane--main {
+  min-height: 0;
+}
+.pw-overlay .pw--step .cq-pane__segment--question {
+  min-height: 0;
+}
+.pw-overlay .pw--step .cq-pane__segment--note {
+  flex: 0 1 auto;
+  max-height: 48%;
 }
 
 /* ---------- 嵌入画布（编辑器整窗预览：铺满指定容器，不铺满视口） ---------- */
 .pw-overlay--embedded {
   position: absolute;
   inset: 0;
-  border-radius: var(--pw-radius-card);
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .pw-overlay--embedded .pw-panel {
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
   border-radius: var(--pw-radius-card);
+  box-shadow: none;
 }
 
-/* ---------- 内容宽度约束（超宽屏下保持易读行宽） ---------- */
+/* ---------- 内容宽度约束（页内挂载时保持易读行宽） ---------- */
 .pw-inner {
   max-width: 1320px;
   margin: 0 auto;
 }
 
-/* ---------- 全屏沉浸（CSS 铺满视口；Esc/再次点击退出） ---------- */
+/* ---------- 全屏沉浸（页内挂载时由「全屏」按钮触发；Esc 退出） ---------- */
 .pw.is-fullscreen,
 .pw-panel.is-fullscreen {
   position: fixed;
@@ -183,14 +381,75 @@
   padding: 32px clamp(16px, 5vw, 72px);
   background: var(--pw-panel-bg);
 }
+.pw-panel.is-fullscreen {
+  width: 100%;
+  height: 100%;
+}
 
-/* ---------- 窄屏 ---------- */
-@media (max-width: 900px) {
+/* ---------- 窄屏：浮层贴满视口，左右布局改为上下堆叠 ---------- */
+@media (max-width: 1024px) {
+  .pw-overlay {
+    align-items: flex-start;
+  }
+  /* 平板 / 手机：放弃整屏缩放，回到可滚动的上下堆叠布局，保证字号可读 */
+  .pw-panel {
+    width: 100%;
+    aspect-ratio: auto;
+    height: auto;
+    max-height: 92vh;
+  }
+  .pw-stage {
+    position: static;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: auto;
+    height: auto;
+    transform: none;
+  }
+  .pw-overlay .pw--step .pw-body {
+    overflow-y: auto;
+  }
+  .pw-overlay .pw--step .cq-q,
+  .pw-overlay .pw--step .cq-q__panes {
+    height: auto;
+  }
+  .pw-overlay .pw--step .cq-pane--material,
+  .pw-overlay .pw--step .cq-pane__segment--question,
+  .pw-overlay .pw--step .cq-pane__segment--note {
+    overflow: visible;
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
   .pw-overlay {
     padding: 0;
   }
   .pw-panel {
-    padding: 20px 16px;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+  .pw-overlay .pw-inner {
+    padding: 0 18px;
+  }
+  .pw-head {
+    flex-wrap: wrap;
+    padding: 20px 0 16px;
+  }
+  .pw-head__meta {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .pw-btn {
+    height: 48px;
+    padding: 0 22px;
+    font-size: 18px;
+  }
+  .pw-foot {
+    padding: 18px 0 20px;
   }
   .pw.is-fullscreen,
   .pw-panel.is-fullscreen {

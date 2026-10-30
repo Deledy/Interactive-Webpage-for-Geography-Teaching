@@ -23,19 +23,21 @@ export interface BodyDatum {
   texture: string
   color: number
   kind: 'star' | 'planet' | 'satellite'
+  /** 自转轴倾角（度，真实值）：卫星轨道面随之对齐到赤道面 */
+  axialTilt?: number
 }
 
 export const BODIES: BodyDatum[] = [
-  { id: 'sun', cn: '太阳', r: 8, orbit: 0, period: 0, phase: 0, texture: 'sun', color: 16760404, kind: 'star' },
-  { id: 'mercury', cn: '水星', r: 0.48, orbit: 22, period: 88, phase: 2.8, texture: 'mercury', color: 12235945, kind: 'planet' },
-  { id: 'venus', cn: '金星', r: 0.95, orbit: 32, period: 225, phase: 4.5, texture: 'venus', color: 15254933, kind: 'planet' },
-  { id: 'earth', cn: '地球', r: 1, orbit: 45, period: 365.25, phase: 0, texture: 'earth', color: 7583972, kind: 'planet' },
-  { id: 'moon', cn: '月球', r: 0.273, orbit: 3.9, period: 27.3, phase: 3.35, texture: 'moon', color: 13027786, kind: 'satellite' },
-  { id: 'mars', cn: '火星', r: 0.66, orbit: 65, period: 687, phase: 1.5, texture: 'mars', color: 15114879, kind: 'planet' },
-  { id: 'jupiter', cn: '木星', r: 4.1, orbit: 108, period: 4333, phase: 3.8, texture: 'jupiter', color: 14665902, kind: 'planet' },
-  { id: 'saturn', cn: '土星', r: 3.45, orbit: 155, period: 10759, phase: 0.7, texture: 'saturn', color: 15127459, kind: 'planet' },
-  { id: 'uranus', cn: '天王星', r: 2.15, orbit: 205, period: 30687, phase: 5.35, texture: 'uranus', color: 11001567, kind: 'planet' },
-  { id: 'neptune', cn: '海王星', r: 2.08, orbit: 252, period: 60190, phase: 2.5, texture: 'neptune', color: 7180516, kind: 'planet' }
+  { id: 'sun', cn: '太阳', r: 8, orbit: 0, period: 0, phase: 0, texture: 'sun', color: 16760404, kind: 'star', axialTilt: 7.25 },
+  { id: 'mercury', cn: '水星', r: 0.48, orbit: 22, period: 88, phase: 2.8, texture: 'mercury', color: 12235945, kind: 'planet', axialTilt: 0.03 },
+  { id: 'venus', cn: '金星', r: 0.95, orbit: 32, period: 225, phase: 4.5, texture: 'venus', color: 15254933, kind: 'planet', axialTilt: 177.4 },
+  { id: 'earth', cn: '地球', r: 1, orbit: 45, period: 365.25, phase: 0, texture: 'earth', color: 7583972, kind: 'planet', axialTilt: 23.44 },
+  { id: 'moon', cn: '月球', r: 0.273, orbit: 3.9, period: 27.3, phase: 3.35, texture: 'moon', color: 13027786, kind: 'satellite', axialTilt: 6.68 },
+  { id: 'mars', cn: '火星', r: 0.66, orbit: 65, period: 687, phase: 1.5, texture: 'mars', color: 15114879, kind: 'planet', axialTilt: 25.19 },
+  { id: 'jupiter', cn: '木星', r: 4.1, orbit: 108, period: 4333, phase: 3.8, texture: 'jupiter', color: 14665902, kind: 'planet', axialTilt: 3.13 },
+  { id: 'saturn', cn: '土星', r: 3.45, orbit: 155, period: 10759, phase: 0.7, texture: 'saturn', color: 15127459, kind: 'planet', axialTilt: 26.73 },
+  { id: 'uranus', cn: '天王星', r: 2.15, orbit: 205, period: 30687, phase: 5.35, texture: 'uranus', color: 11001567, kind: 'planet', axialTilt: 97.77 },
+  { id: 'neptune', cn: '海王星', r: 2.08, orbit: 252, period: 60190, phase: 2.5, texture: 'neptune', color: 7180516, kind: 'planet', axialTilt: 28.32 }
 ]
 
 /** 月球绕地轨道半径（场景单位） */

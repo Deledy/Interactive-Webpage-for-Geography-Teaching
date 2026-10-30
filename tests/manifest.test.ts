@@ -39,9 +39,9 @@ describe('课程结构清单抽取（lesson-manifest）', () => {
     expect(manifest.modules[8]).toMatchObject({ no: '11', nav: '复习' })
   })
 
-  it('M3 识别为拖拽题型，其余默认为选择题型', () => {
-    expect(manifest.modules[2].kind).toBe('drag')
-    expect(manifest.modules[0].kind).toBe('choice')
+  it('全部模块按通用题型处理（M3 不再标记为拖拽）', () => {
+    expect(manifest.modules[2].kind).toBe('choice')
+    expect(manifest.modules.every((m) => m.kind === 'choice')).toBe(true)
   })
 
   it('排除模块内嵌套的 <section>（不误判为模块）', () => {

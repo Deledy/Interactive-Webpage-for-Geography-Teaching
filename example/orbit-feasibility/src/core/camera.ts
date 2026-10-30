@@ -18,8 +18,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { clamp, smooth, reducedMotion } from './math'
 
-/** 场景尺度上限：需要容纳河外星系图鉴（最远约 40 万单位） */
-const MAX_DISTANCE = 3000000
+/** 场景尺度上限：需容纳河外星系图鉴，并为"宇宙背景过渡"留出深空缩放行程 */
+const MAX_DISTANCE = 4000000
 /** 视距超过它即视为进入「银河系」层级（数值与 ORBIT 一致） */
 const GALAXY_LEAVE = 2600
 /** 视距超过它即打开「河外星系图鉴」；离开阈值更低，形成迟滞避免边界抖动 */
@@ -34,7 +34,8 @@ export interface CameraRig {
 }
 
 export function createCamera(renderer: THREE.WebGLRenderer): CameraRig {
-  const camera = new THREE.PerspectiveCamera(43, window.innerWidth / window.innerHeight, 0.001, 4000000)
+  // 远裁剪面需同时容纳"深空缩放最大视距"与跟随相机的 CMB 天穹（见 universe/cosmos.ts）
+  const camera = new THREE.PerspectiveCamera(43, window.innerWidth / window.innerHeight, 0.001, 12000000)
   const controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.07

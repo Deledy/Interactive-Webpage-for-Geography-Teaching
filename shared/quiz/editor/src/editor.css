@@ -28,6 +28,7 @@
   --ce-ease: cubic-bezier(.4, 0, .2, 1);
   /* 字体 */
   --ce-font: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+  --ce-font-serif: "Songti SC", "Source Han Serif SC", "Noto Serif SC", "SimSun", "STSong", serif;
   --ce-font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
 
   /* 颜色（浅色）—— 纸张底 + 深青绿主色 + 赭石辅色 */
@@ -600,9 +601,78 @@ body.ce-app {
   background: var(--ce-surface); color: var(--ce-text-muted); font-size: var(--ce-fs-xs);
 }
 
-/* 题组内的材料：纸张底，与题目卡片形成「材料 / 题目」节奏 */
-.ce-group > .ce-field > .ce-rich-mount { background: var(--ce-surface); }
-.ce-group > .ce-field > .ce-field__label { color: var(--ce-accent-2); }
+/* ---------- 题组折叠 ----------
+   标题栏常驻；折叠只切 class 与 hidden，不重建编辑区，点击即时生效。 */
+.ce-group__toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex: 0 0 auto; padding: 0;
+  border: 1px solid transparent; border-radius: var(--ce-radius-sm);
+  background: transparent; color: var(--ce-text-muted); cursor: pointer;
+  transition: background var(--ce-dur-fast) var(--ce-ease),
+              color var(--ce-dur-fast) var(--ce-ease),
+              border-color var(--ce-dur-fast) var(--ce-ease);
+}
+.ce-group__toggle:hover { background: var(--ce-surface-3); border-color: var(--ce-border); color: var(--ce-text); }
+.ce-group__toggle svg { transition: transform var(--ce-dur-base) var(--ce-ease); }
+.ce-group.is-collapsed .ce-group__toggle svg { transform: rotate(-90deg); }
+.ce-group__body[hidden] { display: none !important; }
+.ce-group.is-collapsed { padding-bottom: var(--ce-space-4); }
+.ce-group.is-collapsed > .ce-group__head {
+  margin-bottom: 0; padding-bottom: 0; border-bottom-color: transparent;
+}
+
+/* ---------- 三级文字层级 ----------
+   题组标题（15px/700 无衬线）> 材料正文（14.5px/1.9 衬线）> 题目字段（13px 无衬线）。 */
+.ce-group__title { font-size: var(--ce-fs-lg); font-weight: 700; letter-spacing: .01em; }
+.ce-group__badge { font-size: var(--ce-fs-xs); letter-spacing: .06em; }
+
+/* 材料：独立阅读块，赭石细线 + 衬线正文，与题目的表单控件区分 */
+.ce-group__material {
+  margin-bottom: var(--ce-space-4);
+  padding-left: var(--ce-space-3);
+  border-left: 2px solid var(--ce-accent-2-soft);
+  transition: border-color var(--ce-dur-base) var(--ce-ease), box-shadow var(--ce-dur-base) var(--ce-ease);
+}
+.ce-group__material > .ce-field__label { color: var(--ce-accent-2); letter-spacing: .1em; }
+.ce-group__material > .ce-rich-mount { background: var(--ce-surface); }
+.ce-group__material .sun-editor .se-contents {
+  font-family: var(--ce-font-serif);
+  font-size: 14.5px; line-height: 1.9;
+}
+
+/* 题目：题号用等宽字，字段保持紧凑表单字号 */
+.ce-group .ce-card--item .ce-qno { font-family: var(--ce-font-mono); }
+.ce-group .ce-card--item .ce-input,
+.ce-group .ce-card--item .ce-textarea { font-size: var(--ce-fs-sm); }
+
+/* ---------- 当前编辑对象高亮 ----------
+   题组：主色左边条，自身聚焦时加外环；材料：赭石外环；题目：主色外环 + 实底题号。
+   三类各自带「编辑中」小标，配合已有的「题组 N / 材料 / 题目 N」标签即可辨认类别。 */
+.ce-group.is-editing { border-left-color: var(--ce-accent); }
+.ce-group.is-editing[data-focus="self"] {
+  border-color: var(--ce-accent-border);
+  box-shadow: 0 0 0 3px var(--ce-ring);
+}
+.ce-group__material.is-editing { border-left-color: var(--ce-accent-2); }
+.ce-group__material.is-editing[data-focus="self"] { box-shadow: 0 0 0 3px var(--ce-accent-2-soft); }
+.ce-group .ce-card--item.is-editing { box-shadow: 0 0 0 3px var(--ce-ring); }
+.ce-group .ce-card--item.is-editing .ce-qno {
+  background: var(--ce-accent); border-color: var(--ce-accent);
+  color: var(--ce-on-accent);
+}
+.ce-group__material.is-editing > .ce-field__label::after,
+.ce-group .ce-card--item.is-editing .ce-card__head::after,
+.ce-group.is-editing[data-focus="self"] > .ce-group__head::after {
+  content: "编辑中";
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  padding: 1px 7px; border-radius: var(--ce-radius-full);
+  background: var(--ce-accent-soft); color: var(--ce-accent);
+  white-space: nowrap;
+}
+.ce-group__material.is-editing > .ce-field__label::after {
+  margin-left: auto;
+  background: var(--ce-accent-2-soft); color: var(--ce-accent-2);
+}
 
 /* 题目卡片：题组内的弱层级卡片 */
 .ce-group .ce-card--item {

@@ -133,6 +133,8 @@ import './editor.css'
 
       itemActions: { up: '上移', down: '下移', duplicate: '复制', remove: '删除' },
 
+      groupToggle: { collapse: '收起题组', expand: '展开题组' },
+
       sectionTitles: {
         content: '分组设置',
         items: '题组'
@@ -170,6 +172,8 @@ import './editor.css'
         localLoaded: '已载入同级数据文件',
         localMissing: '未找到同级数据文件',
         saved: '已保存到所选文件',
+        savedNamed: '已保存到 {name}',
+        draftMerged: '已从同级题库补齐 {n} 个模块',
         saveFallback: '直接保存不可用，已改为下载',
         unparsable: '无法识别的数据结构',
         keepOneSection: '至少保留一个分区',
@@ -182,7 +186,10 @@ import './editor.css'
         cancel: '取消',
         confirm: '确定',
         removeSection: '删除该题组及其全部题目？此操作不可撤销。',
-        removeItem: '删除该题目？此操作不可撤销。'
+        removeItem: '删除该题目？此操作不可撤销。',
+        lossySave: '当前草稿中缺少以下模块的题目：{list}。继续保存会覆盖同级数据文件并丢失这些题目，确定继续吗？',
+        draftMissing: '当前草稿缺少同级题库中的这些模块：{list}。可以从同级文件补齐（只补空白模块，不改动草稿已有内容）。',
+        fillFromLocal: '补齐缺失模块'
       }
     },
 
@@ -272,8 +279,14 @@ import './editor.css'
      ========================================================== */
   var manifest = null;
   var state = null;
+  /** 同级题库文件快照：用于保存前检测“草稿缺模块”的覆盖风险 */
+  var sourceSnapshot = null;
   var selectedId = '';
   var collapsed = {};
+  /** 题组折叠：以题组稳定键（_k）为索引，只记录「已收起」，默认展开 */
+  var collapsedGroups = {};
+  /** 当前编辑对象：{ gkey, kind: 'group' | 'material' | 'item', qi } */
+  var activeEditing = null;
   var guideDismissed = false;
   var guideForced = false;
 
@@ -291,9 +304,34 @@ import './editor.css'
     };
   }
 
+  /**
+   * 题组稳定键：只用于编辑器内部（折叠状态 / 高亮定位），
+   * 导出时会被剔除，不进入题库数据结构。
+   */
+  function newGroupKey() {
+    return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  function ensureGroupKey(g) {
+    if (g && !g._k) g._k = newGroupKey();
+    return g ? g._k : '';
+  }
+
   /** 新题组：一则材料 + 一组题目 */
   function newGroup() {
-    return { id: '', material: '', questions: [] };
+    return { _k: newGroupKey(), id: '', material: '', questions: [] };
+  }
+
+  /**
+   * 丢弃无法解析的题目条目（草稿或导入数据可能混入字符串等脏值）。
+   * 历史缺陷：修改「选定项」时会把题目对象覆盖成答案字母，留下形如 'D' 的脏条目，
+   * 后续导出 / 预览在挂载题组材料时会抛 TypeError。此处统一清理，保证编辑器可自愈。
+   */
+  function validQuestions(list) {
+    return (Array.isArray(list) ? list : []).filter(function (q) {
+      if (q && typeof q === 'object' && !Array.isArray(q)) return true;
+      if (window.console) console.warn('[内容编辑器] 已忽略无法解析的题目条目：', q);
+      return false;
+    });
   }
 
   /**
@@ -303,7 +341,7 @@ import './editor.css'
   function toGroups(questions) {
     var groups = [];
     var last = null;
-    (questions || []).forEach(function (q) {
+    validQuestions(questions).forEach(function (q) {
       var copy = clone(q);
       var material = copy.material || '';
       delete copy.material;
@@ -323,10 +361,11 @@ import './editor.css'
       mod.groups = toGroups(mod.questions || []);
       delete mod.questions;
     }
+    mod.groups = mod.groups.filter(function (g) { return g && typeof g === 'object'; });
     mod.groups.forEach(function (g) {
-      if (!g) return;
-      if (!Array.isArray(g.questions)) g.questions = [];
-      g.questions.forEach(function (q) { if (q) delete q.material; });
+      ensureGroupKey(g);
+      g.questions = validQuestions(g.questions);
+      g.questions.forEach(function (q) { delete q.material; });
     });
   }
 
@@ -334,7 +373,7 @@ import './editor.css'
     var out = [];
     (sections || []).forEach(function (sec) {
       if (!sec) return;
-      var qs = Array.isArray(sec.questions) ? sec.questions : [];
+      var qs = validQuestions(sec.questions);
       if (typeof sec.material === 'string' || !qs.length) {
         sec.questions = qs;
         if (typeof sec.material !== 'string') sec.material = '';
@@ -360,6 +399,7 @@ import './editor.css'
     Object.keys(state.modules || {}).forEach(function (id) { normalizeModule(state.modules[id]); });
     if (state.postLesson) {
       state.postLesson.sections = normalizeSections(state.postLesson.sections || []);
+      state.postLesson.sections.forEach(ensureGroupKey);
     }
   }
 
@@ -388,15 +428,67 @@ import './editor.css'
   var LAYOUT_KEY = SRC.draftKey + ':layout';
   var GUIDE_KEY = SRC.draftKey + ':guide';
 
+  /* 文件句柄持久化（IndexedDB）
+     浏览器不允许网页按相对路径静默写盘，首次保存必须由用户在系统窗口中选择目标文件。
+     记住该句柄后，后续「保存到同级文件」可直接覆盖，不再要求教师每次找路径。 */
+  var FILE_DB = 'content-editor-fs';
+  var FILE_STORE = 'handles';
+
+  function idbOpen() {
+    return new Promise(function (resolve, reject) {
+      if (!window.indexedDB) { reject(new Error('indexedDB unavailable')); return; }
+      var req = window.indexedDB.open(FILE_DB, 1);
+      req.onupgradeneeded = function () {
+        if (!req.result.objectStoreNames.contains(FILE_STORE)) req.result.createObjectStore(FILE_STORE);
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error || new Error('indexedDB open failed')); };
+    });
+  }
+
+  function idbGet(key) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var req = db.transaction(FILE_STORE, 'readonly').objectStore(FILE_STORE).get(key);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { reject(req.error); };
+      });
+    });
+  }
+
+  function idbSet(key, value) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(FILE_STORE, 'readwrite');
+        tx.objectStore(FILE_STORE).put(value, key);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  /** 草稿按课程隔离：同一浏览器编辑多课，避免互相覆盖 */
+  function draftKey() {
+    var lesson = (manifest && manifest.lesson) || (state && state.lesson) || '';
+    return SRC.draftKey + (lesson ? ':' + lesson : '');
+  }
+
   var saveTimer = null;
   function loadDraft() {
-    var raw = storeGet(SRC.draftKey);
+    var key = draftKey();
+    var raw = storeGet(key);
+    var legacy = false;
+    if (!raw) { raw = storeGet(SRC.draftKey); legacy = !!raw; }
     if (!raw) return false;
     try {
       var parsed = JSON.parse(raw);
       if (parsed && (parsed.modules || parsed.postLesson)) {
+        var lesson = (manifest && manifest.lesson) || (state && state.lesson) || '';
+        // 旧版全局草稿未按课程隔离：只有 lesson 一致时才采用，避免串课
+        if (legacy && lesson && parsed.lesson !== lesson) return false;
         state = parsed;
         normalizeState();
+        if (legacy) storeSet(key, raw);
         return true;
       }
     } catch (e) { /* 损坏数据忽略 */ }
@@ -404,7 +496,22 @@ import './editor.css'
   }
   function saveDraft() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(function () { storeSet(SRC.draftKey, JSON.stringify(state)); }, 300);
+    saveTimer = setTimeout(function () { storeSet(draftKey(), JSON.stringify(state)); }, 300);
+  }
+
+  /** 题组折叠状态按课程隔离存放，切换分组 / 保存内容后仍然保持 */
+  function collapsedStoreKey() { return draftKey() + ':collapsed-groups'; }
+  function loadCollapsedGroups() {
+    collapsedGroups = {};
+    var raw = storeGet(collapsedStoreKey());
+    if (!raw) return;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) collapsedGroups = parsed;
+    } catch (e) { collapsedGroups = {}; }
+  }
+  function saveCollapsedGroups() {
+    storeSet(collapsedStoreKey(), JSON.stringify(collapsedGroups));
   }
 
   /* ==========================================================
@@ -669,8 +776,8 @@ import './editor.css'
    * 外层用 div 而非 label：label 会把任意点击转发给第一个可标记控件，
    * 即块右上角的「删除此块」按钮，导致点哪都弹删除确认。
    */
-  function richAreaHtml(label, path, value, rows, phKey, hint) {
-    return '<div class="ce-field"><span class="ce-field__label">' + esc(label) +
+  function richAreaHtml(label, path, value, rows, phKey, hint, extraClass) {
+    return '<div class="ce-field' + (extraClass ? ' ' + extraClass : '') + '"><span class="ce-field__label">' + esc(label) +
       (hint ? '<span class="ce-field__hint">' + esc(hint) + '</span>' : '') + '</span>' +
       '<div class="ce-rich-mount" data-rich-path="' + attr(path) + '"></div>' +
       '<textarea class="ce-textarea ce-rich__source" rows="' + (rows || 3) + '" data-path="' + attr(path) + '"' +
@@ -692,7 +799,7 @@ import './editor.css'
       '<div class="ce-choicegroup">' + (q.options || []).map(function (opt) {
         var on = selected.indexOf(opt.key) >= 0;
         return '<label class="ce-choice"><input type="radio" name="ans-' + attr(base) + '"' +
-          ' data-answer="' + attr(base) + '" value="' + attr(opt.key) + '"' + (on ? ' checked' : '') + '>' +
+          ' data-answer="' + attr(base + '.answer') + '" value="' + attr(opt.key) + '"' + (on ? ' checked' : '') + '>' +
           esc(opt.key) + '</label>';
       }).join('') + '</div></div>';
   }
@@ -719,7 +826,7 @@ import './editor.css'
     var base = qbase + '.' + qi;
     var isEssay = q.type === 'essay';
     var kindLabel = isEssay ? L('kinds.essay') : L('kinds.choice');
-    return '<div class="ce-card ce-card--item" data-base="' + attr(base) + '">' +
+    return '<div class="ce-card ce-card--item" data-base="' + attr(base) + '" data-qi="' + qi + '">' +
       '<div class="ce-card__head">' +
         '<span class="ce-qno">题目 ' + (qi + 1) + '</span>' +
         '<span class="ce-tag' + (isEssay ? ' ce-tag--info' : '') + '">' + esc(kindLabel) + '</span>' +
@@ -753,15 +860,22 @@ import './editor.css'
       '</div>';
   }
 
-  /** 题组卡片：材料 + 题目列表；外层为强容器，内层题目为弱卡片 */
+  /** 题组卡片：标题栏 + 可折叠内容区（材料 + 题目列表） */
   function groupCardHtml(gbase, gi, g, titlePath) {
     var qbase = gbase + '.' + gi + '.questions';
     var qs = g.questions || [];
+    var gkey = ensureGroupKey(g);
+    var isCollapsed = !!collapsedGroups[gkey];
+    var toggleLabel = isCollapsed ? L('groupToggle.expand') : L('groupToggle.collapse');
+    var bodyId = 'ce-gbody-' + gkey;
     var title = titlePath
       ? '<input class="ce-input ce-group__title" type="text" data-path="' + attr(titlePath) + '" value="' + attr(g.title || '') + '" placeholder="' + ph('sectionTitle') + '">'
       : '';
-    return '<div class="ce-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">' +
+    return '<div class="ce-group' + (isCollapsed ? ' is-collapsed' : '') + '" data-gkey="' + attr(gkey) + '" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">' +
       '<div class="ce-group__head">' +
+        '<button class="ce-group__toggle" type="button" data-act="toggle-group" data-gkey="' + attr(gkey) + '" aria-expanded="' + String(!isCollapsed) + '" aria-controls="' + attr(bodyId) + '" title="' + attr(toggleLabel) + '" aria-label="' + attr(toggleLabel) + '">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+        '</button>' +
         '<span class="ce-group__badge">题组 ' + (gi + 1) + '</span>' +
         title +
         '<span class="ce-group__meta">' + esc(L('questionCount', { n: qs.length })) + '</span>' +
@@ -773,13 +887,52 @@ import './editor.css'
           '<button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="del-group" data-gbase="' + attr(gbase) + '" data-gi="' + gi + '">' + esc(L('itemActions.remove')) + '</button>' +
         '</div>' +
       '</div>' +
-      richAreaHtml(L('fields.material'), gbase + '.' + gi + '.material', g.material, 3, 'material') +
-      '<div class="ce-group__questions">' +
-        (qs.length ? '' : '<p class="ce-group__empty">该题组还没有题目，从下方新增选择题或综合题。</p>') +
-        qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
-        addItemButtonsHtml(qbase, !qs.length) +
+      '<div class="ce-group__body" id="' + attr(bodyId) + '"' + (isCollapsed ? ' hidden' : '') + '>' +
+        richAreaHtml(L('fields.material'), gbase + '.' + gi + '.material', g.material, 3, 'material', '', 'ce-group__material') +
+        '<div class="ce-group__questions">' +
+          (qs.length ? '' : '<p class="ce-group__empty">该题组还没有题目，从下方新增选择题或综合题。</p>') +
+          qs.map(function (q, qi) { return itemFormHtml(qbase, qi, q); }).join('') +
+          addItemButtonsHtml(qbase, !qs.length) +
+        '</div>' +
       '</div>' +
       '</div>';
+  }
+
+  /* ---------- 折叠：只切 class 与 hidden，不重建编辑区，点击即时生效 ---------- */
+  function applyGroupCollapsed(card, isCollapsed) {
+    card.classList.toggle('is-collapsed', isCollapsed);
+    var body = el('.ce-group__body', card);
+    if (body) body.hidden = isCollapsed;
+    var btn = el('.ce-group__toggle', card);
+    if (btn) {
+      var label = isCollapsed ? L('groupToggle.expand') : L('groupToggle.collapse');
+      btn.setAttribute('aria-expanded', String(!isCollapsed));
+      btn.setAttribute('title', label);
+      btn.setAttribute('aria-label', label);
+    }
+  }
+
+  function toggleGroup(btn) {
+    var card = btn && btn.closest ? btn.closest('.ce-group') : null;
+    var gkey = btn && btn.dataset ? btn.dataset.gkey : '';
+    if (!card || !gkey) return;
+    var next = !card.classList.contains('is-collapsed');
+    if (next) collapsedGroups[gkey] = true;
+    else delete collapsedGroups[gkey];
+    saveDraft();              /* 持久化题组稳定键，保证刷新后折叠状态仍能对上 */
+    saveCollapsedGroups();
+    applyGroupCollapsed(card, next);
+    if (!next) mountRichFields(card);   /* 展开时再挂载被延迟的富文本字段 */
+  }
+
+  /** 校验定位等场景需要显式展开某个题组 */
+  function expandGroupCard(card) {
+    if (!card || !card.classList.contains('is-collapsed')) return;
+    var gkey = card.dataset.gkey || '';
+    if (gkey) delete collapsedGroups[gkey];
+    saveCollapsedGroups();
+    applyGroupCollapsed(card, false);
+    mountRichFields(card);
   }
 
   function addGroupButtonHtml(gbase) {
@@ -854,15 +1007,13 @@ import './editor.css'
 
   var richFields = [];
 
-  /** 把当前编辑区里的富文本字段挂载成块编辑器（隐藏 textarea 仍是数据源） */
-  function enhanceRichFields() {
-    richFields.forEach(function (f) {
-      try { f.destroy(); } catch (e) { /* ignore */ }
-    });
-    richFields = [];
-    els('#editor .ce-rich-mount').forEach(function (mount) {
+  /** 挂载尚未初始化的富文本字段；折叠中的题组延迟到展开时再挂载，避免隐藏容器里初始化 */
+  function mountRichFields(root) {
+    els('.ce-rich-mount', root).forEach(function (mount) {
+      if (mount.querySelector('.sun-editor')) return;
+      if (mount.closest('.ce-group.is-collapsed')) return;
       var path = mount.getAttribute('data-rich-path');
-      var source = el('#editor [data-path="' + path + '"]');
+      var source = el('[data-path="' + path + '"]', root);
       if (!source) return;
       richFields.push(createRichField({
         mount: mount,
@@ -875,17 +1026,74 @@ import './editor.css'
     });
   }
 
+  /** 把当前编辑区里的富文本字段挂载成块编辑器（隐藏 textarea 仍是数据源） */
+  function enhanceRichFields() {
+    richFields.forEach(function (f) {
+      try { f.destroy(); } catch (e) { /* ignore */ }
+    });
+    richFields = [];
+    var root = el('#editor');
+    if (root) mountRichFields(root);
+  }
+
+  /* ---------- 当前编辑对象：题组 / 材料 / 题目 三级高亮 ---------- */
+  function markActiveEditing(node) {
+    var target = node && node.nodeType === 1 ? node : (node && node.parentElement);
+    if (!target || !target.closest) return;
+    var card = target.closest('.ce-group');
+    if (!card) return;
+    var item = target.closest('.ce-card--item');
+    var material = target.closest('.ce-group__material');
+    var next = {
+      gkey: card.dataset.gkey || '',
+      kind: item ? 'item' : (material ? 'material' : 'group'),
+      qi: item ? Number(item.dataset.qi) : -1
+    };
+    if (activeEditing && activeEditing.gkey === next.gkey &&
+        activeEditing.kind === next.kind && activeEditing.qi === next.qi) return;
+    activeEditing = next;
+    applyActiveEditing();
+  }
+
+  /** 编辑区重建后按记录恢复高亮；记录指向的题组已不存在则自动清除 */
+  function applyActiveEditing() {
+    var root = el('#editor');
+    if (!root) return;
+    els('.is-editing', root).forEach(function (n) {
+      n.classList.remove('is-editing');
+      n.removeAttribute('data-focus');
+    });
+    if (!activeEditing) return;
+    var card = el('.ce-group[data-gkey="' + activeEditing.gkey + '"]', root);
+    if (!card) { activeEditing = null; return; }
+    card.classList.add('is-editing');
+    if (activeEditing.kind === 'group') { card.setAttribute('data-focus', 'self'); return; }
+    if (activeEditing.kind === 'material') {
+      var mat = el('.ce-group__material', card);
+      if (mat) { mat.classList.add('is-editing'); mat.setAttribute('data-focus', 'self'); }
+      return;
+    }
+    var item = el('.ce-card--item[data-qi="' + activeEditing.qi + '"]', card);
+    if (item) { item.classList.add('is-editing'); item.setAttribute('data-focus', 'self'); }
+  }
+
   function renderEditor() {
     var node = el('#editor');
     if (!node) return;
     if (!manifest && navItems().length === 0) {
       node.innerHTML = emptyStateHtml();
+      activeEditing = null;
       return;
     }
     var it = selectedItem();
-    if (!it) { node.innerHTML = '<p class="ce-status">' + esc(L('selectionEmpty')) + '</p>'; return; }
+    if (!it) {
+      node.innerHTML = '<p class="ce-status">' + esc(L('selectionEmpty')) + '</p>';
+      activeEditing = null;
+      return;
+    }
     node.innerHTML = it.kind === 'auxiliary' ? auxiliaryEditorHtml(it) : groupEditorHtml(it);
     enhanceRichFields();
+    applyActiveEditing();
   }
 
   /* ==========================================================
@@ -1020,6 +1228,64 @@ import './editor.css'
   /* ==========================================================
      十二、导出与校验
      ========================================================== */
+  /** 统计题库模块的题目数（兼容 groups / questions 两种结构） */
+  function moduleQuestionCount(mod) {
+    if (!mod) return 0;
+    var n = (mod.questions || []).length;
+    (mod.groups || []).forEach(function (g) { n += ((g && g.questions) || []).length; });
+    return n;
+  }
+  function auxiliaryQuestionCount(pl) {
+    return ((pl && pl.sections) || []).reduce(function (n, s) {
+      return n + (((s && s.questions) || []).length);
+    }, 0);
+  }
+
+  /** 同级题库中有、当前草稿中没有的模块（保存会丢失它们） */
+  function missingSourceModules() {
+    if (!sourceSnapshot) return [];
+    var missing = [];
+    Object.keys(sourceSnapshot.modules || {}).forEach(function (id) {
+      if (!moduleQuestionCount(sourceSnapshot.modules[id])) return;
+      if (questionsOf((state.modules || {})[id]).length) return;
+      var it = findItem(id);
+      missing.push(groupLabel(it) || id);
+    });
+    if (auxiliaryQuestionCount(sourceSnapshot.postLesson) && !auxiliaryCount()) {
+      var auxId = (manifest && manifest.postLesson && manifest.postLesson.id) || 'auxiliary';
+      var aux = findItem(auxId);
+      missing.push((aux && groupLabel(aux)) || L('auxiliaryFallback'));
+    }
+    return missing;
+  }
+
+  /** 当前内存状态快照，保存成功后作为新的比较基线 */
+  function snapshotFromState() {
+    return {
+      modules: clone((state && state.modules) || {}),
+      postLesson: state && state.postLesson ? clone(state.postLesson) : null
+    };
+  }
+
+  /** 用同级题库补齐草稿中为空的模块（不覆盖草稿已有内容） */
+  function mergeMissingFromSource(data) {
+    if (!data) return 0;
+    if (!state.modules) state.modules = {};
+    var added = 0;
+    Object.keys(data.modules || {}).forEach(function (id) {
+      if (questionsOf(state.modules[id]).length) return;
+      if (!moduleQuestionCount(data.modules[id])) return;
+      state.modules[id] = clone(data.modules[id]);
+      added++;
+    });
+    if (auxiliaryQuestionCount(data.postLesson) && !auxiliaryCount()) {
+      state.postLesson = clone(data.postLesson);
+      added++;
+    }
+    if (added) { normalizeState(); saveDraft(); }
+    return added;
+  }
+
   function generated() {
     var modules = {};
     Object.keys((state && state.modules) || {}).forEach(function (id) {
@@ -1054,6 +1320,10 @@ import './editor.css'
       modules: modules
     };
     if (state.postLesson) payload.postLesson = state.postLesson;
+    if (payload.postLesson) {
+      payload.postLesson = clone(payload.postLesson);
+      (payload.postLesson.sections || []).forEach(function (sec) { if (sec) delete sec._k; });
+    }
     return '/* Generated by Content Editor */\n' +
       'window.' + SRC.exportGlobal + ' = ' + JSON.stringify(payload, null, 2) + ';\n';
   }
@@ -1165,6 +1435,8 @@ import './editor.css'
     var target = first ? el('#editor [data-path="' + first.paths[0] + '"]')
       : (issues[0] && issues[0].base ? el('#editor .ce-card--item[data-base="' + issues[0].base + '"]') : null);
     if (target) {
+      var targetGroup = target.closest ? target.closest('.ce-group') : null;
+      if (targetGroup) expandGroupCard(targetGroup);
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
       if (target.classList && target.classList.contains('ce-rich__source')) {
         var mount = target.parentElement && target.parentElement.querySelector('.ce-rich-mount');
@@ -1226,7 +1498,11 @@ import './editor.css'
         return;
       case 'dup-group':
         arr = getPath(state, gbase);
-        if (arr) arr.splice(gi + 1, 0, clone(arr[gi]));
+        if (arr) {
+          var dupGroup = clone(arr[gi]);
+          delete dupGroup._k;   /* 复制出的题组重新分配折叠键，避免与原题组联动 */
+          arr.splice(gi + 1, 0, dupGroup);
+        }
         break;
       case 'up-group':
         arr = getPath(state, gbase);
@@ -1257,6 +1533,7 @@ import './editor.css'
         arr = getPath(state, qbase);
         if (!arr) return;
         confirmDialog(L('dialog.removeItem'), function () {
+          activeEditing = null;   /* 题目序号会前移，清除旧高亮避免指错对象 */
           getPath(state, qbase).splice(qi, 1);
           saveDraft(); renderAll();
         });
@@ -1286,6 +1563,8 @@ import './editor.css'
         break;
       default: return;
     }
+    /* 题目顺序变化后旧序号不再对应原题目，清空高亮待下一次聚焦重建 */
+    if (/^(del|dup|up|down)-item$/.test(act)) activeEditing = null;
     saveDraft(); renderAll();
   }
 
@@ -1425,29 +1704,87 @@ import './editor.css'
     state.lesson = state.lesson || manifest.lesson || '';
     if (!state.postLesson) state.postLesson = emptyState().postLesson;
     ensureSelected();
+    loadCollapsedGroups();
     renderAll();
     return true;
   }
 
+  /** 句柄按课程隔离：同一浏览器编辑多课，避免静默覆盖另一课的 practice-data.js */
+  function handleKey() {
+    var lesson = (manifest && manifest.lesson) || (state && state.lesson) || '';
+    return SRC.exportFile + (lesson ? '@' + lesson : '');
+  }
+
+  function writeFile(handle, text) {
+    return handle.createWritable().then(function (w) {
+      return w.write(text).then(function () { return w.close(); });
+    });
+  }
+
+  /** 用上次记住的句柄直接覆盖；不可用时返回 null（不抛错，交给选择窗口） */
+  function writeRemembered(text) {
+    return idbGet(handleKey()).then(function (handle) {
+      if (!handle || typeof handle.queryPermission !== 'function') return null;
+      return handle.queryPermission({ mode: 'readwrite' }).then(function (state) {
+        if (state === 'granted') return true;
+        return handle.requestPermission({ mode: 'readwrite' }).then(function (next) { return next === 'granted'; });
+      }).then(function (granted) {
+        if (!granted) return null;
+        return writeFile(handle, text).then(function () { return handle; });
+      });
+    }).catch(function () { return null; });
+  }
+
+  /** 首次保存或句柄失效：弹系统窗口；选中后记住句柄，后续一键覆盖 */
+  function pickAndWrite(text) {
+    return idbGet(handleKey()).catch(function () { return null; }).then(function (handle) {
+      // 有旧句柄时让窗口直接定位到它所在目录；首次无法指定任意路径，退到「文档」
+      if (!handle) return null;
+      return handle.getFile().then(function () { return handle; }).catch(function () { return null; });
+    }).then(function (handle) {
+      var options = {
+        suggestedName: SRC.exportFile,
+        types: [{ description: 'JavaScript', accept: { 'text/javascript': ['.js'] } }],
+        startIn: handle || 'documents'
+      };
+      return window.showSaveFilePicker(options);
+    }).then(function (picked) {
+      return writeFile(picked, text).then(function () {
+        idbSet(handleKey(), picked).catch(function () {});
+        return picked;
+      });
+    });
+  }
+
+  /** 保存前防护：草稿缺少同级题库中的模块时先确认，避免静默覆盖 */
   function saveToFile() {
+    var missing = missingSourceModules();
+    if (!missing.length) { doSaveToFile(); return; }
+    openDialog({
+      title: L('dialog.title'),
+      body: '<p class="ce-dialog__text">' + esc(L('dialog.lossySave', { list: missing.join('、') })) + '</p>',
+      confirmText: L('dialog.confirm'),
+      danger: true,
+      onConfirm: doSaveToFile
+    });
+  }
+
+  function doSaveToFile() {
     var btn = el('[data-act="save-local"]');
     var text = generated();
-    if (!window.showSaveFilePicker) { download(); return; }
+    if (!window.showSaveFilePicker) { sourceSnapshot = snapshotFromState(); download(); return; }
     setBusy(btn, true);
-    window.showSaveFilePicker({
-      suggestedName: SRC.exportFile,
-      types: [{ description: 'JavaScript', accept: { 'text/javascript': ['.js'] } }]
+    writeRemembered(text).then(function (handle) {
+      return handle || pickAndWrite(text);
     }).then(function (handle) {
-      return handle.createWritable().then(function (w) {
-        return w.write(text).then(function () { return w.close(); });
-      });
-    }).then(function () {
       setBusy(btn, false);
-      toast(L('toast.saved'), 'ok');
+      sourceSnapshot = snapshotFromState();
+      toast(L('toast.savedNamed', { name: (handle && handle.name) || SRC.exportFile }), 'ok');
     }).catch(function (err) {
       setBusy(btn, false);
       if (err && err.name === 'AbortError') return;
       toast(L('toast.saveFallback'), 'warn');
+      sourceSnapshot = snapshotFromState();
       download();
     });
   }
@@ -1630,6 +1967,9 @@ import './editor.css'
     });
 
     document.addEventListener('click', function (e) {
+      var inEditor = e.target.closest ? e.target.closest('#editor') : null;
+      if (inEditor) markActiveEditing(e.target);
+
       var pick = e.target.closest ? e.target.closest('[data-select]') : null;
       if (pick) { closeMenu(); selectItem(pick.dataset.select); return; }
 
@@ -1652,6 +1992,14 @@ import './editor.css'
           if (keep !== false) closeDialog();
           return;
         }
+      }
+
+      /* 点「题组 N」徽标或题数：折叠 / 展开（输入框与按钮保持各自行为） */
+      var headHit = e.target.closest ? e.target.closest('.ce-group__badge, .ce-group__meta') : null;
+      if (headHit) {
+        var headCard = headHit.closest('.ce-group');
+        var headToggle = headCard ? el('.ce-group__toggle', headCard) : null;
+        if (headToggle) { toggleGroup(headToggle); return; }
       }
 
       var t = e.target.closest ? e.target.closest('button') : null;
@@ -1682,8 +2030,10 @@ import './editor.css'
         case 'load-local':
           closeMenu();
           loadContent().then(function (data) {
-            if (adopt(data)) { ensureSelected(); renderAll(); toast(L('toast.localLoaded'), 'ok'); }
-            else toast(L('toast.localMissing'), 'warn');
+            if (adopt(data)) {
+              sourceSnapshot = data;
+              ensureSelected(); renderAll(); toast(L('toast.localLoaded'), 'ok');
+            } else toast(L('toast.localMissing'), 'warn');
           });
           return;
         case 'toggle-menu': toggleMenu(); return;
@@ -1708,8 +2058,16 @@ import './editor.css'
         case 'guide-add-group':
           guideAddGroup();
           return;
+        case 'toggle-group': toggleGroup(t); return;
         default: handleStruct(act, t);
       }
+    });
+
+    /* 焦点进入编辑区：标记当前编辑对象（题组 / 材料 / 题目） */
+    document.addEventListener('focusin', function (e) {
+      var t = e.target;
+      if (!(t.closest && t.closest('#editor'))) return;
+      markActiveEditing(t);
     });
 
     document.addEventListener('mousedown', function (e) {
@@ -1770,7 +2128,7 @@ import './editor.css'
     applyTheme();
 
     state = emptyState();
-    var hadDraft = loadDraft();
+    var hadDraft = false;
 
     renderChrome();
     renderHeaderActions();
@@ -1784,11 +2142,32 @@ import './editor.css'
         state.lesson = state.lesson || manifest.lesson || '';
         if (!state.postLesson) state.postLesson = emptyState().postLesson;
       }
+      /* 草稿键依赖课程 id，必须在结构清单载入后再读取 */
+      hadDraft = loadDraft();
+      loadCollapsedGroups();
+      if (hadDraft) ensureSelected();
       renderAll();
       return loadContent();
     }).then(function (data) {
+      sourceSnapshot = data;
       if (hadDraft) {
-        if (data) toast(L('toast.draftLoaded', { label: L('actions.loadLocal') }));
+        var missing = missingSourceModules();
+        if (missing.length) {
+          openDialog({
+            title: L('dialog.title'),
+            body: '<p class="ce-dialog__text">' + esc(L('dialog.draftMissing', { list: missing.join('、') })) + '</p>',
+            confirmText: L('dialog.fillFromLocal'),
+            onConfirm: function () {
+              var added = mergeMissingFromSource(data);
+              if (added) {
+                ensureSelected(); renderAll();
+                toast(L('toast.draftMerged', { n: added }), 'ok');
+              }
+            }
+          });
+        } else if (data) {
+          toast(L('toast.draftLoaded', { label: L('actions.loadLocal') }));
+        }
         return;
       }
       if (adopt(data)) { ensureSelected(); renderAll(); toast(L('toast.localLoaded'), 'ok'); }

@@ -20,7 +20,7 @@
  */
 import { spawnSync } from 'node:child_process'
 import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { extractManifest, manifestScript } from './manifest.mjs'
@@ -93,15 +93,43 @@ function reorganizeDistAssets(dir) {
     renameSync(join(distDir, name), join(assetsDir, name))
   }
 
-  // 长文件名优先，避免一个文件名是另一个的子串时被提前匹配
+  // 长文件名优先，避免一个文件名是另一个的子串时被提前匹配；
+  // 同时兼容 HTML 中被百分号编码（encodeURI）的中文文件名
+  const candidates = []
+  for (const name of names) {
+    candidates.push(name)
+    const encoded = encodeURI(name)
+    if (encoded !== name) candidates.push(encoded)
+  }
   const pattern = new RegExp(
-    `(?<!assets/)(?:${names
+    `(?<!assets/)(?:${candidates
       .sort((a, b) => b.length - a.length)
       .map(escapeRegExp)
       .join('|')})`,
     'g'
   )
   const html = readFileSync(htmlPath, 'utf8')
+
+  // data-lightbox 等自定义属性里的本地资源不会被 Vite 处理，
+  // 这里按源文件补拷到 assets/，避免放大查看时 404（如月球视频的 GIF 放大图）。
+  const lessonRoot = join(lessonsRoot, dir)
+  for (const match of html.matchAll(/data-lightbox="([^"]+)"/g)) {
+    const ref = match[1]
+    if (/^(?:https?:|data:|blob:|#)/.test(ref)) continue
+    let clean = ref.replace(/^\.\//, '')
+    try {
+      clean = decodeURIComponent(clean)
+    } catch {
+      // 非法编码时按原样处理
+    }
+    if (!clean.startsWith('assets/')) continue
+    const from = join(lessonRoot, clean)
+    if (!existsSync(from)) continue
+    const to = join(assetsDir, clean.slice('assets/'.length))
+    mkdirSync(dirname(to), { recursive: true })
+    copyFileSync(from, to)
+  }
+
   const next = html.replace(pattern, (match) => `assets/${match}`)
   writeFileSync(htmlPath, next, 'utf8')
   console.log(`[资源] ${names.length} 个文件 → dist/assets/，并已改写 index.html 引用`)

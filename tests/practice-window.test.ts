@@ -41,14 +41,16 @@ describe('PracticeWindow 组件', () => {
     view.destroy()
   })
 
-  it('逐题模式：无进度条、仅计时器，切题由按钮手动触发', () => {
+  it('逐题模式：题目区单题渲染、顶部显示进度与计时器', () => {
     const view = createPracticeView({ mode: 'step', timer: true, questions: twoChoices })
     document.body.appendChild(view.root)
     expect(view.root.querySelector('.pw-nav')).toBeNull()
     expect(view.root.querySelectorAll('.cq-q').length).toBe(1)
     expect(view.root.querySelector('[data-pw-timer]')?.textContent).toBe('00:00')
+    expect(view.root.querySelector('[data-pw-progress]')?.textContent).toBe('第 1 / 2 题')
     view.root.querySelector<HTMLButtonElement>('[data-pw-next]')!.click()
-    expect(view.root.querySelector('.cq-q__no')?.textContent).toBe('2')
+    expect(view.root.querySelector('.cq-q__no')?.textContent).toBe('02')
+    expect(view.root.querySelector('[data-pw-progress]')?.textContent).toBe('第 2 / 2 题')
     view.destroy()
   })
 
@@ -137,40 +139,59 @@ describe('PracticeWindow 组件', () => {
     handle.close()
   })
 
-  it('左右布局：左栏题目、右栏答案解析（作答前给出提示）', () => {
+  it('上下布局：题目（题干 + 选项）在上，说明（判定 + 解析）在下', () => {
     const view = createPracticeView({
       questions: [
         { type: 'choice', mode: 'single', stem: '题干', options: [{ key: 'A', text: '甲' }, { key: 'B', text: '乙' }], answer: 'A', analysis: '解析内容' }
       ]
     })
     document.body.appendChild(view.root)
-    const main = view.root.querySelector('.pw-col--main')!
-    const side = view.root.querySelector('.pw-col--side')!
-    expect(main.querySelector('.cq-q__stem')).not.toBeNull()
-    expect(main.querySelectorAll('.cq-opt').length).toBe(2)
-    expect(side.querySelector('.cq-q__awaiting')).not.toBeNull()
+    expect(view.root.querySelector('.cq-q__panes')?.classList.contains('is-single')).toBe(true)
+
+    const question = view.root.querySelector('.cq-pane__segment--question')!
+    const note = view.root.querySelector('.cq-pane__segment--note')!
+    expect(question.querySelector('.cq-q__stem')).not.toBeNull()
+    expect(question.querySelectorAll('.cq-opt').length).toBe(2)
+    expect(note.querySelector('.cq-q__awaiting')).not.toBeNull()
 
     view.root.querySelector<HTMLButtonElement>('[data-key="A"]')!.click()
-    const sideAfter = view.root.querySelector('.pw-col--side')!
-    expect(sideAfter.querySelector('.cq-verdict.is-right')).not.toBeNull()
-    expect(sideAfter.querySelector('.cq-block--analysis')).not.toBeNull()
-    expect(view.root.querySelector('.pw-col--main .cq-verdict')).toBeNull()
+    const noteAfter = view.root.querySelector('.cq-pane__segment--note')!
+    expect(noteAfter.querySelector('.cq-verdict.is-right')).not.toBeNull()
+    expect(noteAfter.querySelector('.cq-block--analysis')).not.toBeNull()
+    expect(view.root.querySelector('.cq-pane__segment--question .cq-verdict')).toBeNull()
     view.destroy()
   })
 
-  it('左右布局（主观题）：左栏设问、右栏展开参考答案与解析', () => {
+  it('左右布局（主观题）：材料在左，设问与参考答案在右上，解析在右下', () => {
     const view = createPracticeView({
       questions: [
-        { type: 'essay', material: '材料', stems: ['（1）问一'], referenceAnswer: '参考答案', criteria: ['标准1'] }
+        { type: 'essay', material: '材料', stems: ['（1）问一'], referenceAnswer: '参考答案', analysis: '解析内容' }
       ]
     })
     document.body.appendChild(view.root)
-    expect(view.root.querySelector('.pw-col--main .cq-stems')).not.toBeNull()
-    expect(view.root.querySelector('.pw-col--side .cq-q__awaiting')).not.toBeNull()
+    expect(view.root.querySelector('.cq-pane--material .cq-q__material')?.textContent).toContain('材料')
+    expect(view.root.querySelector('.cq-pane__segment--question .cq-stems')).not.toBeNull()
+    expect(view.root.querySelector('.cq-pane__segment--note .cq-q__awaiting')).not.toBeNull()
 
     view.root.querySelector<HTMLButtonElement>('.cq-reveal')!.click()
-    expect(view.root.querySelector('.pw-col--side .cq-block--answer')).not.toBeNull()
-    expect(view.root.querySelector('.pw-col--side .cq-block--criteria')).toBeNull()
+    const question = view.root.querySelector('.cq-pane__segment--question')!
+    const note = view.root.querySelector('.cq-pane__segment--note')!
+    expect(question.querySelector('.cq-block--answer')).not.toBeNull()
+    expect(note.querySelector('.cq-block--analysis')).not.toBeNull()
+    expect(note.querySelector('.cq-block--answer')).toBeNull()
     view.destroy()
+  })
+
+  it('浮层默认：逐题模式 + 自动计时 + 关闭按钮', () => {
+    const handle = openPracticeWindow({ title: '练习', questions: twoChoices })
+    const root = handle.root
+    expect(root.classList.contains('pw--step')).toBe(true)
+    expect(root.querySelector('[data-pw-timer]')).not.toBeNull()
+    expect(root.querySelector('[data-pw-close]')).not.toBeNull()
+    expect(root.querySelector('[data-pw-progress]')?.textContent).toBe('第 1 / 2 题')
+    // 无材料题在浮层逐题模式下仍保留左栏（提示占位），保证窗口始终左右布局
+    expect(root.querySelector('.cq-q__panes')?.classList.contains('has-empty-material')).toBe(true)
+    expect(root.querySelector('.cq-pane--material.is-empty')).not.toBeNull()
+    handle.close()
   })
 })

@@ -14,10 +14,12 @@ import * as THREE from 'three'
 import { createCamera, createNavigation, type Stage } from './core/camera'
 import { createPipeline, createRenderer, describeSupport, detectWebGLSupport } from './core/renderer'
 import { createWorld, type World, type WorldState } from './universe/world'
-import { STATIONS, UNIVERSE_VIEW, infoOf } from './universe/catalog'
+import { STATIONS, UNIVERSE_VIEW, infoOf, OBSERVABLE_UNIVERSE } from './universe/catalog'
+import { createCosmos, type CosmosPhase } from './universe/cosmos'
 import { HOST_STARS, EXOPLANETS } from './universe/star-systems'
 import { GALAXIES } from './universe/galaxies'
-import { MOON_DATUM } from './universe/moon-systems'
+import { MOON_DATUM, SATELLITE_SYSTEMS } from './universe/moon-systems'
+import { hasObservedTexture } from './universe/moon-textures'
 import deepField from '../assets/universe-deep-field.jpg'
 
 /** 层级 → 读数标题（教材四级口径） */
@@ -107,8 +109,11 @@ const TREE: TreeNode[] = [
             target: 'solar',
             children: [
               { id: 'earth', cn: '地月系', target: 'earth' },
+              { id: 'mars-moons', cn: '火星卫星', target: 'mars-moons', extended: true },
               { id: 'jupiter-moons', cn: '木星系', target: 'jupiter-moons', extended: true },
-              { id: 'saturn-moons', cn: '土星系', target: 'saturn-moons', extended: true }
+              { id: 'saturn-moons', cn: '土星系', target: 'saturn-moons', extended: true },
+              { id: 'uranus-moons', cn: '天王星卫星', target: 'uranus-moons', extended: true },
+              { id: 'neptune-moons', cn: '海王星卫星', target: 'neptune-moons', extended: true }
             ]
           }
         ]
@@ -257,7 +262,7 @@ async function start(): Promise<void> {
 
   const rig = createCamera(renderer)
   const { camera } = rig
-  const { composer, resize } = createPipeline(renderer, scene, camera)
+  const { composer, bloom, resize } = createPipeline(renderer, scene, camera)
 
   const pixels = resize([])
   let world: World
@@ -268,6 +273,34 @@ async function start(): Promise<void> {
     return
   }
   resize(world.starFields)
+
+  /* 卫星贴图自检：A/B 级天体必须落到 assets/textures/moons/<key>.* 才会用观测底图，
+     缺图时按既定策略退化为实测反照率纯色（不生成任何程序化纹理）。 */
+  const missingMoonTextures = MOON_DATUM.filter((moon) => moon.texture && !hasObservedTexture(moon.texture))
+  if (missingMoonTextures.length > 0) {
+    console.info(
+      `[卫星贴图] 以下 ${missingMoonTextures.length} 张观测底图尚未就位，暂按实测反照率纯色显示：`,
+      missingMoonTextures.map((moon) => `${moon.id}(${moon.tier}级)`)
+    )
+  }
+
+  /* ---------------- 深空缩放过渡：河外星系 → 星点 → 宇宙微波背景 ----------------
+     必须在 world 之后创建：它要读取各点云已经写入的基准透明度，
+     并在 world.updateVisibility 之后叠加自己的淡出（见 universe/cosmos.ts）。
+     滚轮在深空区间由它接管，其余区间仍交给 OrbitControls。 */
+  const cosmos = createCosmos({
+    scene,
+    rig,
+    atlas: world.galaxyAtlas,
+    galaxyDisk: world.galaxyDisk,
+    milkyWay: world.galaxy.points,
+    milkyWayMarker: world.galaxy.solarMarker,
+    galaxyCenter: world.galaxyCenter,
+    backgroundStars: world.backgroundStars,
+    solarRoot: world.solarRoot,
+    starRoot: world.starSystems.root,
+    pixels
+  })
 
   const state: WorldState = { paused: false, speed: 1, orbitsVisible: true, stage: 'earth' }
   // 先把各天体摆到 t=0 的位置，再初始化镜头 —— 避免开场时镜头与地球"错位"再被拉回
@@ -553,12 +586,14 @@ async function start(): Promise<void> {
     if (stage === 'earth') {
       addItem('moon', '月球')
       addSep()
-      addLabel('拓展观察')
-      addItem('jupiter-moons', '木星系', true)
-      addItem('saturn-moons', '土星系', true)
-      const activeSystem = MOON_DATUM.filter((m) => focus === `${m.parent}-moons` || focus === m.id)
+      addLabel('其他行星的卫星系统')
+      for (const system of SATELLITE_SYSTEMS) {
+        addItem(system.id, system.cn, true)
+      }
+      const activeSystem = MOON_DATUM.filter((m) => focus === m.systemId || focus === m.id)
       if (activeSystem.length > 0) {
         addSep()
+        addLabel(`${activeSystem[0].systemCn} 的入选卫星`)
         for (const moon of activeSystem) addItem(moon.id, moon.cn, true)
       }
     } else if (stage === 'solar') {
@@ -593,9 +628,10 @@ async function start(): Promise<void> {
   /* ---------------- 层级 → 架构图节点 ---------------- */
   function activeTreeNode(stage: Stage, focus: string): string {
     if (stage === 'earth') {
-      if (focus === 'jupiter-moons' || focus === 'saturn-moons') return focus
+      // 任一卫星系统或其卫星 → 高亮对应系统节点
+      if (SATELLITE_SYSTEMS.some((system) => system.id === focus)) return focus
       const moon = MOON_DATUM.find((m) => m.id === focus)
-      return moon ? `${moon.parent}-moons` : 'earth'
+      return moon ? moon.systemId : 'earth'
     }
     if (stage === 'solar') return 'solar'
     if (stage === 'stars') return 'stars'
@@ -604,10 +640,54 @@ async function start(): Promise<void> {
   }
 
   let lastStage: Stage | null = null
+  let lastCosmosPhase: CosmosPhase | null = null
+
+  function applyCard(card: CardInfo): void {
+    cardKindEl.textContent = card.extended ? `${card.kind} · 拓展观察` : card.kind
+    cardTitleEl.textContent = card.cn
+    cardDescEl.textContent = card.desc
+    cardMetaEl.innerHTML = ''
+    for (const item of card.meta) {
+      const li = document.createElement('li')
+      li.textContent = item
+      cardMetaEl.append(li)
+    }
+  }
 
   function syncUI(force = false): void {
     const navState = nav.getState()
     const { stage, focus, distance } = navState
+    const cosmic = cosmos.getState()
+
+    /* 深空缩放末段：层级仍是「河外星系」，但读数、架构图与讲解应指向宇宙背景 */
+    if (cosmic.phase === 'cmb') {
+      readoutValueEl.textContent = OBSERVABLE_UNIVERSE.cn
+      readoutMetaEl.textContent = `宇宙微波背景 · 视距 ${formatDistance(distance)}`
+      highlightTree('universe')
+      // 推一个超出尺子范围的视距，让游标贴住末端并点亮「可观测宇宙」刻度
+      updateScalebar(1e8)
+      applyCard({
+        kind: '天体系统',
+        cn: OBSERVABLE_UNIVERSE.cn,
+        sub: OBSERVABLE_UNIVERSE.sub,
+        desc: OBSERVABLE_UNIVERSE.desc,
+        meta: OBSERVABLE_UNIVERSE.meta ?? []
+      })
+      if (lastCosmosPhase !== 'cmb') {
+        showToast('进入：可观测宇宙 · 宇宙微波背景')
+        lastCosmosPhase = 'cmb'
+      }
+      return
+    }
+
+    if (cosmic.phase !== lastCosmosPhase) {
+      if (cosmic.phase === 'condense' && lastCosmosPhase === 'atlas') {
+        showToast('继续缩小：星系正在汇聚为星点')
+      } else if (lastCosmosPhase === 'cmb') {
+        showToast('返回：河外星系')
+      }
+      lastCosmosPhase = cosmic.phase
+    }
 
     const activeId = activeTreeNode(stage, focus)
     readoutValueEl.textContent = nodeLabel.get(activeId) ?? STAGE_LABEL[stage]
@@ -622,17 +702,7 @@ async function start(): Promise<void> {
     }
 
     const card = resolveInfo(focus)
-    if (card) {
-      cardKindEl.textContent = card.extended ? `${card.kind} · 拓展观察` : card.kind
-      cardTitleEl.textContent = card.cn
-      cardDescEl.textContent = card.desc
-      cardMetaEl.innerHTML = ''
-      for (const item of card.meta) {
-        const li = document.createElement('li')
-        li.textContent = item
-        cardMetaEl.append(li)
-      }
-    }
+    if (card) applyCard(card)
 
     const key = `${stage}|${focus}`
     if (force || key !== subdockKey) {
@@ -665,8 +735,17 @@ async function start(): Promise<void> {
   // 用户拖动即接管镜头，结束自动飞行
   renderer.domElement.addEventListener('pointerdown', () => nav.cancelFlight())
 
+  // 深空缩放：在**捕获阶段**先于 OrbitControls 判断是否接管滚轮（见 universe/cosmos.ts）
+  window.addEventListener(
+    'wheel',
+    (event) => {
+      cosmos.handleWheel(event)
+    },
+    { capture: true, passive: false }
+  )
+
   window.addEventListener('resize', () => {
-    resize(world.starFields)
+    cosmos.resize(resize(world.starFields))
     composer.render()
   })
 
@@ -686,6 +765,12 @@ async function start(): Promise<void> {
     const navState = nav.getState()
     world.backgroundStars.position.copy(camera.position)
     world.updateVisibility(camera, navState.distance, navState.focus, navState.stage, state)
+
+    // 深空过渡必须在 updateVisibility 之后：它要在世界写入的透明度上叠加淡出
+    const cosmic = cosmos.update(dt, navState.distance, navState.stage)
+    // 泛光随过渡先增强（把塌缩的星系"糊"成光点）再回落（让 CMB 全景保持干净）
+    bloom.strength = 0.42 + 0.2 * Math.sin(Math.PI * cosmic.t) - 0.08 * Math.max(0, (cosmic.t - 0.72) / 0.28)
+
     updateStarLabels()
 
     if (++hudTick % 8 === 0) syncUI()

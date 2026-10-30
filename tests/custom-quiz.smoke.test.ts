@@ -92,7 +92,7 @@ describe('customQuiz', () => {
     expect(host().querySelectorAll('.cq-q').length).toBe(3)
     expect(host().querySelector('.cq-table')).not.toBeNull()
     expect(host().querySelector('.cq-img')).not.toBeNull()
-    expect(host().querySelector('.cq-intro strong')?.textContent).toBe('加粗')
+    expect(host().querySelector('.pw-subtitle strong')?.textContent).toBe('加粗')
   })
 
   it('单选：点选即判定并显示解析', async () => {

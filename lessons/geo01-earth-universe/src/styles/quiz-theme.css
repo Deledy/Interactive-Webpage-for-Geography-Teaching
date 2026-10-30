@@ -5,43 +5,54 @@
    - 这里写最终色值，不引用课程其它变量，避免编辑器缺少上下文时失真；
    - 只作用于答题窗口（.pw），不影响课程页面其它部分；
    - 构建时本文件会被复制为 dist/题目编辑器/assets/quiz-theme.css 供编辑器读取。
+
+   色板：「深蓝夜晚 + 亮蓝强调」——窗口底 #08152A、卡片底 #0F1E36、
+   选项底 #172A44、题号金 #F6C51D、蓝强调 #2FB0F5 / #12A7FB。
    ============================================================ */
 .pw {
+  /* 面 / 线 */
+  --pw-panel-bg: #08152A;
+  --pw-panel-border: #1E3854;
+  --pw-surface: #0F1E36;
+  --pw-surface-2: #0B1A2E;
+  --pw-option-bg: #172A44;
+  --pw-option-border: #28425F;
+  --pw-border: #233A57;
+  --pw-divider: #213958;
+  --pw-overlay-bg: rgba(3, 8, 18, 0.82);
+  --pw-material-bg: #0F1E36;
+
   /* 强调 / 判定 */
-  --pw-accent: #FFD54F;
-  --pw-accent-2: #4FC3F7;
+  --pw-accent: #F6C51D;
+  --pw-accent-2: #33C2FF;
   --pw-accent-text: #BFE9FF;
-  --pw-success: #66BB6A;
-  --pw-error: #EF5350;
+  --pw-brand: #0AB8FF;
+  --pw-blue: #12A7FB;
+  --pw-blue-soft: rgba(18, 167, 251, 0.12);
+  --pw-blue-border: rgba(18, 167, 251, 0.45);
+  --pw-success: #3ED598;
+  --pw-error: #FF6161;
   --pw-warn: #FFB74D;
 
-  /* 蓝体系（材料、选项 hover、提交按钮） */
-  --pw-blue: #64B5F6;
-  --pw-blue-soft: rgba(100, 181, 246, 0.12);
-  --pw-blue-border: rgba(100, 181, 246, 0.45);
-
-  /* 面 / 线 / 文字 */
-  --pw-surface: rgba(255, 255, 255, 0.06);
-  --pw-border: rgba(255, 255, 255, 0.14);
-  --pw-panel-bg: rgba(13, 18, 40, 0.55);
-  --pw-overlay-bg: rgba(4, 7, 20, 0.55);
-  --pw-material-bg: rgba(11, 16, 38, 0.55);
-  --pw-text: #E8EAF6;
-  --pw-text-dim: rgba(232, 234, 246, 0.7);
+  /* 文字 */
+  --pw-text: #FFFFFF;
+  --pw-text-body: #FFFFFF;
+  --pw-text-dim: #8FA6BE;
 
   /* 形状 */
   --pw-radius-card: 12px;
-  --pw-radius-btn: 8px;
+  --pw-radius-btn: 10px;
 
-  /* 排版（投屏基准） */
+  /* 排版（1920 × 1080 设计画布基准） */
   --pw-font: "SourceHanSansSC", "Source Han Sans SC", "思源黑体", "Noto Sans SC",
     "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
-  --pw-fs-body: 20px;
-  --pw-fs-note: 16px;
-  --pw-fs-h3: 24px;
+  --pw-fs-body: 24px;
+  --pw-fs-note: 22px;
+  --pw-fs-stem: 30px;
+  --pw-fs-h3: 36px;
 
   /* 动效 / 毛玻璃 */
   --pw-dur: 0.35s;
   --pw-ease: cubic-bezier(0.25, 0.8, 0.35, 1);
-  --pw-backdrop-blur: 22px;
+  --pw-backdrop-blur: 30px;
 }

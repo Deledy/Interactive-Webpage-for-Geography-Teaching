@@ -10,7 +10,8 @@
    5) 卫星绕行星 = 行星系统；行星绕恒星 = 恒星星系（太阳系）。
    ============================================================ */
 import { BODIES } from './data'
-import { MOON_DATUM } from './moon-systems'
+import { MOON_DATUM, SATELLITE_SYSTEMS, satellitesOf } from './satellite-data'
+import { hasObservedTexture } from './moon-textures'
 import { HOST_STARS, EXOPLANETS } from './star-systems'
 import { GALAXIES } from './galaxies'
 
@@ -115,17 +116,44 @@ function build(): Map<string, DestinationInfo> {
       cn: body.cn,
       kind: body.kind === 'star' ? 'star' : body.kind === 'satellite' ? 'satellite' : 'planet',
       sub: body.id === 'sun' ? '太阳系 / 恒星' : body.id === 'moon' ? '地月系 / 天然卫星' : '太阳系 / 行星',
-      desc: SOLAR_TEXT[body.id] ?? ''
+      desc: SOLAR_TEXT[body.id] ?? '',
+      // 月球同时是"有卫星行星系统"的成员，标注与其余卫星一致的数据来源口径
+      meta:
+        body.id === 'moon'
+          ? [
+              'IAU 编号：Earth I',
+              '平均半径：1737.4 km',
+              '轨道半长轴：384,400 km',
+              '公转周期：27.32 天（潮汐锁定）',
+              '贴图级别 A：NASA SVS / LROC WAC 全球彩色图（643·566·415 nm 合成）'
+            ]
+          : undefined
     })
   }
 
   for (const moon of MOON_DATUM) {
+    // 讲解卡显式标出 IAU 编号、真实半径与贴图级别，让"用了什么数据"可核查；
+    // 底图尚未就位时明确写出"暂按实测反照率着色"，避免让读者误以为看到的是观测图。
+    const ready = moon.texture ? hasObservedTexture(moon.texture) : false
+    const meta = [
+      `IAU 编号：${moon.iau}`,
+      `平均半径：${moon.radiusKm} km`,
+      `轨道半长轴：${moon.semiMajorAxisKm.toLocaleString('zh-CN')} km`,
+      `公转周期：${moon.periodDays} 天`,
+      moon.retrograde ? '逆行轨道' : `轨道倾角：${moon.inclinationDeg}°`,
+      moon.tier === 'C'
+        ? '贴图级别 C：全球影像不足，仅按实测反照率着色'
+        : ready
+          ? `贴图级别 ${moon.tier}：${moon.source.product}（${moon.source.band}）`
+          : `贴图级别 ${moon.tier}：${moon.source.product}（底图待就位，暂按实测反照率着色）`
+    ]
     map.set(moon.id, {
       id: moon.id,
       cn: moon.cn,
       kind: 'satellite',
-      sub: moon.parent === 'jupiter' ? '木星系 / 卫星' : '土星系 / 卫星',
+      sub: `${moon.systemCn} / ${moon.en}`,
       desc: moon.desc,
+      meta,
       extended: true
     })
   }
@@ -152,17 +180,23 @@ function build(): Map<string, DestinationInfo> {
     })
   }
 
-  // 木星系 / 土星系整体
-  map.set('jupiter-moons', {
-    id: 'jupiter-moons', cn: '木星系', kind: 'group', sub: '太阳系内部 / 次级行星系统（拓展观察）',
-    desc: '四颗伽利略卫星绕木星公转，构成木星系。它们属于太阳系内部的次级系统，不能与太阳系并列为一级。',
-    meta: ['拓展观察 · 轨道与大小非等比示意'], extended: true
-  })
-  map.set('saturn-moons', {
-    id: 'saturn-moons', cn: '土星系', kind: 'group', sub: '太阳系内部 / 次级行星系统（拓展观察）',
-    desc: '土卫六（泰坦）等卫星绕土星公转，构成土星系。它们同样属于太阳系内部的次级系统。',
-    meta: ['拓展观察 · 轨道与大小非等比示意'], extended: true
-  })
+  // 各行星的卫星系统整体（火星 / 木星 / 土星 / 天王星 / 海王星）
+  for (const system of SATELLITE_SYSTEMS) {
+    const list = satellitesOf(system.id)
+    map.set(system.id, {
+      id: system.id,
+      cn: system.cn,
+      kind: 'group',
+      sub: `太阳系内部 / 次级行星系统（拓展观察）`,
+      desc: system.desc,
+      meta: [
+        `入选卫星：${list.map((m) => m.cn).join('、')}`,
+        `共 ${list.length} 颗；均已按真实半径与周期等比换算`,
+        '拓展观察 · 轨道与大小非等比示意'
+      ],
+      extended: true
+    })
+  }
 
   return map
 }
@@ -171,6 +205,21 @@ export const CATALOG = build()
 
 export function infoOf(id: string): DestinationInfo | undefined {
   return CATALOG.get(id)
+}
+
+/** 「可观测宇宙」在 3D 深空缩放中的讲解卡（与独立视图共用同一教学口径） */
+export const OBSERVABLE_UNIVERSE: DestinationInfo = {
+  id: 'universe',
+  cn: '可观测宇宙',
+  kind: 'station',
+  sub: '第 1 级 · 宇宙微波背景',
+  desc: '宇宙微波背景辐射是宇宙早期高温、高密度状态冷却后留下的余辉，今天全天平均温度约 2.7 K，各方向温差只有约十万分之一。',
+  meta: [
+    '温度约 2.7 K，是宇宙大爆炸理论的观测证据之一',
+    '温度涨落约十万分之一，对应宇宙早期的密度起伏',
+    '可观测宇宙半径约 465 亿光年，是人类观测能力的边界',
+    '画面为示意：温度涨落已放大着色'
+  ]
 }
 
 /** 宇宙尺度独立视图的说明文案（非 3D，可脱离 WebGL 使用） */
