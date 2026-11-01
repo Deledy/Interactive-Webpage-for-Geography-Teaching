@@ -101,12 +101,24 @@
   color: var(--pw-text-dim);
   font-size: var(--pw-fs-note);
 }
+.cq-group__title {
+  margin: 0 0 18px;
+  color: var(--pw-text);
+  font-size: var(--pw-fs-stem);
+  font-weight: 700;
+}
 .cq-group__material {
   margin: 0 0 24px;
   padding: 24px 26px;
   background: var(--pw-surface-2);
   border: 1px dashed #274463;
   border-radius: 8px;
+}
+/* 自由布局材料本身已是完整画布，不再套一层虚线框 */
+.cq-group__material.cq-material {
+  padding: 0;
+  background: transparent;
+  border: 0;
 }
 .cq-group__qs {
   display: flex;
@@ -116,6 +128,52 @@
 .cq-group__qs .cq-q {
   border-color: var(--pw-border);
   box-shadow: none;
+}
+
+/* ---------- 题组布局：stacked / split ---------- */
+.cq-group--stacked {
+  display: block;
+}
+.cq-group--stacked .cq-group__material {
+  margin-bottom: 24px;
+}
+.cq-group--stacked .cq-q {
+  margin-top: 20px;
+}
+.cq-group--split,
+.cq-sec--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.cq-group--split .cq-group__head,
+.cq-group--split .cq-group__title,
+.cq-sec--split .cq-sec__title {
+  grid-column: 1 / -1;
+}
+.cq-group--split .cq-group__material,
+.cq-sec--split .cq-group__material {
+  margin: 0;
+}
+.cq-group--split .cq-group__qs,
+.cq-sec--split .cq-sec__qs {
+  min-width: 0;
+}
+/* split 但没有材料时，题目占满整行 */
+.cq-group--split.cq-group--no-material .cq-group__questions,
+.cq-sec--split.cq-sec--no-material .cq-sec__qs {
+  grid-column: 1 / -1;
+}
+
+/* ---------- 画布整页模式：材料与题目对象在同一张画布上，不再左右分栏 ---------- */
+.cq-group--canvas,
+.cq-sec--canvas {
+  display: block;
+}
+.cq-group--canvas .cq-group__material,
+.cq-sec--canvas .cq-group__material {
+  margin-bottom: 20px;
 }
 
 /* ---------- 单题卡片：左材料 / 右（上题目 + 下说明） ---------- */
@@ -583,6 +641,14 @@
   .cq-q__panes,
   .cq-q__panes.has-empty-material {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .cq-group--split,
+  .cq-sec--split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cq-group--split .cq-group__questions,
+  .cq-sec--split .cq-sec__qs {
+    grid-column: auto;
   }
 }
 @media (max-width: 900px) {

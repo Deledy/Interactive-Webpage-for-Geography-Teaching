@@ -49,6 +49,12 @@ export function extractManifest(html, meta = {}) {
     const title = stripTags((body.match(MANIFEST_RULES.title) || [])[1])
     const key = (body.match(MANIFEST_RULES.practiceKey) || [])[1] || ''
 
+    /* 课后练习固定为 quiz-custom：即使它也有「练习」按钮，也不能当作普通模块 */
+    if (id === 'quiz-custom') {
+      postLesson = { id, no, nav, title }
+      return
+    }
+
     if (!key) {
       // 无随堂练习按钮的 section → 课后练习（以最后一个为准）
       postLesson = { id, no, nav, title }

@@ -61,6 +61,8 @@ export function initPracticeEntry(): void {
   }
 
   $$('.practice-btn').forEach((btn) => {
+    /* 课后练习的按钮由 customQuiz 自己接管 */
+    if ((btn as HTMLElement).dataset.practice === 'postLesson') return
     btn.addEventListener('click', () => open(btn as HTMLElement))
   })
 }

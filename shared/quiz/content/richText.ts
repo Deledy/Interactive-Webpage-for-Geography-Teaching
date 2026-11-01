@@ -15,9 +15,20 @@
 import { sanitizeHtml } from './sanitize'
 
 const HAS_TAG = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/i
+/** 只含 HTML 实体（如 &nbsp;）的字符串也按 HTML 处理，避免被二次转义成 &amp;nbsp; */
+const HAS_ENTITY = /&(?:nbsp|amp|lt|gt|quot|apos|#\d+|#x[0-9a-f]+);/i
+
+function looksLikeHtml(text: string): boolean {
+  return HAS_TAG.test(text) || HAS_ENTITY.test(text)
+}
 
 export function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/** 属性值转义（在 escapeHtml 基础上补引号） */
+export function escapeAttr(value: string): string {
+  return escapeHtml(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
 /** 块级富文本：HTML 走白名单清洗；纯文本按空行/换行分段 */
@@ -25,7 +36,7 @@ export function renderRichText(value?: string): string {
   if (!value) return ''
   const text = String(value).trim()
   if (!text) return ''
-  if (HAS_TAG.test(text)) return sanitizeHtml(text)
+  if (looksLikeHtml(text)) return sanitizeHtml(text)
   return text
     .replace(/\r\n?/g, '\n')
     .split(/\n\s*\n/)
@@ -38,5 +49,14 @@ export function renderInlineRich(value?: string): string {
   if (!value) return ''
   const text = String(value).trim()
   if (!text) return ''
-  return HAS_TAG.test(text) ? sanitizeHtml(text) : escapeHtml(text)
+  return looksLikeHtml(text) ? sanitizeHtml(text) : escapeHtml(text)
+}
+
+/** 行内富文本（保留换行）：HTML 走白名单清洗；纯文本转义并把换行转成 <br> */
+export function renderInlineLines(value?: string): string {
+  if (!value) return ''
+  const text = String(value).trim()
+  if (!text) return ''
+  if (looksLikeHtml(text)) return sanitizeHtml(text)
+  return escapeHtml(text).replace(/\r\n?/g, '\n').replace(/\n/g, '<br>')
 }

@@ -11,9 +11,12 @@
    详见 shared/quiz/runtime/docs/通用练习窗口_开发文档.md。
    ============================================================ */
 import type { CqData, CqGroup, CqQuestion, CqSection } from '../../content/types'
+import type { MaterialLayout } from '../../content/materialTypes'
 import { renderQuestionCard, type CardState } from '../../content/renderCard'
+import { renderMaterialLayout } from '../../content/renderMaterial'
+import { groupHasSlot, renderGroupPage, renderQuestionGroup } from '../../content/renderGroup'
 import { escapeHtml, renderInlineRich, renderRichText } from '../../content/richText'
-import { validateQuizData } from './validate'
+import { validateGroups, validateQuizData } from './validate'
 import '../styles/default-tokens.css'
 import '../../content/card.css'
 import '../styles/practiceWindow.css'
@@ -146,6 +149,28 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
     })
   }
 
+  /** 题目 → 自由布局材料（逐题模式下材料上提，卡片不再自带材料） */
+  const materialLayouts = new Map<CqQuestion, MaterialLayout>()
+  if (useGroups) {
+    groups.forEach((group) => {
+      if (!group.materialLayout || !group.materialLayout.objects.length) return
+      group.questions.forEach((question) => materialLayouts.set(question, group.materialLayout as MaterialLayout))
+    })
+  } else {
+    sections.forEach((section) => {
+      if (!section.materialLayout || !section.materialLayout.objects.length) return
+      ;(section.questions ?? []).forEach((question) =>
+        materialLayouts.set(question, section.materialLayout as MaterialLayout)
+      )
+    })
+  }
+  /** 逐题模式只看材料：整个画布只有题目槽时视为无材料 */
+  const layoutFor = (question: CqQuestion): MaterialLayout | undefined => {
+    const layout = materialLayouts.get(question)
+    if (!layout) return undefined
+    return layout.objects.some((object) => object.type !== 'slot') ? layout : undefined
+  }
+
   const countdown = typeof options.limitSeconds === 'number' && options.limitSeconds > 0
   const showTimer = countdown || !!options.timer
 
@@ -177,9 +202,36 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
     return s
   }
 
+  /** 页面模型：每题一页（画布 + 槽内当前题），列表模式同样按页堆叠 */
+  const pageModel = useGroups && groups.length > 0 && groups.every((group) => groupHasSlot(group))
+  const pageGroup = new Map<CqQuestion, CqGroup>()
+  if (pageModel) {
+    groups.forEach((group) => group.questions.forEach((question) => pageGroup.set(question, group)))
+  }
+
+  function renderPage(question: CqQuestion): HTMLElement {
+    const group = pageGroup.get(question)!
+    const index = globalIndex.get(question) ?? 0
+    const key = keyOf(question)
+    const page = renderGroupPage(group, question, { key, index, state: stateOf(key) })
+    page.dataset.q = key
+    return page
+  }
+
   /* ---------------- 题目渲染（结构由内容层统一提供） ---------------- */
 
   function questionHtml(question: CqQuestion, key: string, showMaterial = true): string {
+    /* 自由布局材料已上提到题组层，卡片不再重复携带材料 */
+    if (layoutFor(question)) {
+      return renderQuestionCard({
+        question,
+        key,
+        index: globalIndex.get(question) ?? 0,
+        state: stateOf(key),
+        showMaterial: false,
+        fillMaterial: false
+      })
+    }
     /* 逐题模式下把题组 / 分节材料补回题面；列表模式由外层统一渲染材料 */
     const material =
       (useGroups ? groupMaterial.get(question) : sectionMaterial.get(question)) ?? question.material
@@ -198,6 +250,15 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
   /* ---------------- 窗口骨架 ---------------- */
 
   function progressLabel(index: number): string {
+    if (pageModel && useGroups) {
+      const question = flat[index]
+      const group = question ? pageGroup.get(question) : undefined
+      if (group) {
+        const gi = groups.indexOf(group)
+        const local = group.questions.indexOf(question!) + 1
+        return `题组 ${gi + 1} / ${groups.length} · 第 ${local} / ${group.questions.length} 题`
+      }
+    }
     return `第 ${index + 1} / ${flat.length} 题`
   }
 
@@ -278,7 +339,7 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
           .map((item) => `<li>${escapeHtml(item)}</li>`)
           .join('')}</ul>`
       : ''
-    return `<div class="cq-empty panel">
+    return `<div class="cq-empty">
       <p class="cq-empty__title">${title}</p>
       <p class="cq-empty__text">${text}</p>
       ${issues}
@@ -301,7 +362,7 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
 
   /** 依据滚动位置计算「当前题」序号 */
   function computeCurrent(): number {
-    const nodes = Array.from(root.querySelectorAll<HTMLElement>('.cq-q'))
+    const nodes = Array.from(root.querySelectorAll<HTMLElement>('.cq-group--page, .cq-q'))
     if (!nodes.length) return 0
     const container = findScrollParent(root)
     const baseTop = (container ? container.getBoundingClientRect().top : 0) + 8
@@ -319,50 +380,116 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
     syncNav()
   }
 
+  function appendHtml(container: HTMLElement, html: string): void {
+    const holder = document.createElement('div')
+    holder.innerHTML = html
+    const node = holder.firstElementChild
+    if (node) container.appendChild(node)
+  }
+
+  /** 课后练习分节：标题 + 每道题一页（画布 + 槽内当前题），无槽时回退材料 + 卡片 */
+  function buildSection(section: CqSection): HTMLElement {
+    const layout = section.layout === 'split' ? 'split' : 'stacked'
+    const node = document.createElement('section')
+    node.className = `cq-sec cq-sec--${layout}`
+
+    const questionsInSection = section.questions ?? []
+    const pseudoGroup: CqGroup = {
+      id: section.id,
+      title: section.title,
+      materialLayout: section.materialLayout,
+      questions: questionsInSection
+    }
+
+    if (section.title) {
+      const title = document.createElement('h3')
+      title.className = 'cq-sec__title'
+      title.textContent = section.title
+      node.appendChild(title)
+    }
+
+    if (groupHasSlot(pseudoGroup)) {
+      node.classList.add('cq-sec--pages')
+      questionsInSection.forEach((question) => node.appendChild(renderPage(question)))
+      return node
+    }
+
+    if (section.materialLayout && section.materialLayout.objects.length) {
+      const material = renderMaterialLayout(section.materialLayout, { mode: 'view' })
+      material.classList.add('cq-group__material', 'cq-sec__material')
+      node.appendChild(material)
+    } else if (section.material) {
+      const material = document.createElement('div')
+      material.className = 'cq-group__material cq-sec__material'
+      material.innerHTML = renderRichText(section.material)
+      node.appendChild(material)
+    } else {
+      node.classList.add('cq-sec--no-material')
+    }
+
+    const questions = document.createElement('div')
+    questions.className = 'cq-sec__qs'
+    const showMaterial = !section.material && !(section.materialLayout && section.materialLayout.objects.length)
+    questionsInSection.forEach((question) => {
+      appendHtml(questions, questionHtml(question, keyOf(question), showMaterial))
+    })
+    if (questions.childElementCount) node.appendChild(questions)
+    return node
+  }
+
   function render(): void {
     /* 空态不启用逐题高度约束，避免提示内容被裁切 */
     root.classList.toggle('pw--step', mode === 'step' && flat.length > 0)
     if (!flat.length) {
       /* 空态仍保留窗口骨架：计时与关闭按钮可用，避免弹窗无法退出 */
+      root.classList.remove('pw--step-material')
       root.innerHTML = `<div class="pw-inner">${headHtml()}<div class="pw-body">${emptyHtml()}</div></div>`
       return
     }
+
     if (mode === 'step') {
-      root.innerHTML = `<div class="pw-inner">${headHtml()}<div class="pw-body">${questionHtml(
-        flat[step],
-        keyOf(flat[step])
-      )}</div>${footHtml()}</div>`
+      root.classList.toggle('pw--step-pages', pageModel)
+      root.innerHTML = `<div class="pw-inner">${headHtml()}<div class="pw-body"></div>${footHtml()}</div>`
+      const body = root.querySelector<HTMLElement>('.pw-body')
+      if (!body) return
+      if (pageModel) {
+        /* 一屏一页：画布 + 槽内当前题；翻题不换画布，组末翻到下一组画布 */
+        body.appendChild(renderPage(flat[step]))
+        return
+      }
+      const layout = layoutFor(flat[step])
+      root.classList.toggle('pw--step-material', !!layout)
+      if (layout) {
+        const material = renderMaterialLayout(layout, { mode: 'view' })
+        material.classList.add('cq-step__material')
+        body.appendChild(material)
+      }
+      appendHtml(body, questionHtml(flat[step], keyOf(flat[step])))
       return
     }
-    const body = useGroups
-      ? groups
-          .map((group, gi) => {
-            const qs = group.questions.map((q) => questionHtml(q, keyOf(q), false)).join('')
-            const material = group.material
-              ? `<div class="cq-group__material">${renderRichText(group.material)}</div>`
-              : ''
-            return `<section class="cq-group" data-cq-group="${gi + 1}">
-              <div class="cq-group__head">
-                <span class="cq-group__badge">题组 ${gi + 1}</span>
-                <span class="cq-group__count">${group.questions.length} 题</span>
-              </div>
-              ${material}
-              <div class="cq-group__qs">${qs}</div>
-            </section>`
+
+    root.classList.remove('pw--step-material')
+    root.classList.toggle('pw--step-pages', pageModel)
+    root.innerHTML = `<div class="pw-inner">${headHtml()}${navHtml()}<div class="pw-body"></div>${footHtml()}</div>`
+    const body = root.querySelector<HTMLElement>('.pw-body')
+    if (!body) return
+
+    if (pageModel) {
+      flat.forEach((question) => body.appendChild(renderPage(question)))
+    } else if (useGroups) {
+      groups.forEach((group, gi) => {
+        body.appendChild(
+          renderQuestionGroup({
+            group,
+            groupIndex: gi,
+            startQuestionIndex: globalIndex.get(group.questions[0]) ?? 0,
+            renderQuestion: (question) => questionHtml(question, keyOf(question), false)
           })
-          .join('')
-      : sections
-          .map((sec) => {
-            const qs = (sec.questions ?? []).map((q) => questionHtml(q, keyOf(q), !sec.material)).join('')
-            const material = sec.material
-              ? `<div class="cq-group__material cq-sec__material">${renderRichText(sec.material)}</div>`
-              : ''
-            return `<section class="cq-sec">${
-              sec.title ? `<h3 class="cq-sec__title">${escapeHtml(sec.title)}</h3>` : ''
-            }${material}<div class="cq-sec__qs">${qs}</div></section>`
-          })
-          .join('')
-    root.innerHTML = `<div class="pw-inner">${headHtml()}${navHtml()}<div class="pw-body">${body}</div>${footHtml()}</div>`
+        )
+      })
+    } else {
+      sections.forEach((section) => body.appendChild(buildSection(section)))
+    }
     syncNav()
   }
 
@@ -423,7 +550,9 @@ export function createPracticeView(options: PracticeViewOptions): PracticeView {
       const idx = Number(jump.dataset.pwJump)
       current = idx
       syncNav()
-      const node = root.querySelector<HTMLElement>(`.cq-q[data-q="q-${idx}"]`)
+      const node =
+        root.querySelector<HTMLElement>(`.cq-q[data-q="q-${idx}"]`) ??
+        root.querySelector<HTMLElement>(`.cq-group--page[data-q="q-${idx}"]`)
       if (node && node.scrollIntoView) node.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
@@ -512,11 +641,23 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
 
   // 数据收敛：优先显式 sections → 否则校验 data → 再否则用 questions（模块随堂练习）
   let sections = options.sections
+  let groups = options.groups
   let issues = options.emptyIssues ?? []
-  if (!sections && options.data !== undefined) {
+  if (sections && sections.length) {
+    /* 显式分节同样走统一校验（材料画布、题目字段、布局） */
+    const checked = validateQuizData({ sections })
+    sections = checked.data?.sections
+    if (checked.issues.length) issues = [...checked.issues, ...issues]
+  } else if (!sections && options.data !== undefined) {
     const checked = validateQuizData(options.data)
     sections = checked.data?.sections
     if (checked.issues.length) issues = [...checked.issues, ...issues]
+  }
+  /* 显式题组同样收敛：材料画布、题目字段都走统一校验，避免脏数据直接进渲染 */
+  if (groups && groups.length) {
+    const checkedGroups = validateGroups(groups, '', issues)
+    if (!checkedGroups.length) issues.push('题组内无有效题目，已忽略')
+    groups = checkedGroups
   }
 
   // 嵌入画布：窗口骨架铺满指定容器（不走页内挂载分支）
@@ -528,7 +669,7 @@ export function openPracticeWindow(options: PracticeWindowOptions): PracticeWind
     title: options.title ?? options.data?.title,
     subtitle: options.subtitle ?? options.data?.subtitle,
     sections,
-    groups: options.groups,
+    groups,
     questions: sections ? undefined : options.questions,
     mode: options.mode ?? (overlayMode ? 'step' : undefined),
     timer: options.timer ?? (overlayMode ? true : false),

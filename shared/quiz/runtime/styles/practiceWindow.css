@@ -337,6 +337,27 @@
   max-height: 48%;
 }
 
+/* ---------- 逐题模式：自由布局材料上提（材料在上，题目在下） ---------- */
+.pw-overlay .pw--step.pw--step-material .pw-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow-y: auto;
+}
+.pw-overlay .pw--step.pw--step-material .cq-q,
+.pw-overlay .pw--step.pw--step-material .cq-q__panes {
+  height: auto;
+}
+.pw-overlay .pw--step.pw--step-material .cq-pane--material,
+.pw-overlay .pw--step.pw--step-material .cq-pane__segment--question,
+.pw-overlay .pw--step.pw--step-material .cq-pane__segment--note {
+  overflow: visible;
+  max-height: none;
+}
+.cq-step__material {
+  flex: 0 0 auto;
+}
+
 /* ---------- 嵌入画布（编辑器整窗预览：铺满指定容器，不铺满视口） ---------- */
 .pw-overlay--embedded {
   position: absolute;
@@ -456,3 +477,30 @@
     padding: 20px 16px;
   }
 }
+
+/* ============================================================
+   一屏一页：画布 + 槽内当前题（v5）
+   ============================================================ */
+.cq-group--page {
+  width: 100%;
+}
+
+.pw--step-pages .pw-body {
+  padding: 16px 0;
+}
+
+.pw--step-pages .cq-page__material {
+  width: 100%;
+}
+
+.cq-sec--pages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cq-group__material--html {
+  font-size: 16px;
+  line-height: 1.7;
+}
+

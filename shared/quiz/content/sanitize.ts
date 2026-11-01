@@ -14,7 +14,7 @@
 
 /** 允许保留的标签 */
 export const ALLOWED_TAGS = new Set([
-  'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL', 'SUB', 'SUP', 'SPAN', 'DIV',
+  'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL', 'SUB', 'SUP', 'SPAN', 'DIV', 'FONT',
   'MARK', 'CODE',
   'IMG', 'A', 'UL', 'OL', 'LI',
   'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'COLGROUP', 'COL',
@@ -34,17 +34,38 @@ export const KEEP_ATTR: Record<string, string[]> = {
   COLGROUP: ['span', 'style'],
   FIGURE: ['style'],
   P: ['style'],
-  DIV: ['style']
+  DIV: ['style'],
+  SPAN: ['style'],
+  FONT: ['color']
 }
 
-/** style 属性中允许保留的 CSS 属性（"内容意图"：图片宽度、段落对齐、单元格对齐） */
-export const KEEP_STYLE_PROPS = ['width', 'text-align', 'vertical-align']
+/** style 属性中允许保留的 CSS 属性（"内容意图"：图片宽度、段落对齐、单元格对齐、行内强调） */
+export const KEEP_STYLE_PROPS = [
+  'width',
+  'text-align',
+  'vertical-align',
+  'font-weight',
+  'font-style',
+  'text-decoration',
+  'text-decoration-line',
+  'text-decoration-style',
+  'text-decoration-color',
+  'color'
+]
 
 /** class 白名单前缀 */
 export const CLASS_PREFIX = 'cq-'
 
 const SAFE_SRC = /^(https?:|data:image\/|\.\/|\.\.\/|\/)/i
 const SAFE_HREF = /^(https?:|mailto:|#|\.\/|\.\.\/|\/)/i
+
+/** 图片地址协议校验：http(s) / data:image / 相对路径；其余（javascript:、本地盘符等）一律拒绝 */
+export function isSafeImageSrc(src: string): boolean {
+  const value = String(src ?? '').trim()
+  if (!value) return false
+  if (/^[a-z]:[\\/]/i.test(value)) return false
+  return SAFE_SRC.test(value)
+}
 
 /** 只保留白名单内的 CSS 声明 */
 export function filterStyle(css: string | null): string {
@@ -106,7 +127,7 @@ function cleanNode(node: Element): void {
       if (style) node.setAttribute('style', style)
       else node.removeAttribute('style')
     } else if (name === 'src') {
-      if (!SAFE_SRC.test(attr.value.trim())) node.removeAttribute('src')
+      if (!isSafeImageSrc(attr.value)) node.removeAttribute('src')
     } else if (name === 'href') {
       if (!SAFE_HREF.test(attr.value.trim())) node.removeAttribute('href')
     }
