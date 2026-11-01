@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>内容编辑器</title>
 </head>
-<body class="ce-app" data-theme="light" data-density="comfortable" data-nav="on" data-preview="on" data-preview-placement="side">
+<body class="ce-app" data-theme="light" data-density="comfortable" data-nav="on" data-inspector="on">
 
 <header class="ce-header">
   <div class="ce-header__brand">
@@ -49,23 +49,48 @@
   </aside>
 
   <section class="ce-panel ce-panel--editor" id="panel-editor">
-    <div class="ce-panel__head"><h2 class="ce-panel__title" id="editor-title">编辑</h2></div>
-    <div id="editor"></div>
+    <div class="ce-panel__head ce-workspace__head">
+      <h2 class="ce-panel__title" id="editor-title">画布</h2>
+      <div class="ce-groupnav" id="group-nav" role="tablist" aria-label="题组导航"></div>
+    </div>
+    <div class="ce-workspace" id="editor"></div>
   </section>
 
-  <section class="ce-panel ce-panel--preview" id="panel-preview">
+  <section class="ce-panel ce-panel--inspector" id="panel-inspector">
     <div class="ce-panel__head">
-      <h2 class="ce-panel__title" id="preview-title">预览</h2>
+      <div class="ce-segment" id="inspector-tabs" role="tablist" aria-label="检查器">
+        <button class="ce-segment__btn" type="button" data-inspector-tab="props" aria-pressed="true" aria-controls="inspector-props">属性</button>
+        <button class="ce-segment__btn" type="button" data-inspector-tab="preview" aria-pressed="false" aria-controls="inspector-preview">预览</button>
+      </div>
       <span class="ce-panel__grow"></span>
-      <button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="collapse-preview" hidden id="preview-collapse-btn">收起</button>
+      <div class="ce-segment" id="preview-zoom" role="group" aria-label="预览缩放" hidden></div>
+      <button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="preview-full" id="preview-full-btn" hidden>放大</button>
     </div>
-    <div class="ce-preview" id="preview"></div>
-    <details class="ce-drawer">
+    <div class="ce-inspector">
+      <div class="ce-inspector__pane" id="inspector-props" role="tabpanel" aria-label="属性"></div>
+      <div class="ce-inspector__pane" id="inspector-preview" role="tabpanel" aria-label="预览" hidden>
+        <div class="ce-preview" id="preview"></div>
+      </div>
+    </div>
+    <details class="ce-drawer" id="output-drawer">
       <summary id="output-summary">输出预览 / 手动复制</summary>
       <textarea class="ce-textarea ce-code" id="output" readonly aria-label="输出内容"></textarea>
     </details>
   </section>
 </main>
+
+<div class="ce-preview-overlay" id="preview-overlay" hidden>
+  <div class="ce-preview-overlay__mask" data-act="preview-close"></div>
+  <div class="ce-preview-overlay__panel" role="dialog" aria-modal="true" aria-label="预览">
+    <div class="ce-preview-overlay__head">
+      <span class="ce-preview-overlay__title" id="preview-overlay-title">预览</span>
+      <span class="ce-panel__grow"></span>
+      <div class="ce-segment" id="preview-zoom-full" role="group" aria-label="预览缩放"></div>
+      <button class="ce-btn ce-btn--ghost ce-btn--sm" type="button" data-act="preview-close">关闭</button>
+    </div>
+    <div class="ce-preview-overlay__body" id="preview-overlay-stage"></div>
+  </div>
+</div>
 
 <div class="ce-toast" id="toast" role="status" aria-live="polite"></div>
 

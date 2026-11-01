@@ -30,8 +30,21 @@ async function resolveData(): Promise<unknown> {
 
 export function initCustomQuiz(): void {
   const host = document.getElementById('quiz-custom-body')
-  if (!host) return
+  if (host) {
+    initInline(host)
+    return
+  }
 
+  /* 与其他模块一致：区块里的「练习」按钮打开浮层，逐题翻页 */
+  const button = document.querySelector<HTMLElement>('#quiz-custom [data-practice="postLesson"]')
+  if (!button) return
+  button.addEventListener('click', () => {
+    void openOverlay()
+  })
+}
+
+/** 兼容旧页面：没有练习按钮时仍可页内挂载 */
+function initInline(host: HTMLElement): void {
   // M10 区块头部既有的「重做本页练习」入口 → 组件重置
   document.querySelector('[data-cq-reset]')?.addEventListener('click', () => {
     windowHandle?.reset()
@@ -45,7 +58,7 @@ export function initCustomQuiz(): void {
     windowHandle = null
     host.innerHTML = ''
 
-    // 页内挂载（container）；底部不再重复「重做」入口（区块头部已有）
+    // 页内挂载（container）
     windowHandle = openPracticeWindow({
       container: host,
       title: data?.title || '自定义练习',
@@ -56,5 +69,23 @@ export function initCustomQuiz(): void {
       resetBar: false,
       emptyIssues: data ? [] : issues
     })
+  })
+}
+
+/** 浮层模式：与随堂练习同一套界面（逐题翻页、计时、重置） */
+async function openOverlay(): Promise<void> {
+  const loaded = await resolveData()
+  const { data, issues } = validateQuizData(loaded)
+  if (issues.length) console.warn('[customQuiz] 数据校验提示：', issues)
+
+  windowHandle?.close()
+  windowHandle = openPracticeWindow({
+    title: data?.title || '练习',
+    groups: (data?.sections ?? []) as never,
+    timer: true,
+    emptyIssues: data ? [] : issues,
+    onClose: () => {
+      windowHandle = null
+    }
   })
 }

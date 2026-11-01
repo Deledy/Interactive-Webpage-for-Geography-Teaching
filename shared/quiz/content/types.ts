@@ -6,6 +6,21 @@
    不再各自维护一份。
    详见 shared/quiz/docs/2026-10-17-quiz-card-wysiwyg-design.md §5。
    ============================================================ */
+import type { MaterialLayout } from './materialTypes'
+
+export type {
+  BaseMaterialObject,
+  ImageMaterialObject,
+  MaterialLayout,
+  MaterialObject,
+  MaterialObjectFit,
+  MaterialObjectType,
+  MaterialTextStyle,
+  OptionLayout,
+  SlotMaterialObject,
+  TableMaterialObject,
+  TextMaterialObject
+} from './materialTypes'
 
 export interface CqOption {
   key: string
@@ -57,13 +72,19 @@ export interface CqEssay {
 export type CqQuestion = CqChoice | CqEssay
 
 /**
- * 题组：一则材料统领多道题目。
+ * 题组：一则材料统领多道题目，一张画布上只有一个题目槽。
  * 材料写在题组上，组内题目不再重复携带 material。
  */
 export interface CqGroup {
   id?: string
-  /** 材料（HTML，关键词用 <mark class="cq-hl">） */
+  title?: string
+  /** 旧字段：历史上下 / 左右分栏，不再影响自由布局画布 */
+  layout?: 'stacked' | 'split'
+  /** 旧版材料（HTML）；与 materialLayout 同时存在时以 materialLayout 为准 */
   material?: string
+  /** 自由布局材料（文字 / 图片 / 表格 + 唯一题目槽） */
+  materialLayout?: MaterialLayout | null
+  /** 组内全部题目；顺序即翻题顺序，共用画布中的题目槽 */
   questions: CqQuestion[]
 }
 
@@ -71,8 +92,11 @@ export interface CqGroup {
 export interface CqSection {
   id?: string
   title?: string
+  layout?: 'stacked' | 'split'
   /** 本节共用材料（HTML）；居中渲染一次 */
   material?: string
+  /** 自由布局材料（文字 / 图片 / 表格 + 唯一题目槽） */
+  materialLayout?: MaterialLayout | null
   questions?: CqQuestion[]
 }
 

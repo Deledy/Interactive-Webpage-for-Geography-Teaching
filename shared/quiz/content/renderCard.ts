@@ -14,7 +14,7 @@
    详见 shared/quiz/docs/2026-10-17-quiz-card-wysiwyg-design.md §7。
    ============================================================ */
 import type { CqChoice, CqEssay, CqQuestion } from './types'
-import { escapeHtml, renderRichText } from './richText'
+import { escapeAttr, escapeHtml, renderInlineLines, renderRichText } from './richText'
 
 const CHOICE_BADGE: Record<'single' | 'multiple', string> = {
   single: '单选题',
@@ -131,11 +131,11 @@ function choiceHtml(
       const picked = state.selected.includes(opt.key)
       /* 选中且（未判定 或 命中正确答案）时显示对勾 */
       const checked = picked && (!revealed || answerKeys(question).includes(opt.key))
-      return `<button type="button" class="${optionClass(question, state, opt.key)}" data-cq-opt="${key}" data-key="${opt.key}"${
+      return `<button type="button" class="${optionClass(question, state, opt.key)}" data-cq-opt="${key}" data-key="${escapeAttr(opt.key)}"${
         revealed ? ' disabled' : ''
       }${picked ? ' aria-pressed="true"' : ' aria-pressed="false"'}>
           <span class="cq-opt__key">${escapeHtml(opt.key)}</span>
-          <span class="cq-opt__text">${escapeHtml(opt.text)}</span>
+          <span class="cq-opt__text">${renderInlineLines(opt.text)}</span>
           ${checked ? `<span class="cq-opt__check" aria-hidden="true">${CHECK_ICON}</span>` : ''}
         </button>`
     })
@@ -183,7 +183,7 @@ function choiceHtml(
             <span class="cq-q__no">${numberLabel(index)}</span>
             <span class="cq-q__badge">${CHOICE_BADGE[modeOne]}</span>
           </div>
-          <p class="cq-q__stem">${escapeHtml(question.stem)}</p>
+          <div class="cq-q__stem">${renderInlineLines(question.stem)}</div>
           <div class="cq-q__options">${options}</div>
           ${submit}
         </section>
@@ -239,7 +239,7 @@ function essayHtml(
             <span class="cq-q__no">${numberLabel(index)}</span>
             <span class="cq-q__badge cq-q__badge--essay">综合题</span>
           </div>
-          ${stems.length ? `<ol class="cq-stems">${stems.map((stem) => `<li>${escapeHtml(stem)}</li>`).join('')}</ol>` : ''}
+          ${stems.length ? `<ol class="cq-stems">${stems.map((stem) => `<li>${renderInlineLines(stem)}</li>`).join('')}</ol>` : ''}
           ${reveal}
           ${answer}
         </section>

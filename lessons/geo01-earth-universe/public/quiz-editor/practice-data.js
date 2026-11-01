@@ -3,258 +3,70 @@
  * ------------------------------------------------------------
  * 1. 本文件构建后位于分发包的「题目编辑器」文件夹（与编辑器 html 同级），主页面与
  *    题目编辑器都从该目录加载；分发后直接替换本文件即可更新练习，无需重新构建、无需联网。
- * 2. 内容格式与课后练习同构（题型统一为 choice / essay）：
- *    - choice：mode 为 "single" 单选 / "multiple" 多选；
+ * 2. 正式格式为 v3：modules 下只写 groups（题组），材料在题组上保存一次，
+ *    题目不再重复携带 material。
+ *    - group.layout：stacked 上下 / split 左右；
+ *    - group.materialLayout：自由布局材料画布（文字 / 图片 / 表格对象）；
+ *    - group.material：旧版 HTML 材料，仅用于兼容；两者同时存在时以 materialLayout 为准。
+ * 3. 题型统一为 choice / essay：
+ *    - choice：mode 为 "single" 单选（数组 answer 仅兼容旧多选数据）；
  *    - essay ：综合题，stems 设问 + referenceAnswer 参考答案。
- * 3. modules 的键 = lesson-manifest 的模块 id（稳定主键，如 universe）；
- *    kind 为 "drag" 的模块为拖拽题占位，内容仍由源码提供，编辑器只读。
- * 4. postLesson 为课后练习（沿用 custom-quiz 结构：title / subtitle / sections）。
+ * 4. postLesson 为课后练习（title / subtitle / sections），sections 同样支持
+ *    layout / materialLayout / material。
  * 5. 本文件由 scripts/migrate-practice.mjs 首次生成，之后请直接编辑本文件；
- *    构建不会覆盖它。
+ *    构建不会覆盖它。用「题目编辑器」保存时只会导出 v3 groups，不会双写扁平 questions。
  * 6. 富文本字段（material / analysis / referenceAnswer 等）直接写 HTML，
  *    关键词高亮写 <mark class="cq-hl">关键词</mark>；不写 Markdown。
  *    可安全使用的标签：p br strong em u s sub sup mark code a img ul ol li
  *    table thead tbody tr th td figure figcaption h3 h4；类名仅限 cq- 前缀。
  * ============================================================ */
 window.__PRACTICE_DATA__ = {
-  version: 2,
-  lesson: 'geo01-earth-universe',
-  updatedAt: '2026-10-17T00:00:00.000Z',
-
-  modules: {
-    /* M1 宇宙概念 —— 选择题 */
-    universe: {
-      title: '宇宙概念 · 随堂练习',
-      intro: '先想清楚<mark class="cq-hl">宇宙</mark>指的是什么。',
-      questions: [
-        {
-          type: 'choice',
-          mode: 'single',
-          stem: '下列关于宇宙的叙述，正确的是（　）',
-          options: [
-            { key: 'A', text: '宇宙是各种天体的简单总和' },
-            { key: 'B', text: '宇宙是时间和空间的统一体，也是所有天体的总和' },
-            { key: 'C', text: '宇宙就是银河系' },
-            { key: 'D', text: '宇宙有中心，也有明确的边界' }
-          ],
-          answer: 'B',
-          analysis:
-            '<p class="cq-p">宇宙是<mark class="cq-hl">时间和空间</mark>的统一体，由各种天体与星际物质组成；它没有中心，也没有边界。银河系只是宇宙中众多星系之一。</p>',
-          knowledge: { title: '要点', items: ['宇宙 = 时间 + 空间 + 物质', '无中心、无边界'] }
-        }
-      ]
+  "version": 3,
+  "lesson": "geo01-earth-universe",
+  "updatedAt": "2026-10-31T13:40:26.173Z",
+  "modules": {
+    "universe": {
+      "title": "宇宙概念 · 随堂练习",
+      "intro": "先想清楚<mark class=\"cq-hl\">宇宙</mark>指的是什么。",
+      "groups": []
     },
-
-    /* M2 天体（物质存在形式） —— 选择题 */
-    celestial: {
-      title: '天体识别 · 随堂练习',
-      intro:
-        '判断一个物体是不是天体，看它<mark class="cq-hl">在哪里</mark>、有没有<mark class="cq-hl">独立轨道</mark>。',
-      questions: [
-        {
-          type: 'choice',
-          mode: 'single',
-          stem: '下列物体中，属于天体的是（　）',
-          options: [
-            { key: 'A', text: '飘浮在地球大气层中的云' },
-            { key: 'B', text: '月球' },
-            { key: 'C', text: '坠落到地面的陨石' },
-            { key: 'D', text: '在发射架上等待发射的人造卫星' }
-          ],
-          answer: 'B',
-          analysis:
-            '<p class="cq-p">天体是宇宙中物质的存在形式，须位于<mark class="cq-hl">地球大气层之外</mark>并具有独立的运行轨道。云、陨石、尚未发射的卫星都不满足条件。</p>',
-          knowledge: {
-            title: '判别三步',
-            items: ['是否为宇宙中的物质存在形式', '是否位于地球大气层之外', '是否具有独立的运行轨道']
-          }
-        }
-      ]
+    "celestial": {
+      "title": "天体识别 · 随堂练习",
+      "intro": "判断一个物体是不是天体，看它<mark class=\"cq-hl\">在哪里</mark>、有没有<mark class=\"cq-hl\">独立轨道</mark>。",
+      "groups": []
     },
-
-    /* M3 天体判别 · 流星案例 —— 综合题 */
-    meteor: {
-      title: '天体判别 · 随堂练习',
-      questions: [
-        {
-          type: 'essay',
-          material: '<p class="cq-p">小明说：“昨晚我在院子里捡到一块陨石，它也是天体。”</p>',
-          stems: ['判断小明的说法是否正确，并简要说明理由。'],
-          referenceAnswer:
-            '<p class="cq-p">不正确。陨石是流星体坠落到地面后的残体，已经位于地球表面、成为地球的一部分，不再位于<mark class="cq-hl">地球大气层之外</mark>，也没有独立的运行轨道，因此不属于天体。</p>',
-          analysis:
-            '<p class="cq-p">判别天体的关键：位于大气层之外 + 具有独立运行轨道。流星体是天体，落地后的残体（陨石）不是天体。</p>',
-          criteria: ['判断为“不正确”', '说明陨石已落到地面、成为地球的一部分', '点出不再具备“位于大气层之外 / 独立轨道”的条件']
-        }
-      ]
+    "meteor": {
+      "title": "天体判别 · 随堂练习",
+      "groups": []
     },
-
-    /* M4 天体系统层级 —— 选择题 */
-    hierarchy: {
-      title: '天体系统层级 · 随堂练习',
-      questions: [
-        {
-          type: 'choice',
-          mode: 'single',
-          stem: '下列天体系统，按级别由低到高排列正确的是（　）',
-          options: [
-            { key: 'A', text: '地月系 → 太阳系 → 银河系 → 可观测宇宙' },
-            { key: 'B', text: '太阳系 → 地月系 → 银河系 → 可观测宇宙' },
-            { key: 'C', text: '银河系 → 太阳系 → 地月系 → 可观测宇宙' },
-            { key: 'D', text: '地月系 → 银河系 → 太阳系 → 可观测宇宙' }
-          ],
-          answer: 'A',
-          analysis:
-            '<p class="cq-p">天体系统由低到高依次为<mark class="cq-hl">地月系 → 太阳系 → 银河系 → 可观测宇宙（总星系）</mark>。</p>',
-          knowledge: { title: '层级（低 → 高）', items: ['地月系', '太阳系', '银河系', '可观测宇宙'] }
-        }
-      ]
+    "hierarchy": {
+      "title": "天体系统层级 · 随堂练习",
+      "groups": []
     },
-
-    /* M5 太阳系与八大行星 —— 选择题 */
-    solar: {
-      title: '八大行星分类 · 随堂练习',
-      questions: [
-        {
-          type: 'choice',
-          mode: 'single',
-          stem: '下列行星中，全部属于类地行星的一组是（　）',
-          options: [
-            { key: 'A', text: '水星、金星、地球、火星' },
-            { key: 'B', text: '木星、土星、天王星、海王星' },
-            { key: 'C', text: '地球、火星、木星、土星' },
-            { key: 'D', text: '水星、地球、木星、土星' }
-          ],
-          answer: 'A',
-          analysis:
-            '<p class="cq-p">八大行星分为三类：<mark class="cq-hl">类地行星</mark>（水星、金星、地球、火星）、巨行星（木星、土星）、远日行星（天王星、海王星）。</p>',
-          knowledge: { title: '分类', items: ['类地行星：水、金、地、火', '巨行星：木、土', '远日行星：天王、海王'] }
-        }
-      ]
+    "solar": {
+      "title": "八大行星分类 · 随堂练习",
+      "groups": []
     },
-
-    /* M6 行星的运动特征 —— 综合题 */
-    planets: {
-      title: '行星运动特征 · 随堂练习',
-      questions: [
-        {
-          type: 'essay',
-          material:
-            '<p class="cq-p">八颗行星绕日公转的轨道倾角均小于 7°，偏心率均小于 0.21，且公转方向相同。</p>',
-          stems: ['上述资料分别说明行星运动具有什么特征？'],
-          referenceAnswer:
-            '<p class="cq-p">轨道倾角都很小，说明八颗行星的公转轨道面几乎在同一平面上，即<mark class="cq-hl">共面性</mark>；偏心率都很小，说明轨道近似正圆，即<mark class="cq-hl">近圆性</mark>；公转方向相同，即<mark class="cq-hl">同向性</mark>。</p>',
-          analysis:
-            '<p class="cq-p">共面性、近圆性、同向性是八颗行星运动特征的共同点，也是地球具有“普通性”的证据之一。</p>',
-          criteria: ['共面性——对应轨道倾角小', '近圆性——对应偏心率小', '同向性——对应公转方向相同']
-        }
-      ]
+    "planets": {
+      "title": "行星运动特征 · 随堂练习",
+      "groups": []
     },
-
-    /* M7 地球的普通性和特殊性 —— 选择题 */
-    earth: {
-      title: '地球的普通性 · 随堂练习',
-      questions: [
-        {
-          type: 'choice',
-          mode: 'single',
-          stem: '下列事实中，最能说明地球是太阳系中一颗普通行星的是（　）',
-          options: [
-            { key: 'A', text: '地球上有生命存在' },
-            { key: 'B', text: '地球公转轨道近似正圆，且公转方向与其他七颗行星相同' },
-            { key: 'C', text: '地球是太阳系中体积最大的行星' },
-            { key: 'D', text: '地球是太阳系中唯一拥有卫星的行星' }
-          ],
-          answer: 'B',
-          analysis:
-            '<p class="cq-p">地球的<mark class="cq-hl">普通性</mark>体现在运动特征（共面性、近圆性、同向性）与结构特征（作为类地行星，体积、质量等与其他类地行星相近）上；存在生命是地球的<mark class="cq-hl">特殊性</mark>。</p>',
-          knowledge: { title: '区分', items: ['普通性：运动特征 + 结构特征与其他行星相似', '特殊性：存在生命'] }
-        }
-      ]
+    "earth": {
+      "title": "地球的普通性 · 随堂练习",
+      "groups": []
     },
-
-    /* M8 地球存在生命的原因 —— 综合题 */
-    life: {
-      title: '地球存在生命的原因 · 随堂练习',
-      questions: [
-        {
-          type: 'essay',
-          material: '<p class="cq-p">地球是目前已知唯一存在高级智慧生命的行星。</p>',
-          stems: ['从地球自身条件角度，简述地球存在生命的原因。'],
-          referenceAnswer:
-            '<p class="cq-p">① <mark class="cq-hl">适宜的温度</mark>：日地距离适中、自转周期适当，地表温度适宜，水能以液态存在；② <mark class="cq-hl">适合生物呼吸的大气</mark>：地球体积和质量适中，能吸住大气，并形成适宜生物呼吸的大气；③ <mark class="cq-hl">液态水</mark>：温度适宜，水以液态存在，为生命活动提供条件。</p>',
-          analysis:
-            '<p class="cq-p">地球存在生命既有外部条件（稳定的太阳光照、安全的宇宙环境），也有自身条件（温度、大气、液态水）；本题只要求自身条件。</p>',
-          criteria: ['答出适宜的温度（日地距离适中）', '答出适合生物呼吸的大气', '答出液态水的存在', '条理清晰、表述完整']
-        }
-      ]
+    "life": {
+      "title": "地球存在生命的原因 · 随堂练习",
+      "groups": []
     },
-
-    /* M9 复习与总结 —— 选择题 */
-    review: {
-      title: '复习巩固 · 随堂练习',
-      questions: [
-        {
-          type: 'choice',
-          mode: 'single',
-          stem: '关于宇宙与天体系统，下列说法正确的是（　）',
-          options: [
-            { key: 'A', text: '天体系统的级别是固定不变的' },
-            { key: 'B', text: '可观测宇宙是目前人类认识的最高一级天体系统' },
-            { key: 'C', text: '陨石属于天体' },
-            { key: 'D', text: '银河系是最高一级的天体系统' }
-          ],
-          answer: 'B',
-          analysis:
-            '<p class="cq-p">天体系统由低到高为地月系 → 太阳系 → 银河系 → 可观测宇宙，其中<mark class="cq-hl">可观测宇宙（总星系）是目前认识的最高一级天体系统</mark>；陨石已落到地面，不是天体。</p>',
-          knowledge: { title: '易错点', items: ['最高一级是“可观测宇宙”，不是银河系', '陨石、未发射的人造卫星都不是天体'] }
-        }
-      ]
+    "review": {
+      "title": "复习巩固 · 随堂练习",
+      "groups": []
     }
   },
-
-  /* M10 课后练习（沿用 custom-quiz 结构：title / subtitle / sections） */
-  postLesson: {
-    title: '练习',
-    subtitle: '教师可按学情增删题目：选择题与综合题，支持表格、图片、答案与解析。',
-    sections: [
-      {
-        id: 'p1',
-        title: '一、选择题',
-        questions: [
-          {
-            type: 'choice',
-            mode: 'single',
-            stem: '下列条件中，属于地球存在生命的“外部条件”的是（　）',
-            options: [
-              { key: 'A', text: '适宜的温度' },
-              { key: 'B', text: '稳定的太阳光照' },
-              { key: 'C', text: '液态水的存在' },
-              { key: 'D', text: '适合生物呼吸的大气' }
-            ],
-            answer: 'B',
-            analysis:
-              '<p class="cq-p">生命存在的条件可分为外部条件与自身条件：<mark class="cq-hl">外部条件</mark>包括稳定的太阳光照和安全的宇宙环境；适宜的温度、液态水、适合呼吸的大气属于地球的<mark class="cq-hl">自身条件</mark>。</p>',
-            knowledge: { title: '记忆', items: ['外部：光照稳定 + 宇宙环境安全', '自身：温度 + 大气 + 液态水'] }
-          }
-        ]
-      },
-      {
-        id: 'p2',
-        title: '二、综合题',
-        questions: [
-          {
-            type: 'essay',
-            material: '<p class="cq-p">地球是太阳系中一颗既普通又特殊的行星。</p>',
-            stems: ['简述地球“普通性”与“特殊性”的主要表现。'],
-            referenceAnswer:
-              '<p class="cq-p">普通性：地球作为太阳系中的一颗行星，在<mark class="cq-hl">运动特征</mark>（共面性、近圆性、同向性）和<mark class="cq-hl">结构特征</mark>（体积、质量等与类地行星相近）上与其他行星相似。特殊性：地球是目前已知唯一存在高级智慧生命的行星，具有适宜的温度、适合生物呼吸的大气和液态水。</p>',
-            analysis:
-              '<p class="cq-p">“普通”指与其他行星的相似性（运动特征 + 结构特征）；“特殊”指存在生命。两者都建立在与其它行星的对比之上。</p>',
-            criteria: ['答出运动特征上的普通', '答出结构特征上的普通', '答出存在生命这一特殊性']
-          }
-        ]
-      }
-    ]
+  "postLesson": {
+    "title": "练习",
+    "subtitle": "教师可按学情增删题目：选择题与综合题，支持表格、图片、答案与解析。",
+    "sections": []
   }
 };

@@ -10,9 +10,44 @@
    本文件是「统一 schema 校验」的单一真源，课程侧（practiceStore 等）应复用而非重写。
    ============================================================ */
 import type { CqChoice, CqData, CqEssay, CqGroup, CqQuestion, CqSection, PracticeModule } from '../../content/types'
+import type { MaterialLayout } from '../../content/materialTypes'
+import { validateMaterialLayout } from '../../content/validateMaterial'
+import { ensureQuestionIds, ensureSlot, pruneSlots } from '../../content/questionObjects'
 
-/** 当前组件支持的数据版本（v3：题组 groups / 节材料 material） */
-export const DATA_VERSION = 3
+/** 当前组件支持的数据版本（v5：一题组一画布 + 题目槽） */
+export const DATA_VERSION = 5
+
+/** 校验题组 / 分节的自由布局材料；非法或空画布视为无材料 */
+function validateMaterial(raw: unknown, label: string, issues: string[]): MaterialLayout | null {
+  if (raw === undefined || raw === null) return null
+  const checked = validateMaterialLayout(raw)
+  checked.issues.forEach((issue) => issues.push(`${label}：${issue}`))
+  if (!checked.layout) issues.push(`${label}材料布局非法，已忽略`)
+  if (!checked.layout || checked.layout.objects.length === 0) return null
+  return checked.layout
+}
+
+/**
+ * 收敛题目槽：去重、有题目时补一个槽。
+ * 题目 id 必须先经 ensureQuestionIds 补齐，题目数量决定是否需要创建槽。
+ */
+function normalizeSlot(
+  layout: MaterialLayout | null,
+  questions: CqQuestion[],
+  label: string,
+  issues: string[]
+): MaterialLayout | null {
+  if (!layout) return null
+  const pruned = pruneSlots(layout)
+  pruned.issues.forEach((issue) => issues.push(`${label}：${issue}`))
+  const ensured = ensureSlot(pruned.layout, questions.length > 0, questions[0])
+  return ensured.layout
+}
+
+/** 题干等字段可能存规范 HTML，判空时先去掉标签 */
+function hasContent(value?: string): boolean {
+  return String(value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
+}
 
 function validateChoiceQuestion(question: CqChoice, label: string, issues: string[]): CqChoice | null {
   const options = (question.options ?? []).filter((option) => option && option.key)
@@ -20,7 +55,7 @@ function validateChoiceQuestion(question: CqChoice, label: string, issues: strin
   const answers = (Array.isArray(question.answer) ? question.answer : [question.answer]).filter(
     (key): key is string => typeof key === 'string' && keys.has(key)
   )
-  if (!question.stem || options.length < 2 || !answers.length) {
+  if (!hasContent(question.stem) || options.length < 2 || !answers.length) {
     issues.push(`${label}（选择题）题干 / 选项 / 答案不完整，已跳过`)
     return null
   }
@@ -30,7 +65,7 @@ function validateChoiceQuestion(question: CqChoice, label: string, issues: strin
 
 function validateEssayQuestion(question: CqEssay, label: string, issues: string[]): CqEssay | null {
   const stems = Array.isArray(question.stems)
-    ? question.stems.filter((stem) => typeof stem === 'string' && stem.trim())
+    ? question.stems.filter((stem) => typeof stem === 'string' && hasContent(stem))
     : question.stems
       ? [question.stems]
       : []
@@ -83,8 +118,18 @@ export function validateQuizData(raw: unknown): { data: CqData | null; issues: s
       const valid = validateQuestion(question, `${secLabel}第 ${qi + 1} 题`, issues)
       if (valid) questions.push(valid)
     })
-    if (questions.length) sections.push({ ...section, questions })
-    else issues.push(`${secLabel}无有效题目，已忽略`)
+    if (questions.length) {
+      const withIds = ensureQuestionIds(questions)
+      const layout = 'materialLayout' in section
+        ? validateMaterial(section.materialLayout, secLabel, issues)
+        : null
+      const checked: CqSection = { ...section, questions: withIds }
+      checked.materialLayout = normalizeSlot(layout, withIds, secLabel, issues)
+      if (section.layout !== 'split') checked.layout = 'stacked'
+      sections.push(checked)
+    } else {
+      issues.push(`${secLabel}无有效题目，已忽略`)
+    }
   })
 
   if (!sections.length) {
@@ -115,8 +160,18 @@ export function validateGroups(raw: unknown, labelPrefix: string, issues: string
       const valid = validateQuestion(question, `${label}第 ${qi + 1} 题`, issues)
       if (valid) questions.push(valid)
     })
-    if (questions.length) groups.push({ ...source, questions })
-    else issues.push(`${label}无有效题目，已忽略`)
+    if (questions.length) {
+      const withIds = ensureQuestionIds(questions)
+      const layout = 'materialLayout' in source
+        ? validateMaterial(source.materialLayout, label, issues)
+        : null
+      const checked: CqGroup = { ...source, questions: withIds }
+      checked.materialLayout = normalizeSlot(layout, withIds, label, issues)
+      if (source.layout !== 'split') checked.layout = 'stacked'
+      groups.push(checked)
+    } else {
+      issues.push(`${label}无有效题目，已忽略`)
+    }
   })
   return groups
 }

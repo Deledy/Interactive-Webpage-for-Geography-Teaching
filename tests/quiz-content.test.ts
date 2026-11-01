@@ -23,9 +23,10 @@ describe('内容层 · HTML 白名单清洗', () => {
     expect(sanitizeHtml('<p class="pw-hl cq-p">x</p>')).toBe('<p class="cq-p">x</p>')
   })
 
-  it('style 只保留宽度与对齐', () => {
-    expect(filterStyle('width: 60%; color: red; text-align: center')).toBe('width: 60%; text-align: center')
-    expect(sanitizeHtml('<p style="color:red;text-align:center">x</p>')).toBe('<p style="text-align:center">x</p>')
+  it('style 保留宽度、对齐与行内颜色 / 强调', () => {
+    expect(filterStyle('width: 60%; color: red; text-align: center')).toBe('width: 60%; color: red; text-align: center')
+    expect(sanitizeHtml('<p style="color:red;text-align:center">x</p>')).toBe('<p style="color:red; text-align:center">x</p>')
+    expect(filterStyle('font-family: 楷体; font-weight: bold; font-size: 20px')).toBe('font-weight: bold')
   })
 
   it('剥除危险协议，保留安全地址', () => {

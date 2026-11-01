@@ -1,0 +1,661 @@
+/* ============================================================
+   内容层 · 自由布局材料画布样式
+   ------------------------------------------------------------
+   课程 / 预览与编辑器共用：
+   - 画布按逻辑尺寸排版，再整体等比缩放到容器宽度；
+   - view 模式只读，edit 模式显示选中框、移动条与四角缩放柄；
+   - 材料画布默认白底（类似试卷纸面），不依赖课程深色主题；
+   - 题目对象（cq-qobj）在这里用中性配色，不依赖课程卡片样式，
+     保证编辑器单独打开时也有完整外观。
+   ============================================================ */
+
+.cq-material {
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.cq-material__viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.cq-material--edit .cq-material__viewport {
+  overflow: auto;
+}
+
+.cq-material__canvas {
+  position: relative;
+  transform-origin: top left;
+  background: var(--cq-material-bg, #ffffff);
+  color: #1b1d19;
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+}
+
+.cq-material__object {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.cq-material__text {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 2px 4px;
+  outline: none;
+  word-break: break-word;
+}
+
+.cq-material__text p {
+  margin: 0 0 0.6em;
+  /* 试卷材料默认首行缩进两字 */
+  text-indent: 2em;
+}
+
+.cq-material__text ul,
+.cq-material__text ol,
+.cq-material__text h3,
+.cq-material__text h4 {
+  text-indent: 0;
+}
+
+.cq-material__text p:last-child {
+  margin-bottom: 0;
+}
+
+.cq-material__object--image {
+  overflow: hidden;
+}
+
+.cq-material__object--image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cq-material__missing {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  color: #8a97a5;
+  font-size: 16px;
+  background: repeating-linear-gradient(45deg, #f4f6f8, #f4f6f8 10px, #eef2f5 10px, #eef2f5 20px);
+}
+
+.cq-material__object--image.is-missing img {
+  visibility: hidden;
+}
+
+.cq-material__object--image.is-missing .cq-material__missing {
+  display: flex;
+}
+
+.cq-material__table {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cq-material__table table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 18px;
+}
+
+.cq-material__table th,
+.cq-material__table td {
+  border: 1px solid #9fb0c0;
+  padding: 8px 10px;
+  vertical-align: middle;
+  text-align: left;
+  word-break: break-word;
+}
+
+.cq-material__table th {
+  background: #eef3f8;
+  font-weight: 700;
+}
+
+.cq-material__table td:focus,
+.cq-material__table th:focus,
+.cq-material__text:focus {
+  outline: 2px solid rgba(18, 167, 251, 0.55);
+  outline-offset: -2px;
+}
+
+/* ---------- 编辑态：选中框 / 移动条 / 四角缩放柄 ---------- */
+.cq-material--edit .cq-material__object {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cq-material--edit .cq-material__object.is-dragging {
+  cursor: grabbing;
+}
+
+.cq-material--edit .cq-material__object.is-selected {
+  outline: 2px solid #12a7fb;
+  outline-offset: 0;
+}
+
+/* 进入就地编辑后允许选择文字 / 点选单元格 */
+.cq-material--edit .cq-material__text.is-editable,
+.cq-material--edit .cq-material__text.is-editable *,
+.cq-material--edit .cq-material__table td[contenteditable="true"],
+.cq-material--edit .cq-material__table th[contenteditable="true"] {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cq-material__bar {
+  display: none;
+  position: absolute;
+  top: -28px;
+  left: 0;
+  right: 0;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  background: #12a7fb;
+  color: #ffffff;
+  cursor: grab;
+}
+
+.cq-material--edit .cq-material__object.is-selected .cq-material__bar {
+  display: flex;
+}
+
+.cq-material__object.is-dragging .cq-material__bar {
+  cursor: grabbing;
+}
+
+.cq-material__bar-grip {
+  display: block;
+  width: 18px;
+  height: 10px;
+  background-image: linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff);
+  background-size: 18px 2px;
+  background-position: 0 0, 0 4px, 0 8px;
+  background-repeat: no-repeat;
+  opacity: 0.9;
+}
+
+.cq-material__handle {
+  display: none;
+  position: absolute;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: #ffffff;
+  border: 2px solid #12a7fb;
+  cursor: nwse-resize;
+}
+
+.cq-material--edit .cq-material__object.is-selected .cq-material__handle {
+  display: block;
+}
+
+.cq-material__handle--nw {
+  top: -7px;
+  left: -7px;
+}
+
+.cq-material__handle--ne {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+
+.cq-material__handle--sw {
+  bottom: -7px;
+  left: -7px;
+  cursor: nesw-resize;
+}
+
+.cq-material__handle--se {
+  bottom: -7px;
+  right: -7px;
+}
+
+/* ============================================================
+   题目对象（cq-qobj）：画布内的紧凑题块
+   ============================================================ */
+
+.cq-material__object--question {
+  background: #ffffff;
+  border: 1px solid #dbe3ec;
+  border-radius: 10px;
+}
+
+.cq-material__question {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+.cq-material__question-missing {
+  margin: 0;
+  padding: 10px 2px;
+  color: #a0abb8;
+  font-size: 18px;
+}
+
+.cq-material__object--question.is-missing {
+  background: repeating-linear-gradient(45deg, #fafbfc, #fafbfc 12px, #f3f6f9 12px, #f3f6f9 24px);
+  border-style: dashed;
+}
+
+.cq-qobj {
+  /* 英文与数字用新罗马，中文回落到黑体 */
+  font-family: "Times New Roman", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  color: #1b1d19;
+  line-height: 1.55;
+}
+
+.cq-qobj__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cq-qobj__no {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.cq-qobj__badge {
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: #eaf3fb;
+  color: #1f6a9c;
+  font-size: 14px;
+}
+
+.cq-qobj__badge--essay {
+  background: #fdf1e3;
+  color: #9a6420;
+}
+
+.cq-qobj__stem {
+  margin: 0 0 10px;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.cq-qobj__opts {
+  display: grid;
+  grid-template-columns: repeat(var(--cq-qobj-cols, 2), minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cq-qobj__opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid #d7e0e9;
+  border-radius: 8px;
+  background: #fbfcfe;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.cq-qobj__opt:hover:not(:disabled) {
+  border-color: #8fc4e9;
+  background: #f2f8fe;
+}
+
+.cq-qobj__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #eef3f8;
+  color: #52616f;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cq-qobj__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.cq-qobj__check {
+  flex: 0 0 auto;
+  color: #1c9d5a;
+  font-weight: 700;
+}
+
+.cq-qobj__opt.is-selected {
+  border-color: #12a7fb;
+  background: #eaf6ff;
+}
+
+.cq-qobj__opt.is-selected .cq-qobj__key {
+  background: #12a7fb;
+  color: #ffffff;
+}
+
+.cq-qobj__opt.is-correct {
+  border-color: #1c9d5a;
+  background: #eaf8f0;
+}
+
+.cq-qobj__opt.is-correct .cq-qobj__key {
+  background: #1c9d5a;
+  color: #ffffff;
+}
+
+.cq-qobj__opt.is-wrong {
+  border-color: #d9564f;
+  background: #fdeeed;
+}
+
+.cq-qobj__opt.is-wrong .cq-qobj__key {
+  background: #d9564f;
+  color: #ffffff;
+}
+
+.cq-qobj__opt.is-dim {
+  opacity: 0.6;
+}
+
+.cq-qobj__verdict {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.cq-qobj__verdict.is-right {
+  background: #eaf8f0;
+  color: #1c7a49;
+}
+
+.cq-qobj__verdict.is-wrong {
+  background: #fdeeed;
+  color: #a8332d;
+}
+
+.cq-qobj__stems {
+  margin: 0 0 10px;
+  padding-left: 1.4em;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.cq-qobj__stems li {
+  margin-bottom: 4px;
+}
+
+.cq-qobj__reveal {
+  padding: 6px 16px;
+  border: 1px solid #12a7fb;
+  border-radius: 8px;
+  background: #eaf6ff;
+  color: #1f6a9c;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.cq-qobj__reveal.is-open {
+  background: #ffffff;
+  color: #52616f;
+  border-color: #cfd9e3;
+}
+
+.cq-qobj__analysis {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f5f8fb;
+  color: #33414f;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.cq-qobj__analysis .cq-p {
+  margin: 0 0 0.4em;
+}
+
+.cq-qobj__analysis .cq-p:last-child {
+  margin-bottom: 0;
+}
+
+.cq-qobj__label {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #e3ecf5;
+  color: #52616f;
+  font-size: 13px;
+}
+
+/* ============================================================
+   题目槽（一个题组画布只有一个）
+   ============================================================ */
+
+.cq-material__object--slot {
+  overflow: hidden;
+}
+
+.cq-material__slot {
+  width: 100%;
+  height: 100%;
+}
+
+.cq-material__slot-empty {
+  margin: 0;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #c7d4e0;
+  border-radius: 10px;
+  background: #fbfcfe;
+  color: #98a5b3;
+  font-size: 17px;
+}
+
+.cq-material__slot .cq-qobj {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   题目块 · 画布内直接编辑（edit 模式）
+   ============================================================ */
+
+.cq-qobj__grow {
+  flex: 1 1 auto;
+}
+
+.cq-qobj__tool {
+  padding: 2px 10px;
+  border: 1px solid #d7e0e9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #7a8794;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cq-qobj__tool:hover {
+  border-color: #d9564f;
+  color: #d9564f;
+}
+
+/* 可编辑字段：hover 提示，focus 高亮 */
+.cq-material--edit .cq-qobj [contenteditable="true"] {
+  outline: none;
+  border-radius: 4px;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cq-material--edit .cq-qobj [contenteditable="true"]:hover {
+  background: #f4f9fe;
+  box-shadow: 0 0 0 1px #d8ebfa;
+}
+
+.cq-material--edit .cq-qobj [contenteditable="true"]:focus {
+  background: #f2f9ff;
+  box-shadow: 0 0 0 2px rgba(18, 167, 251, 0.45);
+}
+
+.cq-material--edit .cq-qobj [contenteditable="true"]:empty::before {
+  content: attr(data-placeholder);
+  color: #b3bdc8;
+}
+
+/* 选项：编辑态整行可选中，✓ 徽标设置正确答案 */
+.cq-qobj__opt--edit {
+  cursor: pointer;
+}
+
+.cq-qobj__opt--edit.is-editing {
+  border-color: #12a7fb;
+  background: #eaf6ff;
+  box-shadow: 0 0 0 2px rgba(18, 167, 251, 0.25);
+}
+
+.cq-qobj__opt--edit.is-answer {
+  border-color: #1c9d5a;
+  background: #eefaf3;
+}
+
+.cq-qobj__answer {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px dashed #c3d0dc;
+  color: #b2bea9;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cq-qobj__answer.is-on {
+  border-style: solid;
+  border-color: #1c9d5a;
+  background: #1c9d5a;
+  color: #ffffff;
+}
+
+/* 参考答案 / 解析折叠与编辑区 */
+.cq-qobj__tools {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.cq-qobj__fold {
+  padding: 3px 12px;
+  border: 1px dashed #c7d4e0;
+  border-radius: 999px;
+  background: #fbfcfe;
+  color: #52616f;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cq-qobj__fold:hover {
+  border-color: #8fc4e9;
+  color: #1f6a9c;
+}
+
+.cq-qobj__fold.is-open {
+  border-style: solid;
+  border-color: #9fd3f2;
+  background: #eaf6ff;
+  color: #1f6a9c;
+}
+
+.cq-qobj__editor {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e9f0;
+  border-radius: 8px;
+  background: #fafcfe;
+  color: #33414f;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 42px;
+}
+
+.cq-qobj__editor .cq-p {
+  margin: 0 0 0.4em;
+}
+
+.cq-qobj__editor .cq-p:last-child {
+  margin-bottom: 0;
+}
+
+.cq-qobj__stems--edit {
+  padding-left: 0;
+  list-style: none;
+}
+
+.cq-qobj__stems--edit li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.cq-qobj__stems--edit li::before {
+  content: "•";
+  color: #8a97a5;
+  line-height: 1.6;
+}
+
+.cq-qobj__stem-item {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cq-qobj__empty {
+  color: #a0abb8;
+  font-size: 15px;
+}
