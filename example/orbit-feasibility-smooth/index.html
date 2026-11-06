@@ -10,8 +10,8 @@
     <!-- 渲染容器：Three.js canvas 挂载于此 -->
     <div id="stage"></div>
 
-    <!-- 深空恒星名称标签层（进入银河系层级后出现，随视角投影，可点击飞达） -->
-    <nav class="starlabels" id="starlabels" aria-label="可见恒星名称"></nav>
+    <!-- 深空名称标签层（恒星与星系共用：进入银河系等级后出现，随视角投影，可点击飞达） -->
+    <nav class="starlabels" id="starlabels" aria-label="可见天体名称"></nav>
 
     <!-- CMB 圆形边界（与 Three.js 里的 CMB 球同步投影） -->
     <div class="cmb-ring" id="cmb-ring" aria-hidden="true"></div>
@@ -74,7 +74,7 @@
     <!-- 常驻标注：所有画面均为非等比示意 -->
     <div class="watermark">非等比示意 · 位置、大小与颜色为可看性做了艺术化处理</div>
 
-    <p class="hint" id="hint">滚轮 / 双指缩放即可连续切换层级，深空会自动放慢，沿途经过本星系群、室女座团、拉尼亚凯亚 · 最终停在圆形宇宙微波背景（可反向滚回；赶时间可用「直达可观测宇宙」） · 拖动旋转视角 · 点击恒星 / 行星或标签可直接飞达 · 左侧架构图与底部尺度轴也可点击跳转</p>
+    <p class="hint" id="hint">滚轮 / 双指缩放即可连续切换层级，全程速度一致 · 离开银河系后，同级星系会显示名称，点击名称或光点即可前往 · 沿途经过本星系群、室女座团、拉尼亚凯亚 · 最终停在圆形宇宙微波背景（可反向滚回；赶时间可用「直达可观测宇宙」） · 拖动旋转视角 · 点击恒星 / 行星可直接飞达 · 左侧架构图与底部尺度轴也可点击跳转</p>
 
     <!-- 宇宙尺度独立视图（非 3D，无 WebGL 时同样可用） -->
     <section class="universe" id="universe" hidden aria-hidden="true">

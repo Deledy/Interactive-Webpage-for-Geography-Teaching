@@ -498,6 +498,8 @@ async function start(): Promise<void> {
   for (const body of world.starSystems.bodies.values()) pickTargets.push(body.mesh)
   for (const body of world.solar.bodies.values()) pickTargets.push(body.mesh)
   for (const moon of world.moonSystems.moons.values()) pickTargets.push(moon.mesh)
+  // 深空里星系只剩一个彩色光点（Sprite），也让它可点，与名称标签共用 jumpTo
+  for (const entry of world.galaxyAtlas.galaxies.values()) pickTargets.push(entry.marker)
 
   function chainVisible(object: THREE.Object3D): boolean {
     let node: THREE.Object3D | null = object
@@ -552,6 +554,32 @@ async function start(): Promise<void> {
     btn.addEventListener('click', () => jumpTo(host.id))
     starLabelLayer.append(btn)
     starLabels.set(host.id, btn)
+  }
+
+  /* ---------------- 深空星系名称标签 ----------------
+     银河系缩成一个光点之后，画面里剩下的是与它同级的河外星系。
+     这里给银河系 + 13 座河外星系各挂一个标签：位置由世界坐标投影得到，
+     点击直接复用 jumpTo，与架构图 / 尺度轴 / 3D 拾取走同一条路径。 */
+  const galaxyLabels = new Map<string, HTMLButtonElement>()
+  function addGalaxyLabel(id: string, cn: string, color: string, home = false): void {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'starlabel starlabel--galaxy' + (home ? ' starlabel--home' : '')
+    btn.dataset.name = cn
+    btn.title = `前往${cn}`
+    const dot = document.createElement('i')
+    dot.style.background = color
+    dot.style.boxShadow = `0 0 7px ${color}`
+    const name = document.createElement('span')
+    name.textContent = cn
+    btn.append(dot, name)
+    btn.addEventListener('click', () => jumpTo(id))
+    starLabelLayer.append(btn)
+    galaxyLabels.set(id, btn)
+  }
+  addGalaxyLabel('galaxy', '银河系', '#ffd479', true)
+  for (const galaxy of GALAXIES) {
+    addGalaxyLabel(galaxy.id, galaxy.cn, `#${new THREE.Color(galaxy.color).getHexString()}`)
   }
 
   interface LabelBox { left: number; top: number; right: number; bottom: number }
@@ -696,7 +724,7 @@ async function start(): Promise<void> {
             const py = -labelVec.y * halfH + halfH
             const clear =
               py > 108 && py < viewH - 150 &&
-              !(px < 340 && py > 120 && py < viewH - 140) && // 左侧架构图
+              !(px < 372 && py > 120 && py < viewH - 140) && // 左侧架构图
               !(px > viewW - 300 && py < 440) // 右侧讲解卡
             if (clear) {
               const width = estimateLabelWidth(btn.dataset.name ?? '')
@@ -718,6 +746,78 @@ async function start(): Promise<void> {
       btn.style.opacity = weight.toFixed(3)
       btn.style.pointerEvents = show && weight > 0.08 ? 'auto' : 'none'
       btn.classList.toggle('is-visible', show)
+    }
+  }
+
+  /**
+   * 把星系标签放到投影点；与已有标签压字时上下错位，
+   * 几档都放不下才放弃（避免十几个星系在画面中央挤成一片）。
+   */
+  function placeGalaxyLabel(
+    btn: HTMLButtonElement,
+    px: number,
+    py: number,
+    boxes: LabelBox[],
+    viewW: number,
+    viewH: number
+  ): boolean {
+    if (!(py > 108 && py < viewH - 150)) return false
+    if (px < 372 && py > 120 && py < viewH - 140) return false // 左侧架构图
+    if (px > viewW - 300 && py < 440) return false // 右侧讲解卡
+    const width = estimateLabelWidth(btn.dataset.name ?? '')
+    for (const shift of [0, -16, 16, -32, 32]) {
+      const top = py + shift - 11
+      const box: LabelBox = { left: px - 3, top, right: px + width, bottom: top + 22 }
+      const overlaps = boxes.some(
+        (other) => box.left < other.right && box.right > other.left && box.top < other.bottom && box.bottom > other.top
+      )
+      if (overlaps) continue
+      btn.style.transform = `translate(${Math.round(px)}px, ${Math.round(py + shift)}px) translate(-3px, -50%)`
+      boxes.push(box)
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 星系名称标签：银河系缩成光点（约 17 万单位起）后淡入，CMB 铺满前淡出。
+   * 与恒星标签共用一块避让表：先算恒星、再算星系，两者不会互相压字。
+   */
+  function updateGalaxyLabels(detail: number, boxes: LabelBox[]): void {
+    const navState = nav.getState()
+    const base = windowFade(
+      Math.log10(170_000),
+      Math.log10(250_000),
+      Math.log10(3_200_000),
+      Math.log10(3_900_000),
+      navState.distance
+    ) * detail
+    if (base <= 0.01) {
+      for (const btn of galaxyLabels.values()) {
+        btn.style.opacity = '0'
+        btn.style.pointerEvents = 'none'
+        btn.classList.remove('is-visible')
+      }
+      return
+    }
+
+    const viewW = window.innerWidth
+    const viewH = window.innerHeight
+    camera.updateMatrixWorld()
+
+    for (const [id, btn] of galaxyLabels) {
+      world.getPosition(id, labelWorld)
+      labelVec.copy(labelWorld).project(camera)
+      let show = false
+      if (labelVec.z > -1 && labelVec.z < 1) {
+        const px = labelVec.x * (viewW / 2) + viewW / 2
+        const py = -labelVec.y * (viewH / 2) + viewH / 2
+        if (px > -120 && px < viewW + 120) show = placeGalaxyLabel(btn, px, py, boxes, viewW, viewH)
+      }
+      btn.style.opacity = (show ? base : 0).toFixed(3)
+      btn.style.pointerEvents = show && base > 0.08 ? 'auto' : 'none'
+      btn.classList.toggle('is-visible', show)
+      btn.classList.toggle('is-active', navState.focus === id)
     }
   }
 
@@ -831,70 +931,120 @@ async function start(): Promise<void> {
     }, 1600)
   }
 
-  /* ---------------- 站点内目标列表 ---------------- */
+  /* ---------------- 站点内目标列表 ----------------
+     统一口径：始终按「上级 / 下级 / 同级」三段组织，与左侧架构图同构。
+     - 上级：回到当前节点的上一层（银河系层级回到可观测宇宙）；
+     - 下级：当前节点的组成成员（太阳系 → 行星；银河系 → 太阳系与近邻恒星）；
+     - 同级：与当前节点同级别的其他天体系统（地月系 ↔ 木星系；银河系 ↔ 河外星系）。
+     旧版把三种关系混在一排、不加说明，所以看不出"这一排到底是同级还是下级"。 */
+  interface SubdockItem {
+    id: string
+    cn: string
+    extended?: boolean
+    up?: boolean
+  }
+
   let subdockKey = ''
   function buildSubdock(stage: Stage, focus: string): void {
     subdockEl.innerHTML = ''
-    const addLabel = (text: string): void => {
+
+    const addTitle = (text: string): void => {
       const span = document.createElement('span')
-      span.className = 'subdock__label'
+      span.className = 'subdock__title'
       span.textContent = text
       subdockEl.append(span)
     }
-    const addSep = (): void => {
-      const sep = document.createElement('span')
-      sep.className = 'subdock__sep'
-      subdockEl.append(sep)
-    }
-    const addItem = (id: string, cn: string, extended = false): void => {
-      const btn = document.createElement('button')
-      btn.type = 'button'
-      btn.className = 'subdock__btn' + (extended ? ' subdock__btn--extended' : '')
-      btn.textContent = cn
-      btn.classList.toggle('is-active', id === focus)
-      btn.addEventListener('click', () => jumpTo(id))
-      subdockEl.append(btn)
+
+    const addGroup = (label: string, items: SubdockItem[]): void => {
+      if (items.length === 0) return
+      const group = document.createElement('div')
+      group.className = 'subdock__group'
+      if (label) {
+        const span = document.createElement('span')
+        span.className = 'subdock__label'
+        span.textContent = label
+        group.append(span)
+      }
+      for (const item of items) {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className =
+          'subdock__btn' +
+          (item.extended ? ' subdock__btn--extended' : '') +
+          (item.up ? ' subdock__btn--up' : '')
+        btn.textContent = item.cn
+        btn.classList.toggle('is-active', item.id === focus)
+        btn.addEventListener('click', () => jumpTo(item.id))
+        group.append(btn)
+      }
+      subdockEl.append(group)
     }
 
+    const moonsOf = (systemId: string): SubdockItem[] =>
+      MOON_DATUM.filter((moon) => moon.systemId === systemId).map((moon) => ({
+        id: moon.id,
+        cn: moon.cn,
+        extended: true
+      }))
+
     if (stage === 'earth') {
-      addItem('moon', '月球')
-      addSep()
-      addLabel('其他行星的卫星系统')
-      for (const system of SATELLITE_SYSTEMS) {
-        addItem(system.id, system.cn, true)
-      }
-      const activeSystem = MOON_DATUM.filter((m) => focus === m.systemId || focus === m.id)
-      if (activeSystem.length > 0) {
-        addSep()
-        addLabel(`${activeSystem[0].systemCn} 的入选卫星`)
-        for (const moon of activeSystem) addItem(moon.id, moon.cn, true)
-      }
+      const system = SATELLITE_SYSTEMS.find(
+        (item) => item.id === focus || MOON_DATUM.some((moon) => moon.id === focus && moon.systemId === item.id)
+      )
+      addTitle(system ? `${system.cn} · 行星系统（拓展观察）` : '地月系 · 第 4 级 行星系统')
+      addGroup('', [{ id: 'solar', cn: '↑ 太阳系', up: true }])
+      addGroup('下级', [{ id: 'moon', cn: '月球' }])
+      addGroup(
+        '同级',
+        SATELLITE_SYSTEMS.map((item) => ({ id: item.id, cn: item.cn, extended: true }))
+      )
+      if (system) addGroup('成员', moonsOf(system.id))
     } else if (stage === 'solar') {
-      addItem('sun', '太阳')
-      const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']
-      for (const id of planets) addItem(id, infoOf(id)?.cn ?? id)
-      addItem('moon', '月球')
+      addTitle('太阳系 · 第 3 级 恒星星系')
+      addGroup('', [{ id: 'galaxy', cn: '↑ 银河系', up: true }])
+      addGroup(
+        '下级',
+        ['sun', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].map((id) => ({
+          id,
+          cn: infoOf(id)?.cn ?? id
+        }))
+      )
+      addGroup('同级', [{ id: 'stars', cn: '其他恒星行星系', extended: true }])
     } else if (stage === 'stars') {
-      addLabel('真实恒星')
-      for (const host of HOST_STARS) addItem(host.id, host.cn)
+      addTitle('其他恒星行星系 · 拓展观察')
+      addGroup('', [{ id: 'galaxy', cn: '↑ 银河系', up: true }])
+      addGroup(
+        '同级',
+        HOST_STARS.map((host) => ({ id: host.id, cn: host.cn }))
+      )
       const host = HOST_STARS.find(
-        (h) => h.id === focus || EXOPLANETS.some((p) => p.id === focus && p.parentStarId === h.id)
+        (item) => item.id === focus || EXOPLANETS.some((p) => p.id === focus && p.parentStarId === item.id)
       )
       if (host) {
-        addSep()
-        addLabel(`${host.cn} 的行星`)
-        for (const planet of EXOPLANETS.filter((p) => p.parentStarId === host.id)) {
-          addItem(planet.id, planet.cn)
-        }
+        addGroup(
+          '下级',
+          EXOPLANETS.filter((planet) => planet.parentStarId === host.id).map((planet) => ({
+            id: planet.id,
+            cn: planet.cn
+          }))
+        )
       }
     } else if (stage === 'galaxy') {
-      addItem('solar', '回到太阳系')
-      addSep()
-      addLabel('近邻恒星（已确认有行星）')
-      for (const host of HOST_STARS) addItem(host.id, host.cn)
-    } else if (stage === 'galaxies') {
-      addItem('galaxy', '银河系')
-      for (const galaxy of GALAXIES) addItem(galaxy.id, galaxy.cn)
+      addTitle('银河系 · 第 2 级 星系')
+      addGroup('', [{ id: 'universe', cn: '↑ 可观测宇宙', up: true }])
+      addGroup('下级', [
+        { id: 'solar', cn: '太阳系' },
+        ...HOST_STARS.map((host) => ({ id: host.id, cn: host.cn }))
+      ])
+      addGroup('同级', [{ id: 'galaxies', cn: '河外星系（13）' }])
+    } else {
+      const galaxy = GALAXIES.find((item) => item.id === focus)
+      addTitle(galaxy ? `${galaxy.cn} · 星系` : '河外星系 · 与银河系同级')
+      addGroup('', [{ id: 'universe', cn: '↑ 可观测宇宙', up: true }])
+      addGroup('同级', [
+        { id: 'galaxy', cn: '银河系' },
+        ...GALAXIES.map((item) => ({ id: item.id, cn: item.cn }))
+      ])
     }
   }
 
@@ -1078,6 +1228,7 @@ async function start(): Promise<void> {
     bloom.strength = 0.42 + 0.18 * Math.sin(Math.PI * cosmic.t) - 0.08 * Math.max(0, (cosmic.t - 0.75) / 0.25)
 
     updateStarLabels(state.detail)
+    updateGalaxyLabels(state.detail, labelBoxes)
     updateCMBOverlay(navState.distance, cosmic.phase, cosmic.t)
     updateMilestone(navState.distance, cosmic.phase, nav.isFlying())
 

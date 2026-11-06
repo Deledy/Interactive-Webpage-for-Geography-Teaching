@@ -430,6 +430,8 @@ export function createGalaxyAtlas(
     marker.name = `${definition.id}-marker`
     marker.position.copy(group.position)
     marker.visible = false
+    // 供 3D 拾取使用：与恒星 / 行星共用 main.ts 的 raycast → jumpTo 路径
+    marker.userData.bodyId = definition.id
     scene.add(marker)
 
     scene.add(group)

@@ -109,16 +109,11 @@ export function createDolly(rig: CameraRig, nav: Navigation): Dolly {
     const goal = clamp(targetLog, min, max)
 
     // OpenSpace 的手感：缩放是"速度 × 当前距离"的指数推进，而不是把目标距离直接吃进去。
-    // 这里按 log10(数量级/秒) 限速：近景灵敏，离开银河系后明显放慢。
-    const logDistance = Math.log(Math.max(1, distance()))
-    const deepT = clamp(
-      (logDistance - Math.log(1.2e5)) / (Math.log(8e5) - Math.log(1.2e5)),
-      0,
-      1
-    )
-    const deep = deepT * deepT * (3 - 2 * deepT)
-    const maxRate = 1.8 + (0.14 - 1.8) * deep // 数量级/秒
-    const maxStep = maxRate * Math.LN10 * Math.max(0, dt)
+    // 全程统一限速（数量级/秒），不再按距离分"近景灵敏 / 深空放慢"两档 ——
+    // 之前在 12 万～80 万单位之间把限速从 1.8 压到 0.14，导致银河系内近乎瞬移、
+    // 银河系外却要慢慢滑，两段手感割裂。现在只用同一个常量。
+    const MAX_LOG_RATE = 0.3 // 数量级/秒
+    const maxStep = MAX_LOG_RATE * Math.LN10 * Math.max(0, dt)
     const diff = goal - currentLog
     const desired = diff * (1 - Math.exp(-Math.max(0, dt) * 6))
     currentLog += clamp(desired, -maxStep, maxStep)
